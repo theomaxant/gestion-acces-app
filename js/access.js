@@ -24,7 +24,6 @@ class AccessManager {
         }
     }
 
-
     setupEventListeners() {
         document.getElementById('add-access-btn')?.addEventListener('click', () => {
             this.showAddAccessModal();
@@ -37,13 +36,12 @@ class AccessManager {
 
     async loadAccess() {
         try {
-        const [accessResult, usersResult, softwareResult, costsResult] = await Promise.all([
-            window.D1API.get('acces'),
-            window.D1API.get('utilisateurs'),
-            window.D1API.get('logiciels'),
-            window.D1API.get('couts_licences')
-        ]);
-
+            const [accessResult, usersResult, softwareResult, costsResult] = await Promise.all([
+                window.D1API.get('acces),
+                window.D1API.get('utilisateurs),
+                window.D1API.get('logiciels),
+                window.D1API.get('couts_licences)
+            ]);
 
             this.access = accessResult.data || [];
             this.users = usersResult.data || [];
@@ -344,7 +342,7 @@ class AccessManager {
                 window.app?.showAlert('Accès modifié avec succès', 'success');
             } else {
                 // Création
-                await fetch('tables/acces', {
+                await window.D1API.get('acces', {
                     method: 'POST',
                     headers: { 'Content-Type': 'application/json' },
                     body: JSON.stringify(accessData)
