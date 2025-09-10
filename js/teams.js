@@ -33,15 +33,14 @@ class TeamsManager {
 
     async loadTeams() {
         try {
-        const [teamsResult, usersResult, softwareResult, accessResult, costsResult, droitsResult] = await Promise.all([
-            window.D1API.get('equipes'),
-            window.D1API.get('utilisateurs'),
-            window.D1API.get('logiciels'),
-            window.D1API.get('acces'),
-            window.D1API.get('couts_licences'),
-            window.D1API.get('droits')
-        ]);
-
+            const [teamsResult, usersResult, softwareResult, accessResult, costsResult, droitsResult] = await Promise.all([
+                window.D1API.get('equipes'),
+                window.D1API.get('utilisateurs'),
+                window.D1API.get('logiciels'),
+                window.D1API.get('acces'),
+                window.D1API.get('couts_licences'),
+                window.D1API.get('droits')
+            ]);
 
             this.teams = teamsResult.data || [];
             this.users = usersResult.data || [];
@@ -309,19 +308,11 @@ class TeamsManager {
 
             if (teamId) {
                 // Mise à jour
-                await fetch(`tables/equipes/${teamId}`, {
-                    method: 'PUT',
-                    headers: { 'Content-Type': 'application/json' },
-                    body: JSON.stringify(teamData)
-                });
+                await window.D1API.update('equipes', teamId, teamData);
                 window.app?.showAlert('Équipe modifiée avec succès', 'success');
             } else {
                 // Création
-                await fetch('tables/equipes', {
-                    method: 'POST',
-                    headers: { 'Content-Type': 'application/json' },
-                    body: JSON.stringify(teamData)
-                });
+                await window.D1API.create('equipes', teamData);
                 window.app?.showAlert('Équipe ajoutée avec succès', 'success');
             }
 
@@ -370,7 +361,7 @@ class TeamsManager {
         if (!team) return;
 
         try {
-            const usersResult = await fetch('tables/utilisateurs').then(r => r.json());
+            const usersResult = await window.D1API.get('utilisateurs');
             const teamMembers = (usersResult.data || []).filter(u => u.equipe_id === teamId && !u.archived);
 
             const modalContent = `
@@ -408,13 +399,9 @@ class TeamsManager {
         if (!confirm('Retirer cet utilisateur de l\'équipe ?')) return;
 
         try {
-            const usersResult = await fetch(`tables/utilisateurs/${userId}`).then(r => r.json());
+            const usersResult = await window.D1API.get('utilisateurs', userId);
             if (usersResult) {
-                await fetch(`tables/utilisateurs/${userId}`, {
-                    method: 'PUT',
-                    headers: { 'Content-Type': 'application/json' },
-                    body: JSON.stringify({ ...usersResult, equipe_id: '' })
-                });
+                await window.D1API.update('utilisateurs', userId, { ...usersResult.data, equipe_id: '' });
 
                 window.app?.showAlert('Utilisateur retiré de l\'équipe', 'success');
                 document.querySelector('.fixed')?.remove();
@@ -431,11 +418,7 @@ class TeamsManager {
         try {
             const team = this.teams.find(t => t.id === teamId);
             if (team) {
-                await fetch(`tables/equipes/${teamId}`, {
-                    method: 'PUT',
-                    headers: { 'Content-Type': 'application/json' },
-                    body: JSON.stringify({ ...team, archived: true })
-                });
+                await window.D1API.update('equipes', teamId, { ...team, archived: true });
 
                 window.app?.showAlert('Équipe archivée avec succès', 'success');
                 await this.loadTeams();
@@ -450,11 +433,7 @@ class TeamsManager {
         try {
             const team = this.teams.find(t => t.id === teamId);
             if (team) {
-                await fetch(`tables/equipes/${teamId}`, {
-                    method: 'PUT',
-                    headers: { 'Content-Type': 'application/json' },
-                    body: JSON.stringify({ ...team, archived: false })
-                });
+                await window.D1API.update('equipes', teamId, { ...team, archived: false });
 
                 window.app?.showAlert('Équipe désarchivée avec succès', 'success');
                 await this.loadTeams();
