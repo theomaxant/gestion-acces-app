@@ -29,12 +29,19 @@ class LogsManager {
      * Initialiser l'interface des logs
      */
     async init() {
-        this.render();
-        await Promise.all([
-            this.loadFilterOptions(),
-            this.loadResolveData()
-        ]);
-        this.loadLogs();
+        try {
+            console.log('🔄 Initialisation des logs...');
+            this.render();
+            await Promise.all([
+                this.loadFilterOptions(),
+                this.loadResolveData()
+            ]);
+            this.loadLogs();
+            console.log('✅ Logs initialisés');
+        } catch (error) {
+            console.error('❌ Erreur lors de l\'initialisation des logs:', error);
+            this.renderError(error);
+        }
     }
     
     /**
@@ -159,8 +166,37 @@ class LogsManager {
             </div>
         `;
         
-        document.getElementById('main-content').innerHTML = content;
+        const container = document.querySelector('#logs-view #main-content');
+        if (container) {
+            container.innerHTML = content;
+        } else {
+            console.error('Conteneur logs non trouvé');
+        }
         this.setupEventListeners();
+    }
+    
+    /**
+     * Afficher une erreur si l'initialisation échoue
+     */
+    renderError(error) {
+        const container = document.querySelector('#logs-view #main-content');
+        if (container) {
+            container.innerHTML = `
+                <div class="min-h-64 flex items-center justify-center">
+                    <div class="text-center">
+                        <div class="text-red-500 text-6xl mb-4">
+                            <i class="fas fa-exclamation-triangle"></i>
+                        </div>
+                        <h3 class="text-xl font-semibold text-gray-900 mb-2">Erreur de chargement des logs</h3>
+                        <p class="text-gray-600 mb-4">${error.message || 'Une erreur inattendue s\'est produite'}</p>
+                        <button onclick="window.logsManager.init()" 
+                                class="px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors">
+                            <i class="fas fa-redo mr-2"></i>Réessayer
+                        </button>
+                    </div>
+                </div>
+            `;
+        }
     }
     
     /**
@@ -169,45 +205,40 @@ class LogsManager {
     async loadResolveData() {
         try {
             // Charger toutes les données en parallèle
-        const [usersResponse, softwareResponse, teamsResponse, rightsResponse] = await Promise.all([
-            window.D1API.get('utilisateurs', null, {limit: 1000}),
-            window.D1API.get('logiciels', null, {limit: 1000}),
-            window.D1API.get('equipes', null, {limit: 1000}),
-            window.D1API.get('droits', null, {limit: 1000})
-        ]);
+            const [usersResponse, softwareResponse, teamsResponse, rightsResponse] = await Promise.all([
+                window.D1API.get('utilisateurs', null, {limit: 1000}),
+                window.D1API.get('logiciels', null, {limit: 1000}),
+                window.D1API.get('equipes', null, {limit: 1000}),
+                window.D1API.get('droits', null, {limit: 1000})
+            ]);
 
-
-        // Traiter les utilisateurs
-        if (usersResponse.success) {
-            usersResponse.data?.forEach(user => {
-                this.resolveCache.users.set(user.id, `${user.prenom} ${user.nom}`.trim());
-            });
+            // Traiter les utilisateurs
+            if (usersResponse.success) {
+                usersResponse.data?.forEach(user => {
+                    this.resolveCache.users.set(user.id, `${user.prenom} ${user.nom}`.trim());
                 });
                 this.resolveCache.loaded.users = true;
             }
 
             // Traiter les logiciels
-            if (softwareResponse.ok) {
-                const softwareData = await softwareResponse.json();
-                softwareData.data?.forEach(software => {
+            if (softwareResponse.success) {
+                softwareResponse.data?.forEach(software => {
                     this.resolveCache.software.set(software.id, software.nom);
                 });
                 this.resolveCache.loaded.software = true;
             }
 
             // Traiter les équipes
-            if (teamsResponse.ok) {
-                const teamsData = await teamsResponse.json();
-                teamsData.data?.forEach(team => {
+            if (teamsResponse.success) {
+                teamsResponse.data?.forEach(team => {
                     this.resolveCache.teams.set(team.id, team.nom);
                 });
                 this.resolveCache.loaded.teams = true;
             }
 
             // Traiter les droits
-            if (rightsResponse.ok) {
-                const rightsData = await rightsResponse.json();
-                rightsData.data?.forEach(right => {
+            if (rightsResponse.success) {
+                rightsResponse.data?.forEach(right => {
                     this.resolveCache.rights.set(right.id, right.nom);
                 });
                 this.resolveCache.loaded.rights = true;
@@ -224,12 +255,11 @@ class LogsManager {
     async loadFilterOptions() {
         try {
             // Charger les utilisateurs
-            const usersResponse = await fetch('tables/utilisateurs?limit=1000');
-            if (usersResponse.ok) {
-                const usersData = await usersResponse.json();
+            const usersResponse = await window.D1API.get('utilisateurs', null, {limit: 1000});
+            if (usersResponse.success) {
                 const userSelect = document.getElementById('filter-user');
-                if (userSelect && usersData.data) {
-                    const userOptions = usersData.data
+                if (userSelect && usersResponse.data) {
+                    const userOptions = usersResponse.data
                         .filter(user => !user.archived)
                         .map(user => `<option value="${user.id}">${user.prenom} ${user.nom}</option>`)
                         .join('');
@@ -238,12 +268,11 @@ class LogsManager {
             }
 
             // Charger les logiciels
-            const softwareResponse = await fetch('tables/logiciels?limit=1000');
-            if (softwareResponse.ok) {
-                const softwareData = await softwareResponse.json();
+            const softwareResponse = await window.D1API.get('logiciels', null, {limit: 1000});
+            if (softwareResponse.success) {
                 const softwareSelect = document.getElementById('filter-software');
-                if (softwareSelect && softwareData.data) {
-                    const softwareOptions = softwareData.data
+                if (softwareSelect && softwareResponse.data) {
+                    const softwareOptions = softwareResponse.data
                         .filter(software => !software.archived)
                         .map(software => `<option value="${software.id}">${software.nom}</option>`)
                         .join('');
