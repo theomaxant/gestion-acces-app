@@ -6,7 +6,7 @@
 class SupabaseAPI {
     constructor() {
         // ⚙️ Credentials Supabase configurés
-        this.supabaseUrl = 'https://ehiagntpmmietnpnbtrk.supabase.co/';
+        this.supabaseUrl = 'https://ehiagntpmmietnpnbtrk.supabase.co';
         this.supabaseKey = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImVoaWFnbnRwbW1pZXRucG5idHJrIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NTc0NjU5NTAsImV4cCI6MjA3MzA0MTk1MH0.E5O5fbxMkkiFTKwtZsyLEcjGvQyLAjXWafIiBdff0JQ';
         
         this.baseUrl = `${this.supabaseUrl}/rest/v1`;
