@@ -40,13 +40,12 @@ class ReportsManager {
 
     async loadReports() {
         try {
-        const [usersResult, softwareResult, accessResult, costsResult] = await Promise.all([
-            window.D1API.get('utilisateurs'),
-            window.D1API.get('logiciels'),
-            window.D1API.get('acces'),
-            window.D1API.get('couts_licences')
-        ]);
-
+            const [usersResult, softwareResult, accessResult, costsResult] = await Promise.all([
+                window.D1API.get('utilisateurs),
+                window.D1API.get('logiciels),
+                window.D1API.get('acces),
+                window.D1API.get('couts_licences)
+            ]);
 
             this.users = usersResult.data || [];
             this.software = softwareResult.data || [];
@@ -529,11 +528,11 @@ class ReportsManager {
     async showTeamView() {
         try {
             const [teamsResult, softwareResult, usersResult, accessResult, costsResult] = await Promise.all([
-                fetch('tables/equipes').then(r => r.json()),
-                fetch('tables/logiciels').then(r => r.json()),
-                fetch('tables/utilisateurs').then(r => r.json()),
-                fetch('tables/acces').then(r => r.json()),
-                fetch('tables/couts_licences').then(r => r.json())
+                window.D1API.get('equipes),
+                window.D1API.get('logiciels),
+                window.D1API.get('utilisateurs),
+                window.D1API.get('acces),
+                window.D1API.get('couts_licences)
             ]);
 
             const teams = (teamsResult.data || []).filter(t => !t.archived);
@@ -683,11 +682,11 @@ class ReportsManager {
     async exportTeamReport() {
         try {
             const [teamsResult, softwareResult, accessResult, costsResult, droitsResult] = await Promise.all([
-                fetch('tables/equipes').then(r => r.json()),
-                fetch('tables/logiciels').then(r => r.json()),
-                fetch('tables/acces').then(r => r.json()),
-                fetch('tables/couts_licences').then(r => r.json()),
-                fetch('tables/droits').then(r => r.json())
+                window.D1API.get('equipes),
+                window.D1API.get('logiciels),
+                window.D1API.get('acces),
+                window.D1API.get('couts_licences),
+                window.D1API.get('droits)
             ]);
 
             const teams = (teamsResult.data || []).filter(t => !t.archived);
