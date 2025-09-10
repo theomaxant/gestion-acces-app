@@ -334,11 +334,10 @@ class AccessManager {
 
             if (accessId) {
                 // Mise à jour
-                await fetch(`tables/acces/${accessId}`, {
-                    method: 'PUT',
-                    headers: { 'Content-Type': 'application/json' },
-                    body: JSON.stringify(accessData)
-                });
+                const result = await window.D1API.update('acces', accessId, accessData);
+                if (!result.success) {
+                    throw new Error(result.error);
+                }
                 window.app?.showAlert('Accès modifié avec succès', 'success');
             } else {
                 // Création
@@ -430,9 +429,10 @@ class AccessManager {
         if (!confirm('Êtes-vous sûr de vouloir supprimer cet accès ?')) return;
 
         try {
-            await fetch(`tables/acces/${accessId}`, {
-                method: 'DELETE'
-            });
+            const result = await window.D1API.delete('acces', accessId);
+            if (!result.success) {
+                throw new Error(result.error);
+            }
 
             window.app?.showAlert('Accès supprimé avec succès', 'success');
             await this.loadAccess();

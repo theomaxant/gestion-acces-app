@@ -353,19 +353,17 @@ class SoftwareManager {
 
             if (softwareId) {
                 // Mise à jour
-                await fetch(`tables/logiciels/${softwareId}`, {
-                    method: 'PUT',
-                    headers: { 'Content-Type': 'application/json' },
-                    body: JSON.stringify(softwareData)
-                });
+                const result = await window.D1API.update('logiciels', softwareId, softwareData);
+                if (!result.success) {
+                    throw new Error(result.error);
+                }
                 window.app?.showAlert('Logiciel modifié avec succès', 'success');
             } else {
                 // Création
-                await window.D1API.get('logiciels', {
-                    method: 'POST',
-                    headers: { 'Content-Type': 'application/json' },
-                    body: JSON.stringify(softwareData)
-                });
+                const result = await window.D1API.create('logiciels', softwareData);
+                if (!result.success) {
+                    throw new Error(result.error);
+                }
                 window.app?.showAlert('Logiciel ajouté avec succès', 'success');
             }
 
@@ -523,24 +521,21 @@ class SoftwareManager {
             // Supprimer les coûts existants pour ce logiciel
             const existingCosts = this.costs.filter(c => c.logiciel_id === softwareId);
             for (const cost of existingCosts) {
-                await fetch(`tables/couts_licences/${cost.id}`, {
-                    method: 'DELETE'
-                });
+                await window.D1API.delete('couts_licences', cost.id);
             }
 
             // Ajouter les nouveaux coûts
             for (const droit of this.droits) {
                 const costValue = document.getElementById(`cost-${droit.id}`)?.value;
                 if (costValue && parseFloat(costValue) > 0) {
-                    await window.D1API.get('couts_licences', {
-                        method: 'POST',
-                        headers: { 'Content-Type': 'application/json' },
-                        body: JSON.stringify({
-                            logiciel_id: softwareId,
-                            droit_id: droit.id,
-                            cout_mensuel: parseFloat(costValue)
-                        })
+                    const result = await window.D1API.create('couts_licences', {
+                        logiciel_id: softwareId,
+                        droit_id: droit.id,
+                        cout_mensuel: parseFloat(costValue)
                     });
+                    if (!result.success) {
+                        throw new Error(result.error);
+                    }
                 }
             }
 
@@ -646,9 +641,10 @@ class SoftwareManager {
 
     async removeAccess(accessId) {
         try {
-            await fetch(`tables/acces/${accessId}`, {
-                method: 'DELETE'
-            });
+            const result = await window.D1API.delete('acces', accessId);
+            if (!result.success) {
+                throw new Error(result.error);
+            }
             window.app?.showAlert('Accès supprimé avec succès', 'success');
             // Recharger la vue
             const modal = document.querySelector('.fixed');
@@ -671,11 +667,10 @@ class SoftwareManager {
         try {
             const software = this.software.find(s => s.id === softwareId);
             if (software) {
-                await fetch(`tables/logiciels/${softwareId}`, {
-                    method: 'PUT',
-                    headers: { 'Content-Type': 'application/json' },
-                    body: JSON.stringify({ ...software, archived: true })
-                });
+                const result = await window.D1API.update('logiciels', softwareId, { ...software, archived: true });
+                if (!result.success) {
+                    throw new Error(result.error);
+                }
 
                 window.app?.showAlert('Logiciel archivé avec succès', 'success');
                 await this.loadSoftware();
@@ -690,11 +685,10 @@ class SoftwareManager {
         try {
             const software = this.software.find(s => s.id === softwareId);
             if (software) {
-                await fetch(`tables/logiciels/${softwareId}`, {
-                    method: 'PUT',
-                    headers: { 'Content-Type': 'application/json' },
-                    body: JSON.stringify({ ...software, archived: false })
-                });
+                const result = await window.D1API.update('logiciels', softwareId, { ...software, archived: false });
+                if (!result.success) {
+                    throw new Error(result.error);
+                }
 
                 window.app?.showAlert('Logiciel désarchivé avec succès', 'success');
                 await this.loadSoftware();
