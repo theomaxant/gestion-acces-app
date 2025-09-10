@@ -49,8 +49,6 @@ class RightsManager {
                 this.rights = [];
             }
         } catch (error) {
-
-        } catch (error) {
             console.error('Erreur lors du chargement des types d\'accès:', error);
             this.rights = [];
         }
@@ -59,18 +57,27 @@ class RightsManager {
     async createDefaultRights() {
         const defaultRights = [
             {
+                nom: 'Super Admin',
+                description: 'Accès super administrateur avec tous les privilèges',
+                niveau: 1,
+                couleur: '#7C3AED'
+            },
+            {
                 nom: 'Admin',
                 description: 'Accès administrateur complet',
+                niveau: 2,
                 couleur: '#DC2626'
             },
             {
                 nom: 'User',
                 description: 'Accès utilisateur standard',
+                niveau: 3,
                 couleur: '#2563EB'
             },
             {
-                nom: 'Lecteur',
+                nom: 'Reader',
                 description: 'Accès en lecture seule',
+                niveau: 4,
                 couleur: '#16A34A'
             }
         ];
@@ -81,13 +88,7 @@ class RightsManager {
             if (!existingRight) {
                 // Créer le droit s'il n'existe pas
                 try {
-                    const response = await fetch('tables/droits', {
-                        method: 'POST',
-                        headers: {
-                            'Content-Type': 'application/json'
-                        },
-                        body: JSON.stringify(defaultRight)
-                    });
+                    const response = await window.D1API.create('droits', defaultRight);
                     if (response.ok) {
                         console.log(`Type d'accès créé: ${defaultRight.nom}`);
                     }
@@ -97,15 +98,9 @@ class RightsManager {
             } else if (existingRight.couleur !== defaultRight.couleur) {
                 // Mettre à jour la couleur si elle est différente
                 try {
-                    const response = await fetch(`tables/droits/${existingRight.id}`, {
-                        method: 'PUT',
-                        headers: {
-                            'Content-Type': 'application/json'
-                        },
-                        body: JSON.stringify({
-                            ...existingRight,
-                            couleur: defaultRight.couleur
-                        })
+                    const response = await window.D1API.update('droits', existingRight.id, {
+                        ...existingRight,
+                        couleur: defaultRight.couleur
                     });
                     if (response.ok) {
                         console.log(`Couleur mise à jour pour le type: ${defaultRight.nom}`);
@@ -167,22 +162,10 @@ class RightsManager {
             let response;
             if (this.currentEditingRight) {
                 // Update existing right
-                response = await fetch(`tables/droits/${this.currentEditingRight.id}`, {
-                    method: 'PUT',
-                    headers: {
-                        'Content-Type': 'application/json'
-                    },
-                    body: JSON.stringify(rightData)
-                });
+                response = await window.D1API.update('droits', this.currentEditingRight.id, rightData);
             } else {
                 // Create new right
-                response = await fetch('tables/droits', {
-                    method: 'POST',
-                    headers: {
-                        'Content-Type': 'application/json'
-                    },
-                    body: JSON.stringify(rightData)
-                });
+                response = await window.D1API.create('droits', rightData);
             }
 
             if (response.ok) {
@@ -210,10 +193,9 @@ class RightsManager {
 
         try {
             // Check if right is used in access table
-            const accessResponse = await fetch('tables/acces');
+            const accessResponse = await window.D1API.get('acces');
             if (accessResponse.ok) {
-                const accessResult = await accessResponse.json();
-                const usedInAccess = (accessResult.data || []).some(access => access.droit_id === rightId);
+                const usedInAccess = (accessResponse.data || []).some(access => access.droit_id === rightId);
                 
                 if (usedInAccess) {
                     alert('Ce type d\'accès ne peut pas être supprimé car il est utilisé dans des accès existants.');
@@ -221,9 +203,7 @@ class RightsManager {
                 }
             }
 
-            const response = await fetch(`tables/droits/${rightId}`, {
-                method: 'DELETE'
-            });
+            const response = await window.D1API.delete('droits', rightId);
 
             if (response.ok) {
                 await this.loadRights();
