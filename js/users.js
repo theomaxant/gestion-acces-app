@@ -201,26 +201,26 @@ class UsersManager {
                                    class="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500">
                         </div>
                         <div>
-                            <label class="block text-sm font-medium text-gray-700 mb-1">Prénom</label>
-                            <input type="text" id="user-prenom"
+                            <label class="block text-sm font-medium text-gray-700 mb-1">Prénom *</label>
+                            <input type="text" id="user-prenom" required
                                    class="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500">
                         </div>
                     </div>
                     <div>
-                        <label class="block text-sm font-medium text-gray-700 mb-1">Email</label>
-                        <input type="email" id="user-email"
+                        <label class="block text-sm font-medium text-gray-700 mb-1">Email *</label>
+                        <input type="email" id="user-email" required
                                class="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500">
                     </div>
                     <div>
-                        <label class="block text-sm font-medium text-gray-700 mb-1">Poste</label>
-                        <input type="text" id="user-poste"
+                        <label class="block text-sm font-medium text-gray-700 mb-1">Poste *</label>
+                        <input type="text" id="user-poste" required
                                class="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500">
                     </div>
                     <div>
-                        <label class="block text-sm font-medium text-gray-700 mb-1">Équipe</label>
-                        <select id="user-equipe"
+                        <label class="block text-sm font-medium text-gray-700 mb-1">Équipe *</label>
+                        <select id="user-equipe" required
                                 class="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500">
-                            <option value="">Aucune équipe</option>
+                            <option value="">Sélectionner une équipe</option>
                             ${this.teams.filter(t => !t.archived).map(team => 
                                 `<option value="${team.id}">${team.nom}</option>`
                             ).join('')}
@@ -258,8 +258,25 @@ class UsersManager {
         const equipe_id = document.getElementById('user-equipe').value;
         const addBaseAccess = !userId && document.getElementById('user-add-base-access')?.checked;
 
+        // Validation des champs obligatoires
         if (!nom) {
             window.app?.showAlert('Le nom est requis', 'error');
+            return;
+        }
+        if (!prenom) {
+            window.app?.showAlert('Le prénom est requis', 'error');
+            return;
+        }
+        if (!email) {
+            window.app?.showAlert('L\'email est requis', 'error');
+            return;
+        }
+        if (!poste) {
+            window.app?.showAlert('Le poste est requis', 'error');
+            return;
+        }
+        if (!equipe_id) {
+            window.app?.showAlert('L\'équipe est requise', 'error');
             return;
         }
 

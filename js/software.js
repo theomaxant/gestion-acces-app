@@ -261,8 +261,8 @@ class SoftwareManager {
                             </select>
                         </div>
                         <div>
-                            <label class="block text-sm font-medium text-gray-700 mb-1">Qui paye ?</label>
-                            <select id="software-payer" 
+                            <label class="block text-sm font-medium text-gray-700 mb-1">Qui paye ? *</label>
+                            <select id="software-payer" required
                                     class="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500">
                                 <option value="">Sélectionner un utilisateur</option>
                                 ${usersOptions}
@@ -272,28 +272,34 @@ class SoftwareManager {
                     
                     <div class="grid grid-cols-1 md:grid-cols-3 gap-4">
                         <div>
-                            <label class="block text-sm font-medium text-gray-700 mb-1">Moyen de paiement</label>
-                            <select id="software-payment-method" 
+                            <label class="block text-sm font-medium text-gray-700 mb-1">Moyen de paiement *</label>
+                            <select id="software-payment-method" required
                                     class="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500">
+                                <option value="">Sélectionner un moyen de paiement</option>
                                 <option value="carte">Carte bancaire</option>
                                 <option value="prelevement">Prélèvement automatique</option>
                                 <option value="virement">Virement</option>
+                                <option value="cheque">Chèque</option>
+                                <option value="especes">Espèces</option>
                             </select>
                         </div>
                         <div>
-                            <label class="block text-sm font-medium text-gray-700 mb-1">Périodicité de paiement</label>
-                            <select id="software-periodicity" 
+                            <label class="block text-sm font-medium text-gray-700 mb-1">Périodicité de paiement *</label>
+                            <select id="software-periodicity" required
                                     class="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500">
-                                <option value="mensuel" selected>Mensuel</option>
+                                <option value="">Sélectionner une périodicité</option>
+                                <option value="mensuel">Mensuel</option>
                                 <option value="trimestriel">Trimestriel</option>
                                 <option value="semestriel">Semestriel</option>
                                 <option value="annuel">Annuel</option>
+                                <option value="ponctuel">Ponctuel (achat unique)</option>
                             </select>
                         </div>
                         <div>
-                            <label class="block text-sm font-medium text-gray-700 mb-1">Date de souscription</label>
-                            <input type="date" id="software-subscription-date" 
-                                   class="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500">
+                            <label class="block text-sm font-medium text-gray-700 mb-1">Date de souscription *</label>
+                            <input type="date" id="software-subscription-date" required
+                                   class="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
+                                   value="${new Date().toISOString().split('T')[0]}">
                         </div>
                     </div>
                     
