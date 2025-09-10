@@ -22,16 +22,29 @@ class Logger {
             // Extraire les informations sur l'utilisateur et le logiciel depuis les données
             const contextInfo = this.extractContextInfo(tableName, oldValues, newValues);
             
+            // Construire l'entrée de log de base
             const logEntry = {
                 action: action,
                 table_name: tableName,
                 record_id: recordId,
-                old_values: oldValues ? JSON.stringify(oldValues) : null,
-                new_values: newValues ? JSON.stringify(newValues) : null,
                 user_info: this.getUserInfo(),
                 timestamp: new Date().toISOString(),
                 details: this.enrichDetails(details, contextInfo)
             };
+            
+            // Ajouter old_values et new_values seulement si les colonnes existent
+            // (pour éviter l'erreur PGRST204)
+            try {
+                if (oldValues) {
+                    logEntry.old_values = JSON.stringify(oldValues);
+                }
+                if (newValues) {
+                    logEntry.new_values = JSON.stringify(newValues);
+                }
+            } catch (e) {
+                // Si erreur de sérialisation, inclure dans details
+                logEntry.details += ` | Valeurs: ${oldValues ? 'old_values présentes' : 'pas d\'old_values'}, ${newValues ? 'new_values présentes' : 'pas de new_values'}`;
+            }
             
             await this.saveLog(logEntry);
             console.log(`📝 Log enregistré: ${action} sur ${tableName}${recordId ? ` (${recordId})` : ''}`);
@@ -55,6 +68,33 @@ class Logger {
             return result.data;
             
         } catch (error) {
+            // Gestion spécifique pour l'erreur PGRST204 (colonne non trouvée)
+            if (error.message && error.message.includes('PGRST204')) {
+                console.warn('⚠️ Colonnes old_values/new_values non trouvées, tentative sans ces champs...');
+                
+                // Recréer logEntry sans old_values et new_values
+                const simplifiedLogEntry = {
+                    action: logEntry.action,
+                    table_name: logEntry.table_name,
+                    record_id: logEntry.record_id,
+                    user_info: logEntry.user_info,
+                    timestamp: logEntry.timestamp,
+                    details: logEntry.details + (logEntry.old_values || logEntry.new_values ? ' | Données dans details par manque de colonnes' : '')
+                };
+                
+                try {
+                    const result = await window.D1API.create(this.tableName, simplifiedLogEntry);
+                    if (!result.success) {
+                        throw new Error(`Erreur simplifiée: ${result.error}`);
+                    }
+                    console.log('✅ Log sauvegardé en mode simplifié (sans old_values/new_values)');
+                    return result.data;
+                } catch (simplifiedError) {
+                    console.error('❌ Échec même en mode simplifié:', simplifiedError);
+                    throw simplifiedError;
+                }
+            }
+            
             if (retryCount < this.maxRetries) {
                 console.warn(`⚠️ Tentative ${retryCount + 1}/${this.maxRetries} échouée, nouvelle tentative...`);
                 await this.delay(1000 * (retryCount + 1)); // Délai progressif
