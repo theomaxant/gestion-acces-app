@@ -42,13 +42,14 @@ class RightsManager {
 
     async loadRights() {
         try {
-            const response = await fetch('tables/droits');
-            if (response.ok) {
-                const result = await response.json();
+            const result = await window.D1API.get('droits');
+            if (result.success) {
                 this.rights = result.data || [];
             } else {
                 this.rights = [];
             }
+        } catch (error) {
+
         } catch (error) {
             console.error('Erreur lors du chargement des types d\'accès:', error);
             this.rights = [];
