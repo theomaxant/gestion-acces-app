@@ -428,7 +428,12 @@ class AccessManagementApp {
             const labels = software.map(s => s.nom);
             const data = software.map(s => softwareCosts[s.id] || 0);
 
-            new Chart(ctx, {
+            // Détruire le graphique existant s'il y en a un
+            if (window.costChart) {
+                window.costChart.destroy();
+            }
+
+            window.costChart = new Chart(ctx, {
                 type: 'doughnut',
                 data: {
                     labels: labels,
@@ -557,7 +562,12 @@ class AccessManagementApp {
             const labels = Object.keys(teamCosts);
             const data = Object.values(teamCosts);
 
-            new Chart(ctx, {
+            // Détruire le graphique existant s'il y en a un
+            if (window.teamCostChart) {
+                window.teamCostChart.destroy();
+            }
+
+            window.teamCostChart = new Chart(ctx, {
                 type: 'bar',
                 data: {
                     labels: labels,
@@ -915,7 +925,12 @@ class AccessManagementApp {
             const data = Object.values(paymentMethods).map(pm => pm.cost);
             const colors = ['#3B82F6', '#10B981', '#F59E0B', '#EF4444'];
 
-            new Chart(ctx, {
+            // Détruire le graphique existant s'il y en a un
+            if (window.paymentMethodChart) {
+                window.paymentMethodChart.destroy();
+            }
+
+            window.paymentMethodChart = new Chart(ctx, {
                 type: 'doughnut',
                 data: {
                     labels: labels,
