@@ -429,8 +429,22 @@ class AccessManagementApp {
                 }
             }
 
-            const labels = software.map(s => s.nom);
-            const data = software.map(s => softwareCosts[s.id] || 0);
+            // Filtrer les logiciels qui ont des coûts > 0
+            const softwareWithCosts = software.filter(s => (softwareCosts[s.id] || 0) > 0);
+            
+            const labels = softwareWithCosts.map(s => s.nom);
+            const data = softwareWithCosts.map(s => softwareCosts[s.id]);
+
+            // Si aucune donnée, afficher un message au lieu du graphique
+            if (data.length === 0 || data.every(d => d === 0)) {
+                ctx.getContext('2d').clearRect(0, 0, ctx.width, ctx.height);
+                const context = ctx.getContext('2d');
+                context.font = '16px Arial';
+                context.fillStyle = '#6B7280';
+                context.textAlign = 'center';
+                context.fillText('Aucune donnée de coût disponible', ctx.width / 2, ctx.height / 2);
+                return;
+            }
 
             // Détruire le graphique existant s'il y en a un
             if (window.costChart && typeof window.costChart.destroy === 'function') {
@@ -1002,11 +1016,30 @@ class AccessManagementApp {
                 paymentMethods[method].cost += s.cout_annuel;
             });
 
-            const labels = Object.keys(paymentMethods).map(key => 
-                paymentMethodLabels[key] || 'Non défini'
+            // Filtrer les moyens de paiement qui ont des coûts > 0 et qui ne sont pas "non-défini"
+            const filteredPaymentMethods = Object.entries(paymentMethods)
+                .filter(([key, pm]) => pm.cost > 0 && key !== 'non-defini')
+                .reduce((acc, [key, value]) => {
+                    acc[key] = value;
+                    return acc;
+                }, {});
+
+            const labels = Object.keys(filteredPaymentMethods).map(key => 
+                paymentMethodLabels[key] || key
             );
-            const data = Object.values(paymentMethods).map(pm => pm.cost);
+            const data = Object.values(filteredPaymentMethods).map(pm => pm.cost);
             const colors = ['#3B82F6', '#10B981', '#F59E0B', '#EF4444'];
+
+            // Si aucune donnée, afficher un message au lieu du graphique
+            if (data.length === 0 || data.every(d => d === 0)) {
+                ctx.getContext('2d').clearRect(0, 0, ctx.width, ctx.height);
+                const context = ctx.getContext('2d');
+                context.font = '16px Arial';
+                context.fillStyle = '#6B7280';
+                context.textAlign = 'center';
+                context.fillText('Aucun moyen de paiement défini', ctx.width / 2, ctx.height / 2);
+                return;
+            }
 
             // Détruire le graphique existant s'il y en a un
             if (window.paymentMethodChart && typeof window.paymentMethodChart.destroy === 'function') {
@@ -1053,8 +1086,8 @@ class AccessManagementApp {
                         tooltip: {
                             callbacks: {
                                 label: function(context) {
-                                    const method = Object.keys(paymentMethods)[context.dataIndex];
-                                    const pm = paymentMethods[method];
+                                    const method = Object.keys(filteredPaymentMethods)[context.dataIndex];
+                                    const pm = filteredPaymentMethods[method];
                                     const percentage = ((context.raw / data.reduce((a, b) => a + b, 0)) * 100).toFixed(1);
                                     return `${context.label}: ${context.raw.toFixed(0)}€/an (${pm.count} logiciel${pm.count > 1 ? 's' : ''}) - ${percentage}%`;
                                 }
