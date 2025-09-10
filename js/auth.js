@@ -413,14 +413,13 @@ class SimpleAuth {
         try {
             console.log('📋 Chargement des utilisateurs depuis la base de données...');
             
-            // Récupérer tous les utilisateurs non archivés
-            const response = await fetch('tables/utilisateurs?limit=100&sort=nom');
-            if (!response.ok) {
-                throw new Error(`Erreur HTTP: ${response.status}`);
+            // Récupérer tous les utilisateurs non archivés via Supabase API
+            const result = await window.D1API.get('utilisateurs', null, {limit: 100, sort: 'nom'});
+            if (result.success) {
+                this.users = (result.data || []).filter(user => !user.archived);
+            } else {
+                throw new Error(result.error || 'Erreur lors du chargement');
             }
-            
-            const result = await response.json();
-            this.users = result.data.filter(user => !user.archived);
             
             // Populer le select avec les utilisateurs
             this.populateUserSelect();
