@@ -46,19 +46,13 @@ class Logger {
      */
     async saveLog(logEntry, retryCount = 0) {
         try {
-            const response = await fetch(`tables/${this.tableName}`, {
-                method: 'POST',
-                headers: {
-                    'Content-Type': 'application/json'
-                },
-                body: JSON.stringify(logEntry)
-            });
+            const result = await window.D1API.create(this.tableName, logEntry);
             
-            if (!response.ok) {
-                throw new Error(`Erreur HTTP: ${response.status}`);
+            if (!result.success) {
+                throw new Error(`Erreur: ${result.error}`);
             }
             
-            return await response.json();
+            return result.data;
             
         } catch (error) {
             if (retryCount < this.maxRetries) {
@@ -95,14 +89,15 @@ class Logger {
      */
     async getLogs(page = 1, limit = 50, filters = {}) {
         try {
-            let url = `tables/${this.tableName}?page=${page}&limit=${limit}&sort=timestamp&order=desc`;
+            const result = await window.D1API.get(this.tableName, null, {
+                limit: limit,
+                offset: (page - 1) * limit,
+                sort: 'timestamp'
+            });
             
-            const response = await fetch(url);
-            if (!response.ok) {
-                throw new Error(`Erreur HTTP: ${response.status}`);
+            if (!result.success) {
+                throw new Error(`Erreur: ${result.error}`);
             }
-            
-            const result = await response.json();
             
             // Filtrer côté client (car l'API ne supporte pas tous nos filtres personnalisés)
             if (Object.keys(filters).some(key => filters[key])) {
@@ -205,9 +200,7 @@ class Logger {
             for (const log of logs.data) {
                 const logDate = new Date(log.timestamp);
                 if (logDate < cutoffDate) {
-                    await fetch(`tables/${this.tableName}/${log.id}`, {
-                        method: 'DELETE'
-                    });
+                    await window.D1API.delete(this.tableName, log.id);
                     deletedCount++;
                 }
             }
