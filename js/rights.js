@@ -49,7 +49,7 @@ class RightsManager {
                 this.rights = [];
             }
         } catch (error) {
-            console.error('Erreur lors du chargement des types d\'accès:', error);
+            console.error('Erreur lors du chargement des types d\'accÃ¨s:', error);
             this.rights = [];
         }
     }
@@ -58,25 +58,25 @@ class RightsManager {
         const defaultRights = [
             {
                 nom: 'Super Admin',
-                description: 'Accès super administrateur avec tous les privilèges',
+                description: 'AccÃ¨s super administrateur avec tous les privilÃ¨ges',
                 niveau: 1,
                 couleur: '#7C3AED'
             },
             {
                 nom: 'Admin',
-                description: 'Accès administrateur complet',
+                description: 'AccÃ¨s administrateur complet',
                 niveau: 2,
                 couleur: '#DC2626'
             },
             {
                 nom: 'User',
-                description: 'Accès utilisateur standard',
+                description: 'AccÃ¨s utilisateur standard',
                 niveau: 3,
                 couleur: '#2563EB'
             },
             {
                 nom: 'Reader',
-                description: 'Accès en lecture seule',
+                description: 'AccÃ¨s en lecture seule',
                 niveau: 4,
                 couleur: '#16A34A'
             }
@@ -86,32 +86,32 @@ class RightsManager {
             const existingRight = this.rights.find(right => right.nom === defaultRight.nom);
             
             if (!existingRight) {
-                // Créer le droit s'il n'existe pas
+                // CrÃ©er le droit s'il n'existe pas
                 try {
                     const response = await window.D1API.create('droits', defaultRight);
-                    if (response.ok) {
-                        console.log(`Type d'accès créé: ${defaultRight.nom}`);
+                    if (response.success) {
+                        console.log(`Type d'accÃ¨s crÃ©Ã©: ${defaultRight.nom}`);
                     }
                 } catch (error) {
-                    console.error(`Erreur lors de la création du type d'accès ${defaultRight.nom}:`, error);
+                    console.error(`Erreur lors de la crÃ©ation du type d'accÃ¨s ${defaultRight.nom}:`, error);
                 }
             } else if (existingRight.couleur !== defaultRight.couleur) {
-                // Mettre à jour la couleur si elle est différente
+                // Mettre Ã  jour la couleur si elle est diffÃ©rente
                 try {
                     const response = await window.D1API.update('droits', existingRight.id, {
                         ...existingRight,
                         couleur: defaultRight.couleur
                     });
-                    if (response.ok) {
-                        console.log(`Couleur mise à jour pour le type: ${defaultRight.nom}`);
+                    if (response.success) {
+                        console.log(`Couleur mise Ã  jour pour le type: ${defaultRight.nom}`);
                     }
                 } catch (error) {
-                    console.error(`Erreur lors de la mise à jour de la couleur pour le type ${defaultRight.nom}:`, error);
+                    console.error(`Erreur lors de la mise Ã  jour de la couleur pour le type ${defaultRight.nom}:`, error);
                 }
             }
         }
         
-        // Recharger après création/mise à jour
+        // Recharger aprÃ¨s crÃ©ation/mise Ã  jour
         await this.loadRights();
     }
 
@@ -125,12 +125,12 @@ class RightsManager {
         form.reset();
 
         if (right) {
-            title.textContent = 'Modifier le Type d\'Accès';
+            title.textContent = 'Modifier le Type d\'AccÃ¨s';
             document.getElementById('right-name').value = right.nom || '';
             document.getElementById('right-description').value = right.description || '';
             document.getElementById('right-color').value = right.couleur || '#3B82F6';
         } else {
-            title.textContent = 'Ajouter un Type d\'Accès';
+            title.textContent = 'Ajouter un Type d\'AccÃ¨s';
         }
 
         modal.classList.remove('hidden');
@@ -148,7 +148,7 @@ class RightsManager {
         const color = document.getElementById('right-color').value;
 
         if (!name) {
-            alert('Le nom du type d\'accès est obligatoire');
+            alert('Le nom du type d\'accÃ¨s est obligatoire');
             return;
         }
 
@@ -168,53 +168,53 @@ class RightsManager {
                 response = await window.D1API.create('droits', rightData);
             }
 
-            if (response.ok) {
+            if (response.success) {
                 await this.loadRights();
                 this.render();
                 this.closeModal();
                 
                 const message = this.currentEditingRight ? 
-                    'Type d\'accès modifié avec succès' : 
-                    'Type d\'accès ajouté avec succès';
+                    'Type d\'accÃ¨s modifiÃ© avec succÃ¨s' : 
+                    'Type d\'accÃ¨s ajoutÃ© avec succÃ¨s';
                 this.showNotification(message, 'success');
             } else {
                 throw new Error('Erreur lors de la sauvegarde');
             }
         } catch (error) {
             console.error('Erreur:', error);
-            this.showNotification('Erreur lors de la sauvegarde du type d\'accès', 'error');
+            this.showNotification('Erreur lors de la sauvegarde du type d\'accÃ¨s', 'error');
         }
     }
 
     async deleteRight(rightId) {
-        if (!confirm('Voulez-vous vraiment supprimer ce type d\'accès ? Cette action est irréversible.')) {
+        if (!confirm('Voulez-vous vraiment supprimer ce type d\'accÃ¨s ? Cette action est irrÃ©versible.')) {
             return;
         }
 
         try {
             // Check if right is used in access table
             const accessResponse = await window.D1API.get('acces');
-            if (accessResponse.ok) {
+            if (accessResponse.success) {
                 const usedInAccess = (accessResponse.data || []).some(access => access.droit_id === rightId);
                 
                 if (usedInAccess) {
-                    alert('Ce type d\'accès ne peut pas être supprimé car il est utilisé dans des accès existants.');
+                    alert('Ce type d\'accÃ¨s ne peut pas Ãªtre supprimÃ© car il est utilisÃ© dans des accÃ¨s existants.');
                     return;
                 }
             }
 
             const response = await window.D1API.delete('droits', rightId);
 
-            if (response.ok) {
+            if (response.success) {
                 await this.loadRights();
                 this.render();
-                this.showNotification('Type d\'accès supprimé avec succès', 'success');
+                this.showNotification('Type d\'accÃ¨s supprimÃ© avec succÃ¨s', 'success');
             } else {
                 throw new Error('Erreur lors de la suppression');
             }
         } catch (error) {
             console.error('Erreur:', error);
-            this.showNotification('Erreur lors de la suppression du type d\'accès', 'error');
+            this.showNotification('Erreur lors de la suppression du type d\'accÃ¨s', 'error');
         }
     }
 
@@ -244,7 +244,7 @@ class RightsManager {
                 <tr>
                     <td colspan="4" class="px-6 py-8 text-center text-gray-500">
                         <i class="fas fa-user-shield text-4xl mb-4 block"></i>
-                        Aucun type d'accès trouvé. Commencez par ajouter un type.
+                        Aucun type d'accÃ¨s trouvÃ©. Commencez par ajouter un type.
                     </td>
                 </tr>
             `;
