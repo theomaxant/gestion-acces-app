@@ -1,0 +1,402 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Test des Messages de Logs Simplifiés</title>
+    <style>
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            max-width: 1200px;
+            margin: 0 auto;
+            padding: 20px;
+            background-color: #f5f5f5;
+        }
+        
+        .container {
+            background: white;
+            padding: 30px;
+            border-radius: 10px;
+            box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+        }
+        
+        h1 {
+            color: #2c3e50;
+            text-align: center;
+            margin-bottom: 30px;
+        }
+        
+        .test-section {
+            margin: 20px 0;
+            padding: 20px;
+            border: 1px solid #e0e0e0;
+            border-radius: 8px;
+            background-color: #fafafa;
+        }
+        
+        .test-section h3 {
+            color: #34495e;
+            margin-top: 0;
+        }
+        
+        button {
+            background-color: #3498db;
+            color: white;
+            border: none;
+            padding: 10px 20px;
+            margin: 5px;
+            border-radius: 5px;
+            cursor: pointer;
+            font-size: 14px;
+        }
+        
+        button:hover {
+            background-color: #2980b9;
+        }
+        
+        .log-output {
+            background-color: #2c3e50;
+            color: #ecf0f1;
+            padding: 15px;
+            border-radius: 5px;
+            font-family: monospace;
+            font-size: 13px;
+            margin-top: 15px;
+            max-height: 300px;
+            overflow-y: auto;
+        }
+        
+        .log-entry {
+            margin: 5px 0;
+            padding: 5px;
+            border-left: 3px solid #3498db;
+            padding-left: 10px;
+        }
+        
+        .warning {
+            background-color: #f39c12;
+            color: white;
+            padding: 10px;
+            border-radius: 5px;
+            margin: 10px 0;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>🔍 Test des Messages de Logs Simplifiés</h1>
+        
+        <div class="warning">
+            <strong>⚠️ Prérequis :</strong> Assurez-vous que la table 'logs' a été corrigée avec le script SQL et que logger.js est chargé.
+        </div>
+
+        <div class="test-section">
+            <h3>📋 Connexion/Déconnexion & Actions Système</h3>
+            <button onclick="testLogin()">Test Connexion</button>
+            <button onclick="testLogout()">Test Déconnexion</button>
+            <button onclick="testLoginAttempt()">Tentative Connexion</button>
+            <button onclick="testPasswordReset()">Réinit. Mot de Passe</button>
+            <button onclick="testDataExport()">Export Données</button>
+            <button onclick="testSystemError()">Erreur Système</button>
+        </div>
+
+        <div class="test-section">
+            <h3>👤 Gestion des Utilisateurs</h3>
+            <button onclick="testCreateUser()">Créer Utilisateur</button>
+            <button onclick="testUpdateUser()">Modifier Utilisateur</button>
+            <button onclick="testDeleteUser()">Supprimer Utilisateur</button>
+        </div>
+
+        <div class="test-section">
+            <h3>💻 Gestion des Logiciels</h3>
+            <button onclick="testCreateSoftware()">Créer Logiciel</button>
+            <button onclick="testUpdateSoftware()">Modifier Logiciel</button>
+            <button onclick="testArchiveSoftware()">Archiver Logiciel</button>
+        </div>
+
+        <div class="test-section">
+            <h3>🔑 Gestion des Accès</h3>
+            <button onclick="testCreateAccess()">Créer Accès</button>
+            <button onclick="testUpdateAccess()">Modifier Accès</button>
+            <button onclick="testDeleteAccess()">Supprimer Accès</button>
+        </div>
+
+        <div class="test-section">
+            <h3>🧪 Messages Personnalisés</h3>
+            <button onclick="testCustomMessages()">Messages Personnalisés</button>
+        </div>
+
+        <div class="log-output" id="logOutput">
+            <div class="log-entry">📝 Console de logs en temps réel...</div>
+        </div>
+
+        <div style="margin-top: 20px; text-align: center;">
+            <button onclick="clearLogs()" style="background-color: #e74c3c;">🗑️ Effacer Console</button>
+        </div>
+    </div>
+
+    <!-- Mock des APIs si elles ne sont pas disponibles -->
+    <script>
+        // Mock simple de D1API si pas disponible
+        if (!window.D1API) {
+            window.D1API = {
+                create: async (table, data) => {
+                    console.log(`Mock API: CREATE ${table}`, data);
+                    return { success: true, data: { id: 'mock-' + Date.now(), ...data } };
+                }
+            };
+        }
+
+        // Mock simple de auth si pas disponible
+        if (!window.auth) {
+            window.auth = {
+                getCurrentUser: () => 'Jean Dupont',
+                getSessionInfo: () => ({ connected: true, loginTime: new Date().toISOString() })
+            };
+        }
+
+        // Capturer les logs console
+        const originalLog = console.log;
+        console.log = function(...args) {
+            originalLog.apply(console, arguments);
+            addLogToOutput(args.join(' '));
+        };
+
+        function addLogToOutput(message) {
+            const output = document.getElementById('logOutput');
+            const entry = document.createElement('div');
+            entry.className = 'log-entry';
+            entry.textContent = `[${new Date().toLocaleTimeString()}] ${message}`;
+            output.appendChild(entry);
+            output.scrollTop = output.scrollHeight;
+        }
+
+        function clearLogs() {
+            document.getElementById('logOutput').innerHTML = '<div class="log-entry">📝 Console effacée...</div>';
+        }
+
+        // Tests de connexion/déconnexion
+        async function testLogin() {
+            if (window.logger) {
+                await window.logger.logLogin();
+            } else {
+                addLogToOutput('❌ Logger non disponible');
+            }
+        }
+
+        async function testLogout() {
+            if (window.logger) {
+                await window.logger.logLogout();
+            } else {
+                addLogToOutput('❌ Logger non disponible');
+            }
+        }
+
+        // Tests utilisateurs
+        async function testCreateUser() {
+            if (window.logger) {
+                const userData = {
+                    id: 'user-123',
+                    prenom: 'Théo',
+                    nom: 'Martin',
+                    email: 'theo.martin@example.com'
+                };
+                await window.logger.logCreate('utilisateurs', 'user-123', userData);
+            } else {
+                addLogToOutput('❌ Logger non disponible');
+            }
+        }
+
+        async function testUpdateUser() {
+            if (window.logger) {
+                const oldData = {
+                    id: 'user-123',
+                    prenom: 'Théo',
+                    nom: 'Martin',
+                    email: 'theo.martin@example.com',
+                    statut: 'actif'
+                };
+                const newData = {
+                    id: 'user-123',
+                    prenom: 'Théodore',
+                    nom: 'Martin-Dupont',
+                    email: 'theodore.martin-dupont@example.com',
+                    statut: 'actif'
+                };
+                await window.logger.logUpdate('utilisateurs', 'user-123', oldData, newData);
+            } else {
+                addLogToOutput('❌ Logger non disponible');
+            }
+        }
+
+        async function testDeleteUser() {
+            if (window.logger) {
+                const userData = {
+                    id: 'user-123',
+                    prenom: 'Théo',
+                    nom: 'Martin',
+                    email: 'theo.martin@example.com'
+                };
+                await window.logger.logDelete('utilisateurs', 'user-123', userData);
+            } else {
+                addLogToOutput('❌ Logger non disponible');
+            }
+        }
+
+        // Tests logiciels
+        async function testCreateSoftware() {
+            if (window.logger) {
+                const softwareData = {
+                    id: 'soft-456',
+                    nom: 'Photoshop CC',
+                    version: '2024',
+                    editeur: 'Adobe'
+                };
+                await window.logger.logCreate('logiciels', 'soft-456', softwareData);
+            } else {
+                addLogToOutput('❌ Logger non disponible');
+            }
+        }
+
+        async function testUpdateSoftware() {
+            if (window.logger) {
+                const oldData = {
+                    id: 'soft-456',
+                    nom: 'Photoshop CC',
+                    version: '2023',
+                    statut: 'actif'
+                };
+                const newData = {
+                    id: 'soft-456',
+                    nom: 'Photoshop CC',
+                    version: '2024',
+                    statut: 'actif'
+                };
+                await window.logger.logUpdate('logiciels', 'soft-456', oldData, newData);
+            } else {
+                addLogToOutput('❌ Logger non disponible');
+            }
+        }
+
+        async function testArchiveSoftware() {
+            if (window.logger) {
+                const softwareData = {
+                    id: 'soft-456',
+                    nom: 'Photoshop CC',
+                    version: '2024'
+                };
+                await window.logger.logArchive('logiciels', 'soft-456', softwareData);
+            } else {
+                addLogToOutput('❌ Logger non disponible');
+            }
+        }
+
+        // Tests accès
+        async function testCreateAccess() {
+            if (window.logger) {
+                await window.logger.logCreateAccess(
+                    'user-123', 
+                    'Théo Martin', 
+                    'soft-456', 
+                    'Photoshop CC', 
+                    'admin'
+                );
+            } else {
+                addLogToOutput('❌ Logger non disponible');
+            }
+        }
+
+        async function testUpdateAccess() {
+            if (window.logger) {
+                await window.logger.logUpdateAccess(
+                    'user-123', 
+                    'Théo Martin', 
+                    'soft-456', 
+                    'Photoshop CC', 
+                    'reader', 
+                    'admin'
+                );
+            } else {
+                addLogToOutput('❌ Logger non disponible');
+            }
+        }
+
+        async function testDeleteAccess() {
+            if (window.logger) {
+                await window.logger.logDeleteAccess(
+                    'user-123', 
+                    'Théo Martin', 
+                    'soft-456', 
+                    'Photoshop CC'
+                );
+            } else {
+                addLogToOutput('❌ Logger non disponible');
+            }
+        }
+
+        // Tests actions système
+        async function testLoginAttempt() {
+            if (window.logger) {
+                await window.logger.logLoginAttempt('marie.dubois@example.com', false);
+            } else {
+                addLogToOutput('❌ Logger non disponible');
+            }
+        }
+
+        async function testPasswordReset() {
+            if (window.logger) {
+                await window.logger.logPasswordReset('pierre.martin@example.com');
+            } else {
+                addLogToOutput('❌ Logger non disponible');
+            }
+        }
+
+        async function testDataExport() {
+            if (window.logger) {
+                await window.logger.logDataExport('Liste utilisateurs PDF');
+            } else {
+                addLogToOutput('❌ Logger non disponible');
+            }
+        }
+
+        async function testSystemError() {
+            if (window.logger) {
+                await window.logger.logSystemAction('ERROR', 'Erreur de connexion à la base de données détectée');
+            } else {
+                addLogToOutput('❌ Logger non disponible');
+            }
+        }
+
+        // Tests messages personnalisés
+        async function testCustomMessages() {
+            if (window.logger) {
+                await window.logger.log('CREATE', 'acces', 'custom-1', null, null, 
+                    'Jean Dupont a accordé les droits administrateur à Marie Dubois pour Microsoft Office suite à sa promotion');
+                
+                await window.logger.logConfigChange('Durée de session', '30 minutes', '2 heures', 'Admin Système');
+                
+                await window.logger.logBackup('Sauvegarde automatique quotidienne', 'Système');
+                
+                await window.logger.logDataImport('Utilisateurs Excel', 25, 'Sarah Lefevre');
+            } else {
+                addLogToOutput('❌ Logger non disponible');
+            }
+        }
+
+        // Message d'initialisation
+        window.addEventListener('load', () => {
+            setTimeout(() => {
+                if (window.logger) {
+                    addLogToOutput('✅ Logger détecté ! Vous pouvez tester les fonctions.');
+                } else {
+                    addLogToOutput('⚠️ Logger non détecté. Chargez d\'abord js/logger.js pour des tests complets.');
+                    addLogToOutput('📋 Mode démo activé avec API simulée.');
+                }
+            }, 100);
+        });
+    </script>
+
+    <!-- Chargement du logger si disponible -->
+    <script src="js/logger.js" onerror="console.log('Logger.js non trouvé - mode démo activé')"></script>
+</body>
+</html>
