@@ -97,8 +97,8 @@ class SoftwareManager {
                         <th class="px-3 sm:px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider cursor-pointer hover:bg-gray-100" onclick="window.softwareManager.sortTable('nom')">
                             Logiciel <i class="fas fa-sort ml-1"></i>
                         </th>
-                        <th class="hidden sm:table-cell px-3 sm:px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Ãquipe</th>
-                        <th class="hidden sm:table-cell px-3 sm:px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">AccÃ¨s</th>
+                        <th class="hidden sm:table-cell px-3 sm:px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Équipe</th>
+                        <th class="hidden sm:table-cell px-3 sm:px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Accès</th>
                         <th class="hidden sm:table-cell px-3 sm:px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Qui paye</th>
                         <th class="hidden lg:table-cell px-3 sm:px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Paiement</th>
                         <th class="hidden lg:table-cell px-3 sm:px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Date souscription</th>
@@ -111,7 +111,7 @@ class SoftwareManager {
                     ${filteredSoftware.map(software => this.renderSoftwareRow(software)).join('')}
                 </tbody>
             </table>
-            ${filteredSoftware.length === 0 ? '<div class="text-center py-8 text-gray-500 text-sm sm:text-base">Aucun logiciel trouvÃ©</div>' : ''}
+            ${filteredSoftware.length === 0 ? '<div class="text-center py-8 text-gray-500 text-sm sm:text-base">Aucun logiciel trouvé</div>' : ''}
         `;
 
         container.innerHTML = tableHtml;
@@ -124,16 +124,16 @@ class SoftwareManager {
             new Date(software.date_souscription).toLocaleDateString('fr-FR') : '-';
         
         const paymentMethodLabels = {
-            'carte': 'ð³ Carte',
-            'prelevement': 'ð¦ PrÃ©lÃ¨vement',
-            'virement': 'ð¤ Virement'
+            'carte': '💳 Carte',
+            'prelevement': '🏦 Prélèvement',
+            'virement': '📤 Virement'
         };
 
-        // Calculer les coÃ»ts une seule fois pour optimiser les performances
+        // Calculer les coûts une seule fois pour optimiser les performances
         const monthlyCost = this.calculateSoftwareCost(software.id);
         const annualCost = monthlyCost * 12;
         
-        // Calculer le prochain paiement basÃ© sur la pÃ©riodicitÃ©
+        // Calculer le prochain paiement basé sur la périodicité
         const nextPayment = this.calculateNextPayment(software);
 
         return `
@@ -171,7 +171,7 @@ class SoftwareManager {
                     <span class="px-2 inline-flex text-xs leading-5 font-semibold rounded-full ${
                         software.archived ? 'bg-red-100 text-red-800' : 'bg-green-100 text-green-800'
                     }">
-                        ${software.archived ? 'ArchivÃ©' : 'Actif'}
+                        ${software.archived ? 'Archivé' : 'Actif'}
                     </span>
                 </td>
                 <td class="px-3 sm:px-6 py-3 sm:py-4 text-right">
@@ -181,11 +181,11 @@ class SoftwareManager {
                             <i class="fas fa-edit text-sm"></i>
                         </button>
                         <button onclick="window.softwareManager.manageCosts('${software.id}')" 
-                                class="text-green-600 hover:text-green-900 p-1" title="GÃ©rer les coÃ»ts">
+                                class="text-green-600 hover:text-green-900 p-1" title="Gérer les coûts">
                             <i class="fas fa-euro-sign text-sm"></i>
                         </button>
                         <button onclick="window.softwareManager.manageAccess('${software.id}')" 
-                                class="text-purple-600 hover:text-purple-900 p-1" title="GÃ©rer les accÃ¨s">
+                                class="text-purple-600 hover:text-purple-900 p-1" title="Gérer les accès">
                             <i class="fas fa-users text-sm"></i>
                         </button>
                         ${!software.archived ? 
@@ -194,7 +194,7 @@ class SoftwareManager {
                                 <i class="fas fa-archive text-sm"></i>
                              </button>` :
                             `<button onclick="window.softwareManager.unarchiveSoftware('${software.id}')" 
-                                     class="text-green-600 hover:text-green-900 p-1" title="DÃ©sarchiver">
+                                     class="text-green-600 hover:text-green-900 p-1" title="Désarchiver">
                                 <i class="fas fa-undo text-sm"></i>
                              </button>`
                         }
@@ -205,16 +205,16 @@ class SoftwareManager {
                                 Actif
                             </span>` :
                             `<span class="px-2 py-1 text-xs font-semibold rounded-full bg-red-100 text-red-800">
-                                ArchivÃ©
+                                Archivé
                             </span>`
                         }
                         <div class="text-xs text-gray-600 mt-1">
-                            <div><strong>CoÃ»t mensuel:</strong> ${monthlyCost.toFixed(2)}â¬</div>
-                            <div><strong>CoÃ»t annuel:</strong> ${annualCost.toFixed(2)}â¬</div>
-                            <div><strong>AccÃ¨s actifs:</strong> ${this.countActiveAccessForSoftware(software.id)}</div>
+                            <div><strong>Coût mensuel:</strong> ${monthlyCost.toFixed(2)}€</div>
+                            <div><strong>Coût annuel:</strong> ${annualCost.toFixed(2)}€</div>
+                            <div><strong>Accès actifs:</strong> ${this.countActiveAccessForSoftware(software.id)}</div>
                             ${nextPayment ? `<div class="${nextPayment.color}"><strong>Prochain paiement:</strong> ${nextPayment.date}</div>` : ''}
-                            ${team ? `<div><strong>Ãquipe:</strong> ${team.nom}</div>` : ''}
-                            ${payerUser ? `<div><strong>PayÃ© par:</strong> ${payerUser.nom} ${payerUser.prenom}</div>` : ''}
+                            ${team ? `<div><strong>Équipe:</strong> ${team.nom}</div>` : ''}
+                            ${payerUser ? `<div><strong>Payé par:</strong> ${payerUser.nom} ${payerUser.prenom}</div>` : ''}
                         </div>
                     </div>
                 </td>
@@ -230,7 +230,7 @@ class SoftwareManager {
             `<option value="${user.id}">${user.nom} ${user.prenom || ''}</option>`
         ).join('');
 
-        // Charger les Ã©quipes
+        // Charger les équipes
         const teamsResponse = await window.D1API.get('equipes');
         const teams = (teamsResponse.data || []).filter(t => !t.archived);
         const teamsOptions = teams.map(team => 
@@ -253,10 +253,10 @@ class SoftwareManager {
                     
                     <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
                         <div>
-                            <label class="block text-sm font-medium text-gray-700 mb-1">Ãquipe *</label>
+                            <label class="block text-sm font-medium text-gray-700 mb-1">Équipe *</label>
                             <select id="software-team" required
                                     class="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500">
-                                <option value="">SÃ©lectionner une Ã©quipe</option>
+                                <option value="">Sélectionner une équipe</option>
                                 ${teamsOptions}
                             </select>
                         </div>
@@ -264,7 +264,7 @@ class SoftwareManager {
                             <label class="block text-sm font-medium text-gray-700 mb-1">Qui paye ?</label>
                             <select id="software-payer" 
                                     class="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500">
-                                <option value="">SÃ©lectionner un utilisateur</option>
+                                <option value="">Sélectionner un utilisateur</option>
                                 ${usersOptions}
                             </select>
                         </div>
@@ -276,12 +276,12 @@ class SoftwareManager {
                             <select id="software-payment-method" 
                                     class="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500">
                                 <option value="carte">Carte bancaire</option>
-                                <option value="prelevement">PrÃ©lÃ¨vement automatique</option>
+                                <option value="prelevement">Prélèvement automatique</option>
                                 <option value="virement">Virement</option>
                             </select>
                         </div>
                         <div>
-                            <label class="block text-sm font-medium text-gray-700 mb-1">PÃ©riodicitÃ© de paiement</label>
+                            <label class="block text-sm font-medium text-gray-700 mb-1">Périodicité de paiement</label>
                             <select id="software-periodicity" 
                                     class="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500">
                                 <option value="mensuel" selected>Mensuel</option>
@@ -301,7 +301,7 @@ class SoftwareManager {
                         <input type="checkbox" id="software-base" 
                                class="h-4 w-4 text-blue-600 focus:ring-blue-500 border-gray-300 rounded">
                         <label for="software-base" class="ml-2 block text-sm text-gray-700">
-                            Logiciel de base (accÃ¨s automatique pour les nouveaux utilisateurs)
+                            Logiciel de base (accès automatique pour les nouveaux utilisateurs)
                         </label>
                     </div>
                 </div>
@@ -335,7 +335,7 @@ class SoftwareManager {
         }
 
         if (!equipe_id) {
-            window.app?.showAlert('L\'Ã©quipe est requise', 'error');
+            window.app?.showAlert('L\'équipe est requise', 'error');
             return;
         }
 
@@ -345,7 +345,7 @@ class SoftwareManager {
                 description,
                 logiciel_de_base,
                 equipe_id,
-                payer_id: payer_id || null, // Convertir chaÃ®ne vide en null
+                payer_id: payer_id || null, // Convertir chaîne vide en null
                 moyen_paiement,
                 periodicite,
                 date_souscription,
@@ -353,19 +353,34 @@ class SoftwareManager {
             };
 
             if (softwareId) {
-                // Mise Ã  jour
+                // Récupérer les anciennes valeurs pour le log
+                const oldSoftware = this.software.find(s => s.id === softwareId);
+                
+                // Mise à jour
                 const result = await window.D1API.update('logiciels', softwareId, softwareData);
                 if (!result.success) {
                     throw new Error(result.error);
                 }
-                window.app?.showAlert('Logiciel modifiÃ© avec succÃ¨s', 'success');
+                
+                // Log de la modification
+                if (window.logger) {
+                    await window.logger.log('UPDATE', 'logiciels', softwareId, oldSoftware, softwareData, `Modification du logiciel ${softwareData.nom}`);
+                }
+                
+                window.app?.showAlert('Logiciel modifié avec succès', 'success');
             } else {
-                // CrÃ©ation
+                // Création
                 const result = await window.D1API.create('logiciels', softwareData);
                 if (!result.success) {
                     throw new Error(result.error);
                 }
-                window.app?.showAlert('Logiciel ajoutÃ© avec succÃ¨s', 'success');
+                
+                // Log de la création
+                if (window.logger) {
+                    await window.logger.log('CREATE', 'logiciels', result.data.id, null, softwareData, `Création du logiciel ${softwareData.nom}`);
+                }
+                
+                window.app?.showAlert('Logiciel ajouté avec succès', 'success');
             }
 
             document.querySelector('.fixed')?.remove();
@@ -391,7 +406,7 @@ class SoftwareManager {
             `<option value="${user.id}" ${user.id === software.payer_id ? 'selected' : ''}>${user.nom} ${user.prenom || ''}</option>`
         ).join('');
 
-        // Charger les Ã©quipes
+        // Charger les équipes
         const teamsResponse = await window.D1API.get('equipes');
         const teams = (teamsResponse.data || []).filter(t => !t.archived);
         const teamsOptions = teams.map(team => 
@@ -414,10 +429,10 @@ class SoftwareManager {
                     
                     <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
                         <div>
-                            <label class="block text-sm font-medium text-gray-700 mb-1">Ãquipe *</label>
+                            <label class="block text-sm font-medium text-gray-700 mb-1">Équipe *</label>
                             <select id="software-team" required
                                     class="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500">
-                                <option value="">SÃ©lectionner une Ã©quipe</option>
+                                <option value="">Sélectionner une équipe</option>
                                 ${teamsOptions}
                             </select>
                         </div>
@@ -425,7 +440,7 @@ class SoftwareManager {
                             <label class="block text-sm font-medium text-gray-700 mb-1">Qui paye ?</label>
                             <select id="software-payer" 
                                     class="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500">
-                                <option value="">SÃ©lectionner un utilisateur</option>
+                                <option value="">Sélectionner un utilisateur</option>
                                 ${usersOptions}
                             </select>
                         </div>
@@ -437,12 +452,12 @@ class SoftwareManager {
                             <select id="software-payment-method" 
                                     class="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500">
                                 <option value="carte" ${software.moyen_paiement === 'carte' ? 'selected' : ''}>Carte bancaire</option>
-                                <option value="prelevement" ${software.moyen_paiement === 'prelevement' ? 'selected' : ''}>PrÃ©lÃ¨vement automatique</option>
+                                <option value="prelevement" ${software.moyen_paiement === 'prelevement' ? 'selected' : ''}>Prélèvement automatique</option>
                                 <option value="virement" ${software.moyen_paiement === 'virement' ? 'selected' : ''}>Virement</option>
                             </select>
                         </div>
                         <div>
-                            <label class="block text-sm font-medium text-gray-700 mb-1">PÃ©riodicitÃ© de paiement</label>
+                            <label class="block text-sm font-medium text-gray-700 mb-1">Périodicité de paiement</label>
                             <select id="software-periodicity" 
                                     class="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500">
                                 <option value="mensuel" ${(software.periodicite === 'mensuel' || !software.periodicite) ? 'selected' : ''}>Mensuel</option>
@@ -462,7 +477,7 @@ class SoftwareManager {
                         <input type="checkbox" id="software-base" ${software.logiciel_de_base ? 'checked' : ''}
                                class="h-4 w-4 text-blue-600 focus:ring-blue-500 border-gray-300 rounded">
                         <label for="software-base" class="ml-2 block text-sm text-gray-700">
-                            Logiciel de base (accÃ¨s automatique pour les nouveaux utilisateurs)
+                            Logiciel de base (accès automatique pour les nouveaux utilisateurs)
                         </label>
                     </div>
                 </div>
@@ -488,7 +503,7 @@ class SoftwareManager {
         
         const modalContent = `
             <div class="space-y-4">
-                <h4 class="font-medium text-gray-900">CoÃ»ts pour: ${software.nom}</h4>
+                <h4 class="font-medium text-gray-900">Coûts pour: ${software.nom}</h4>
                 <div id="costs-list">
                     ${this.droits.map(droit => {
                         const existingCost = softwareCosts.find(c => c.droit_id === droit.id);
@@ -501,7 +516,7 @@ class SoftwareManager {
                                            value="${existingCost ? existingCost.cout_mensuel : ''}"
                                            placeholder="0.00"
                                            class="w-20 px-2 py-1 border border-gray-300 rounded text-sm">
-                                    <span class="text-sm text-gray-500">â¬/mois</span>
+                                    <span class="text-sm text-gray-500">€/mois</span>
                                 </div>
                             </div>
                         `;
@@ -518,18 +533,18 @@ class SoftwareManager {
             }
         ];
 
-        window.app?.showModal('GÃ©rer les coÃ»ts', modalContent, actions);
+        window.app?.showModal('Gérer les coûts', modalContent, actions);
     }
 
     async saveCosts(softwareId) {
         try {
-            // Supprimer les coÃ»ts existants pour ce logiciel
+            // Supprimer les coûts existants pour ce logiciel
             const existingCosts = this.costs.filter(c => c.logiciel_id === softwareId);
             for (const cost of existingCosts) {
                 await window.D1API.delete('couts_licences', cost.id);
             }
 
-            // Ajouter les nouveaux coÃ»ts
+            // Ajouter les nouveaux coûts
             for (const droit of this.droits) {
                 const costValue = document.getElementById(`cost-${droit.id}`)?.value;
                 if (costValue && parseFloat(costValue) > 0) {
@@ -546,10 +561,10 @@ class SoftwareManager {
 
             document.querySelector('.fixed')?.remove();
             await this.loadSoftware();
-            window.app?.showAlert('CoÃ»ts sauvegardÃ©s avec succÃ¨s', 'success');
+            window.app?.showAlert('Coûts sauvegardés avec succès', 'success');
         } catch (error) {
-            console.error('Erreur lors de la sauvegarde des coÃ»ts:', error);
-            window.app?.showAlert('Erreur lors de la sauvegarde des coÃ»ts', 'error');
+            console.error('Erreur lors de la sauvegarde des coûts:', error);
+            window.app?.showAlert('Erreur lors de la sauvegarde des coûts', 'error');
         }
     }
 
@@ -568,7 +583,7 @@ class SoftwareManager {
 
             const modalContent = `
                 <div class="space-y-4">
-                    <h4 class="font-medium text-gray-900">AccÃ¨s pour: ${software.nom}</h4>
+                    <h4 class="font-medium text-gray-900">Accès pour: ${software.nom}</h4>
                     <div class="max-h-60 overflow-y-auto space-y-2">
                         ${access.map(acc => {
                             const user = users.find(u => u.id === acc.utilisateur_id);
@@ -588,14 +603,14 @@ class SoftwareManager {
                         }).join('')}
                     </div>
                     <div class="border-t pt-4">
-                        <h5 class="text-sm font-medium mb-2">Ajouter un accÃ¨s</h5>
+                        <h5 class="text-sm font-medium mb-2">Ajouter un accès</h5>
                         <div class="space-y-2 sm:space-y-0 sm:flex sm:space-x-2">
                             <select id="select-user" class="w-full sm:flex-1 px-2 py-1 border border-gray-300 rounded text-sm">
-                                <option value="">SÃ©lectionner un utilisateur</option>
+                                <option value="">Sélectionner un utilisateur</option>
                                 ${users.map(user => `<option value="${user.id}">${user.nom} ${user.prenom}</option>`).join('')}
                             </select>
                             <select id="select-right" class="w-full sm:flex-1 px-2 py-1 border border-gray-300 rounded text-sm">
-                                <option value="">SÃ©lectionner un droit</option>
+                                <option value="">Sélectionner un droit</option>
                                 ${this.droits.map(droit => `<option value="${droit.id}">${droit.nom}</option>`).join('')}
                             </select>
                             <button onclick="window.softwareManager.addAccess('${softwareId}')" 
@@ -608,10 +623,10 @@ class SoftwareManager {
                 </div>
             `;
 
-            window.app?.showModal('GÃ©rer les accÃ¨s', modalContent, []);
+            window.app?.showModal('Gérer les accès', modalContent, []);
         } catch (error) {
-            console.error('Erreur lors du chargement des accÃ¨s:', error);
-            window.app?.showAlert('Erreur lors du chargement des accÃ¨s', 'error');
+            console.error('Erreur lors du chargement des accès:', error);
+            window.app?.showAlert('Erreur lors du chargement des accès', 'error');
         }
     }
 
@@ -620,7 +635,7 @@ class SoftwareManager {
         const rightId = document.getElementById('select-right')?.value;
 
         if (!userId || !rightId) {
-            window.app?.showAlert('Veuillez sÃ©lectionner un utilisateur et un droit', 'error');
+            window.app?.showAlert('Veuillez sélectionner un utilisateur et un droit', 'error');
             return;
         }
 
@@ -634,12 +649,12 @@ class SoftwareManager {
                 throw new Error(result.error);
             }
 
-            window.app?.showAlert('AccÃ¨s ajoutÃ© avec succÃ¨s', 'success');
+            window.app?.showAlert('Accès ajouté avec succès', 'success');
             document.querySelector('.fixed')?.remove();
             this.manageAccess(softwareId); // Recharger la modal
         } catch (error) {
-            console.error('Erreur lors de l\'ajout de l\'accÃ¨s:', error);
-            window.app?.showAlert('Erreur lors de l\'ajout de l\'accÃ¨s', 'error');
+            console.error('Erreur lors de l\'ajout de l\'accès:', error);
+            window.app?.showAlert('Erreur lors de l\'ajout de l\'accès', 'error');
         }
     }
 
@@ -649,7 +664,7 @@ class SoftwareManager {
             if (!result.success) {
                 throw new Error(result.error);
             }
-            window.app?.showAlert('AccÃ¨s supprimÃ© avec succÃ¨s', 'success');
+            window.app?.showAlert('Accès supprimé avec succès', 'success');
             // Recharger la vue
             const modal = document.querySelector('.fixed');
             if (modal) {
@@ -660,13 +675,13 @@ class SoftwareManager {
                 }
             }
         } catch (error) {
-            console.error('Erreur lors de la suppression de l\'accÃ¨s:', error);
-            window.app?.showAlert('Erreur lors de la suppression de l\'accÃ¨s', 'error');
+            console.error('Erreur lors de la suppression de l\'accès:', error);
+            window.app?.showAlert('Erreur lors de la suppression de l\'accès', 'error');
         }
     }
 
     async archiveSoftware(softwareId) {
-        if (!confirm('Ãtes-vous sÃ»r de vouloir archiver ce logiciel ?')) return;
+        if (!confirm('Êtes-vous sûr de vouloir archiver ce logiciel ?')) return;
 
         try {
             const software = this.software.find(s => s.id === softwareId);
@@ -676,7 +691,7 @@ class SoftwareManager {
                     throw new Error(result.error);
                 }
 
-                window.app?.showAlert('Logiciel archivÃ© avec succÃ¨s', 'success');
+                window.app?.showAlert('Logiciel archivé avec succès', 'success');
                 await this.loadSoftware();
             }
         } catch (error) {
@@ -694,12 +709,12 @@ class SoftwareManager {
                     throw new Error(result.error);
                 }
 
-                window.app?.showAlert('Logiciel dÃ©sarchivÃ© avec succÃ¨s', 'success');
+                window.app?.showAlert('Logiciel désarchivé avec succès', 'success');
                 await this.loadSoftware();
             }
         } catch (error) {
-            console.error('Erreur lors du dÃ©sarchivage:', error);
-            window.app?.showAlert('Erreur lors du dÃ©sarchivage', 'error');
+            console.error('Erreur lors du désarchivage:', error);
+            window.app?.showAlert('Erreur lors du désarchivage', 'error');
         }
     }
 
@@ -712,14 +727,14 @@ class SoftwareManager {
         const softwareAccess = this.access.filter(a => a.logiciel_id === softwareId);
         const activeUsers = this.users.filter(u => !u.archived);
         
-        // Les coÃ»ts dans couts_licences sont mensuels
-        // PÃ©riodicitÃ© utilisÃ©e seulement pour l'Ã©chÃ©ancier, pas pour les calculs de coÃ»ts
+        // Les coûts dans couts_licences sont mensuels
+        // Périodicité utilisée seulement pour l'échéancier, pas pour les calculs de coûts
         
         let totalCost = 0;
         const processedShared = new Set();
 
         for (const acc of softwareAccess) {
-            // VÃ©rifier que l'utilisateur est toujours actif
+            // Vérifier que l'utilisateur est toujours actif
             const user = activeUsers.find(u => u.id === acc.utilisateur_id);
             if (!user) continue;
 
@@ -727,10 +742,10 @@ class SoftwareManager {
             const droit = this.droits.find(d => d.id === acc.droit_id);
             
             if (cost && droit) {
-                // Le coÃ»t de base est mensuel
+                // Le coût de base est mensuel
                 const monthlyCost = cost.cout_mensuel || 0;
                 
-                if (droit.nom === 'AccÃ¨s communs') {
+                if (droit.nom === 'Accès communs') {
                     const sharedKey = `${acc.logiciel_id}_${acc.droit_id}`;
                     if (!processedShared.has(sharedKey)) {
                         totalCost += monthlyCost;
@@ -748,14 +763,14 @@ class SoftwareManager {
     calculateNextPayment(software) {
         // Si pas de date de souscription, pas de calcul possible
         if (!software.date_souscription) {
-            return { date: 'Non dÃ©fini', color: 'text-gray-500' };
+            return { date: 'Non défini', color: 'text-gray-500' };
         }
 
         const subscriptionDate = new Date(software.date_souscription);
         const today = new Date();
         const periodicity = software.periodicite || 'mensuel';
 
-        // DÃ©finir les intervalles en mois et les couleurs
+        // Définir les intervalles en mois et les couleurs
         const periodConfig = {
             'mensuel': { months: 1, color: 'text-blue-600' },
             'trimestriel': { months: 3, color: 'text-orange-600' },
@@ -768,12 +783,12 @@ class SoftwareManager {
         // Calculer la prochaine date de paiement
         let nextPaymentDate = new Date(subscriptionDate);
         
-        // Avancer jusqu'Ã  dÃ©passer aujourd'hui
+        // Avancer jusqu'à dépasser aujourd'hui
         while (nextPaymentDate <= today) {
             nextPaymentDate.setMonth(nextPaymentDate.getMonth() + config.months);
         }
 
-        // Formater la date en franÃ§ais
+        // Formater la date en français
         const options = { 
             day: 'numeric', 
             month: 'long', 
@@ -823,11 +838,11 @@ class SoftwareManager {
             }
         });
 
-        // RÃ©assigner les logiciels triÃ©s
+        // Réassigner les logiciels triés
         if (this.showArchived) {
             this.software = filteredSoftware;
         } else {
-            // Garder les logiciels archivÃ©s Ã  leur place
+            // Garder les logiciels archivés à leur place
             const archivedSoftware = this.software.filter(s => s.archived);
             this.software = [...filteredSoftware, ...archivedSoftware];
         }
@@ -836,7 +851,7 @@ class SoftwareManager {
     }
 
     countActiveAccessForSoftware(softwareId) {
-        // Compter les accÃ¨s actifs (utilisateurs non archivÃ©s) pour ce logiciel
+        // Compter les accès actifs (utilisateurs non archivés) pour ce logiciel
         const softwareAccess = this.access.filter(access => access.logiciel_id === softwareId);
         const activeAccess = softwareAccess.filter(access => {
             const user = this.users.find(u => u.id === access.utilisateur_id);

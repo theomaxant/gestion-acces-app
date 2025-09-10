@@ -345,6 +345,12 @@ class AccessManager {
                 if (!result.success) {
                     throw new Error(result.error);
                 }
+                
+                // Log de la création
+                if (window.logger) {
+                    await window.logger.log('CREATE', 'acces', result.data.id, null, accessData, `Création d'un accès`);
+                }
+                
                 window.app?.showAlert('Accès ajouté avec succès', 'success');
             }
 

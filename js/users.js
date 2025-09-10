@@ -275,11 +275,20 @@ class UsersManager {
 
             let newUserId = userId;
             if (userId) {
+                // Récupérer les anciennes valeurs pour le log
+                const oldUser = this.users.find(u => u.id === userId);
+                
                 // Mise à jour
                 const result = await window.D1API.update('utilisateurs', userId, userData);
                 if (!result.success) {
                     throw new Error(result.error);
                 }
+                
+                // Log de la modification
+                if (window.logger) {
+                    await window.logger.log('UPDATE', 'utilisateurs', userId, oldUser, userData, `Modification de l'utilisateur ${userData.nom} ${userData.prenom}`);
+                }
+                
                 window.app?.showAlert('Utilisateur modifié avec succès', 'success');
             } else {
                 // Création
@@ -288,6 +297,11 @@ class UsersManager {
                     throw new Error(result.error);
                 }
                 newUserId = result.data.id;
+                
+                // Log de la création
+                if (window.logger) {
+                    await window.logger.log('CREATE', 'utilisateurs', newUserId, null, userData, `Création de l'utilisateur ${userData.nom} ${userData.prenom}`);
+                }
                 
                 // Ajouter les accès de base si demandé
                 if (addBaseAccess) {
@@ -624,6 +638,11 @@ class UsersManager {
                 const result = await window.D1API.update('utilisateurs', userId, { ...user, archived: true });
                 if (!result.success) {
                     throw new Error(result.error);
+                }
+                
+                // Log de l'archivage
+                if (window.logger) {
+                    await window.logger.log('ARCHIVE', 'utilisateurs', userId, user, { ...user, archived: true }, `Archivage de l'utilisateur ${user.nom} ${user.prenom}`);
                 }
             }
 

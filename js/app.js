@@ -386,7 +386,11 @@ class AccessManagementApp {
 
     async loadCostChart() {
         const ctx = document.getElementById('costChart');
-        if (!ctx) return;
+        if (!ctx) {
+            console.warn('Element costChart non trouvé');
+            return;
+        }
+        console.log('Chargement du graphique des coûts...');
 
         try {
             const [accessResult, costsResult, softwareResult, droitsResult] = await Promise.all([
@@ -429,10 +433,21 @@ class AccessManagementApp {
             const data = software.map(s => softwareCosts[s.id] || 0);
 
             // Détruire le graphique existant s'il y en a un
-            if (window.costChart) {
-                window.costChart.destroy();
+            if (window.costChart && typeof window.costChart.destroy === 'function') {
+                try {
+                    window.costChart.destroy();
+                } catch (e) {
+                    console.warn('Erreur lors de la destruction du graphique coûts:', e);
+                }
             }
+            window.costChart = null;
 
+            // Vérifier que Chart.js est disponible
+            if (typeof Chart === 'undefined') {
+                console.error('Chart.js n\'est pas chargé');
+                return;
+            }
+            
             window.costChart = new Chart(ctx, {
                 type: 'doughnut',
                 data: {
@@ -512,7 +527,11 @@ class AccessManagementApp {
 
     async loadTeamCostChart() {
         const ctx = document.getElementById('teamCostChart');
-        if (!ctx) return;
+        if (!ctx) {
+            console.warn('Element teamCostChart non trouvé');
+            return;
+        }
+        console.log('Chargement du graphique des coûts par équipe...');
 
         try {
             const [teamsResult, usersResult, accessResult, costsResult, droitsResult] = await Promise.all([
@@ -563,10 +582,21 @@ class AccessManagementApp {
             const data = Object.values(teamCosts);
 
             // Détruire le graphique existant s'il y en a un
-            if (window.teamCostChart) {
-                window.teamCostChart.destroy();
+            if (window.teamCostChart && typeof window.teamCostChart.destroy === 'function') {
+                try {
+                    window.teamCostChart.destroy();
+                } catch (e) {
+                    console.warn('Erreur lors de la destruction du graphique équipes:', e);
+                }
             }
+            window.teamCostChart = null;
 
+            // Vérifier que Chart.js est disponible
+            if (typeof Chart === 'undefined') {
+                console.error('Chart.js n\'est pas chargé pour teamCostChart');
+                return;
+            }
+            
             window.teamCostChart = new Chart(ctx, {
                 type: 'bar',
                 data: {
@@ -854,7 +884,11 @@ class AccessManagementApp {
 
     async loadPaymentMethodChart() {
         const ctx = document.getElementById('paymentMethodChart');
-        if (!ctx) return;
+        if (!ctx) {
+            console.warn('Element paymentMethodChart non trouvé');
+            return;
+        }
+        console.log('Chargement du graphique des moyens de paiement...');
 
         try {
             const [softwareResult, accessResult, costsResult, droitsResult] = await Promise.all([
@@ -926,10 +960,21 @@ class AccessManagementApp {
             const colors = ['#3B82F6', '#10B981', '#F59E0B', '#EF4444'];
 
             // Détruire le graphique existant s'il y en a un
-            if (window.paymentMethodChart) {
-                window.paymentMethodChart.destroy();
+            if (window.paymentMethodChart && typeof window.paymentMethodChart.destroy === 'function') {
+                try {
+                    window.paymentMethodChart.destroy();
+                } catch (e) {
+                    console.warn('Erreur lors de la destruction du graphique paiements:', e);
+                }
             }
+            window.paymentMethodChart = null;
 
+            // Vérifier que Chart.js est disponible
+            if (typeof Chart === 'undefined') {
+                console.error('Chart.js n\'est pas chargé pour paymentMethodChart');
+                return;
+            }
+            
             window.paymentMethodChart = new Chart(ctx, {
                 type: 'doughnut',
                 data: {

@@ -256,10 +256,11 @@ class LogsManager {
         try {
             // Charger les utilisateurs
             const usersResponse = await window.D1API.get('utilisateurs', null, {limit: 1000});
-            if (usersResponse.success) {
+            if (usersResponse.ok) {
+                const usersData = await usersResponse.json();
                 const userSelect = document.getElementById('filter-user');
-                if (userSelect && usersResponse.data) {
-                    const userOptions = usersResponse.data
+                if (userSelect && usersData.data) {
+                    const userOptions = usersData.data
                         .filter(user => !user.archived)
                         .map(user => `<option value="${user.id}">${user.prenom} ${user.nom}</option>`)
                         .join('');
@@ -269,10 +270,11 @@ class LogsManager {
 
             // Charger les logiciels
             const softwareResponse = await window.D1API.get('logiciels', null, {limit: 1000});
-            if (softwareResponse.success) {
+            if (softwareResponse.ok) {
+                const softwareData = await softwareResponse.json();
                 const softwareSelect = document.getElementById('filter-software');
-                if (softwareSelect && softwareResponse.data) {
-                    const softwareOptions = softwareResponse.data
+                if (softwareSelect && softwareData.data) {
+                    const softwareOptions = softwareData.data
                         .filter(software => !software.archived)
                         .map(software => `<option value="${software.id}">${software.nom}</option>`)
                         .join('');
@@ -318,12 +320,30 @@ class LogsManager {
      */
     async loadLogs() {
         try {
+            console.log('📊 Chargement des logs...', {
+                page: this.currentPage,
+                limit: this.itemsPerPage,
+                filters: this.currentFilters
+            });
+            
             this.showLoading(true);
+            
+            // Vérifier que window.logger existe
+            if (!window.logger) {
+                throw new Error('window.logger non disponible');
+            }
             
             const response = await window.logger.getLogs(this.currentPage, this.itemsPerPage, this.currentFilters);
             
-            this.logs = response.data;
-            this.totalLogs = response.total;
+            console.log('📊 Réponse getLogs:', response);
+            
+            this.logs = response.data || [];
+            this.totalLogs = response.total || 0;
+            
+            console.log('📊 Logs chargés:', {
+                count: this.logs.length,
+                total: this.totalLogs
+            });
             
             this.displayLogs();
             this.displayStats();
@@ -331,7 +351,7 @@ class LogsManager {
             
         } catch (error) {
             console.error('❌ Erreur lors du chargement des logs:', error);
-            this.showError('Erreur lors du chargement des logs');
+            this.showError(`Erreur lors du chargement des logs: ${error.message}`);
         } finally {
             this.showLoading(false);
         }

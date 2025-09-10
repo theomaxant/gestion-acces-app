@@ -1,13 +1,13 @@
 /**
- * Système d'authentification symbolique
- * ⚠️ ATTENTION : Ce système n'est PAS sécurisé !
+ * Systeme d'authentification symbolique
+ * ATTENTION : Ce systeme n'est PAS securise !
  * Le mot de passe est visible dans le code source.
- * À utiliser uniquement pour une protection basique.
+ * A utiliser uniquement pour une protection basique.
  */
 
 class SimpleAuth {
     constructor() {
-        // ⚠️ ATTENTION : Mot de passe visible dans le code !
+        // ATTENTION : Mot de passe visible dans le code !
         this.PASSWORD = 'Celesty2025!'; // Changez ce mot de passe selon vos besoins
         
         this.loginScreen = document.getElementById('login-screen');
@@ -58,17 +58,51 @@ class SimpleAuth {
             await this.loadUsers();
         } catch (error) {
             // Échec silencieux du pré-chargement, on chargera lors de la connexion
-            console.warn('⚠️ Pré-chargement des utilisateurs échoué, chargement différé');
+            console.warn('[WARN] Pre-chargement des utilisateurs echoue, chargement differe');
         }
     }
     
     setupEventListeners() {
-        // Formulaire de connexion
-        if (this.loginForm) {
-            this.loginForm.addEventListener('submit', (e) => {
+        console.log('[AUTH] Setup event listeners - debut');
+        console.log('[AUTH] Elements disponibles:', {
+            loginBtn: !!this.loginBtn,
+            loginBtnId: this.loginBtn?.id,
+            loginForm: !!this.loginForm,
+            passwordInput: !!this.passwordInput
+        });
+        
+        // Gestionnaire principal sur le bouton de connexion
+        if (this.loginBtn) {
+            console.log('[AUTH] Ajout event listener sur bouton:', this.loginBtn);
+            this.loginBtn.addEventListener('click', (e) => {
+                console.log('[BOUTON] === CLIC DETECTE ===');
+                console.log('[DEBUG] Type evenement:', e.type);
+                console.log('[DEBUG] Element clique:', e.target);
+                console.log('[DEBUG] Current target:', e.currentTarget);
                 e.preventDefault();
+                e.stopPropagation();
                 this.handleLogin();
             });
+            console.log('[AUTH] Event listener bouton ajoute avec succes');
+        } else {
+            console.error('[AUTH] ERREUR: Bouton de connexion non trouve dans setupEventListeners!');
+            // Essayer de le trouver à nouveau
+            const btnById = document.getElementById('login-btn');
+            console.log('[AUTH] Recherche par ID:', btnById);
+        }
+        
+        // Formulaire de connexion (backup)
+        if (this.loginForm) {
+            console.log('[AUTH] Ajout event listener sur formulaire');
+            this.loginForm.addEventListener('submit', (e) => {
+                console.log('[FORM] === SUBMIT DETECTE ===');
+                e.preventDefault();
+                e.stopPropagation();
+                this.handleLogin();
+            });
+            console.log('[AUTH] Event listener formulaire ajoute avec succes');
+        } else {
+            console.error('[AUTH] ERREUR: Formulaire de connexion non trouve!');
         }
         
         // Note: La gestion de la déconnexion est maintenant dans MenuManager
@@ -106,6 +140,13 @@ class SimpleAuth {
     }
     
     handleLogin() {
+        console.log('[LOGIN] handleLogin appele - Debut de la connexion');
+        console.log('[LOGIN] Etat actuel:', {
+            isPasswordValidated: this.isPasswordValidated,
+            isCaptchaValidated: this.isCaptchaValidated,
+            hasSelectedUser: !!this.userSelect?.value
+        });
+        
         // Étape 1 : Vérification du mot de passe
         if (!this.isPasswordValidated) {
             const password = this.passwordInput.value;
@@ -233,7 +274,7 @@ class SimpleAuth {
         }
         
         // Message de bienvenue avec le nom de l'utilisateur
-        console.log(`✅ Connexion réussie ! Bienvenue ${this.currentUser}`);
+        console.log(`[SUCCESS] Connexion reussie ! Bienvenue ${this.currentUser}`);
     }
     
     handleLogout() {
@@ -285,12 +326,12 @@ class SimpleAuth {
         // Remettre le texte d'instruction initial
         const instructionText = document.querySelector('#login-screen p');
         if (instructionText) {
-            instructionText.textContent = 'Saisissez le mot de passe pour accéder à l\'application';
+            instructionText.textContent = 'Saisissez le mot de passe pour acceder a l\'application';
         }
         
         this.hideError();
         
-        console.log('👋 Déconnexion réussie !');
+        console.log('[LOGOUT] Deconnexion reussie !');
     }
     
     isLoggedIn() {
@@ -375,13 +416,13 @@ class SimpleAuth {
     // Usage: window.auth.changePassword('nouveau_mot_de_passe')
     changePassword(newPassword) {
         if (typeof newPassword !== 'string' || newPassword.length < 3) {
-            console.error('❌ Le mot de passe doit contenir au moins 3 caractères');
+            console.error('[ERROR] Le mot de passe doit contenir au moins 3 caracteres');
             return false;
         }
         
         this.PASSWORD = newPassword;
-        console.log('✅ Mot de passe changé avec succès !');
-        console.log('⚠️ Attention : Le nouveau mot de passe est toujours visible dans le code source');
+        console.log('[SUCCESS] Mot de passe change avec succes !');
+        console.log('[WARNING] Attention : Le nouveau mot de passe est toujours visible dans le code source');
         return true;
     }
     
@@ -411,7 +452,7 @@ class SimpleAuth {
      */
     async loadUsers() {
         try {
-            console.log('📋 Chargement des utilisateurs depuis la base de données...');
+            console.log('[LOAD] Chargement des utilisateurs depuis la base de donnees...');
             
             // Récupérer tous les utilisateurs non archivés via Supabase API
             if (window.D1API) {
@@ -428,10 +469,10 @@ class SimpleAuth {
             // Populer le select avec les utilisateurs
             this.populateUserSelect();
             
-            console.log(`✅ ${this.users.length} utilisateurs chargés`);
+            console.log(`[SUCCESS] ${this.users.length} utilisateurs charges`);
             
         } catch (error) {
-            console.error('❌ Erreur lors du chargement des utilisateurs:', error);
+            console.error('[ERROR] Erreur lors du chargement des utilisateurs:', error);
             
             // Fallback vers les utilisateurs par défaut
             this.users = [
@@ -475,11 +516,11 @@ class SimpleAuth {
             this.userSelect.appendChild(option);
         });
         
-        console.log(`📋 ${this.users.length} utilisateurs ajoutés au formulaire (triés alphabétiquement)`);
+        console.log(`[UI] ${this.users.length} utilisateurs ajoutes au formulaire (tries alphabetiquement)`);
         
         // Afficher la liste des utilisateurs chargés (pour debug)
         const sortedNames = sortedUsers.map(u => `${u.prenom} ${u.nom}`.trim());
-        console.log('👥 Utilisateurs disponibles (ordre alphabétique):', sortedNames);
+        console.log('[UI] Utilisateurs disponibles (ordre alphabetique):', sortedNames);
     }
     
     /**
@@ -519,7 +560,7 @@ class SimpleAuth {
         this.captchaQuestion.textContent = question;
         this.captchaAnswer = answer;
         
-        console.log(`🤖 Captcha généré: ${question} = ${answer}`); // Pour debug (à supprimer en production)
+        console.log(`[CAPTCHA] Captcha genere: ${question} = ${answer}`); // Pour debug (a supprimer en production)
     }
 }
 
@@ -527,14 +568,14 @@ class SimpleAuth {
 document.addEventListener('DOMContentLoaded', () => {
     try {
         window.auth = new SimpleAuth();
-        console.log('🔐 Système d\'authentification initialisé');
-        console.log('💡 Commandes disponibles dans la console :');
+        console.log('[AUTH] Systeme d\'authentification initialise');
+        console.log('[INFO] Commandes disponibles dans la console :');
         console.log('   - auth.changePassword("nouveau_mdp") : Changer le mot de passe');
         console.log('   - auth.getSessionInfo() : Informations sur la session');
         console.log('   - auth.logout() : Se déconnecter');
-        console.log('⚠️  ATTENTION : Ce système n\'est PAS sécurisé !');
+        console.log('[WARNING] ATTENTION : Ce systeme n\'est PAS securise !');
     } catch (error) {
-        console.error('❌ Erreur lors de l\'initialisation de l\'authentification:', error);
+        console.error('[ERROR] Erreur lors de l\'initialisation de l\'authentification:', error);
     }
 });
 
