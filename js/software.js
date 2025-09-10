@@ -224,8 +224,10 @@ class SoftwareManager {
 
     async showAddSoftwareModal() {
         // Charger les utilisateurs pour la liste "Qui paye"
-        const usersOptions = this.users.map(user => 
-            `<option value="${user.id}">${user.nom} ${user.prenom}</option>`
+        const usersResponse = await window.D1API.get('utilisateurs');
+        const users = (usersResponse.data || []).filter(u => !u.archived);
+        const usersOptions = users.map(user => 
+            `<option value="${user.id}">${user.nom} ${user.prenom || ''}</option>`
         ).join('');
 
         // Charger les équipes
@@ -343,7 +345,7 @@ class SoftwareManager {
                 description,
                 logiciel_de_base,
                 equipe_id,
-                payer_id,
+                payer_id: payer_id || null, // Convertir chaîne vide en null
                 moyen_paiement,
                 periodicite,
                 date_souscription,
@@ -383,12 +385,16 @@ class SoftwareManager {
         if (!software) return;
 
         // Charger les utilisateurs pour la liste "Qui paye"
-        const usersOptions = this.users.map(user => 
-            `<option value="${user.id}" ${user.id === software.payer_id ? 'selected' : ''}>${user.nom} ${user.prenom}</option>`
+        const usersResponse = await window.D1API.get('utilisateurs');
+        const users = (usersResponse.data || []).filter(u => !u.archived);
+        const usersOptions = users.map(user => 
+            `<option value="${user.id}" ${user.id === software.payer_id ? 'selected' : ''}>${user.nom} ${user.prenom || ''}</option>`
         ).join('');
 
         // Charger les équipes
-        const teamsOptions = this.teams.map(team => 
+        const teamsResponse = await window.D1API.get('equipes');
+        const teams = (teamsResponse.data || []).filter(t => !t.archived);
+        const teamsOptions = teams.map(team => 
             `<option value="${team.id}" ${team.id === software.equipe_id ? 'selected' : ''}>${team.nom}</option>`
         ).join('');
 
