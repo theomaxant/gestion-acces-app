@@ -45,11 +45,11 @@ class SoftwareManager {
     async loadSoftware() {
         try {
             const [softwareResult, costsResult, usersResult, accessResult, teamsResult] = await Promise.all([
-                window.D1API.get('logiciels),
-                window.D1API.get('couts_licences),
-                window.D1API.get('utilisateurs),
-                window.D1API.get('acces),
-                window.D1API.get('equipes)
+                window.D1API.get('logiciels'),
+                window.D1API.get('couts_licences'),
+                window.D1API.get('utilisateurs'),
+                window.D1API.get('acces'),
+                window.D1API.get('equipes')
             ]);
 
             this.software = softwareResult.data || [];
@@ -559,8 +559,8 @@ class SoftwareManager {
 
         try {
             const [usersResult, accessResult] = await Promise.all([
-                window.D1API.get('utilisateurs),
-                window.D1API.get('acces)
+                window.D1API.get('utilisateurs'),
+                window.D1API.get('acces')
             ]);
 
             const users = (usersResult.data || []).filter(u => !u.archived);

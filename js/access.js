@@ -37,10 +37,10 @@ class AccessManager {
     async loadAccess() {
         try {
             const [accessResult, usersResult, softwareResult, costsResult] = await Promise.all([
-                window.D1API.get('acces),
-                window.D1API.get('utilisateurs),
-                window.D1API.get('logiciels),
-                window.D1API.get('couts_licences)
+                window.D1API.get('acces'),
+                window.D1API.get('utilisateurs'),
+                window.D1API.get('logiciels'),
+                window.D1API.get('couts_licences')
             ]);
 
             this.access = accessResult.data || [];

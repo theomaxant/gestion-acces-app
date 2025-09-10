@@ -44,11 +44,11 @@ class UsersManager {
     async loadUsers() {
         try {
             const [usersResult, softwareResult, accessResult, costsResult, teamsResult] = await Promise.all([
-                window.D1API.get('utilisateurs),
-                window.D1API.get('logiciels),
-                window.D1API.get('acces),
-                window.D1API.get('couts_licences),
-                window.D1API.get('equipes)
+                window.D1API.get('utilisateurs'),
+                window.D1API.get('logiciels'),
+                window.D1API.get('acces'),
+                window.D1API.get('couts_licences'),
+                window.D1API.get('equipes')
             ]);
 
             this.users = usersResult.data || [];
@@ -367,7 +367,7 @@ class UsersManager {
         if (!user) return;
 
         try {
-            const accessResult = await window.D1API.get('acces);
+            const accessResult = await window.D1API.get('acces');
             const userAccess = (accessResult.data || []).filter(a => a.utilisateur_id === userId);
             const activeSoftware = this.software.filter(s => !s.archived);
 
@@ -476,8 +476,8 @@ class UsersManager {
 
         try {
             const [accessResult, costsResult] = await Promise.all([
-                window.D1API.get('acces),
-                window.D1API.get('couts_licences)
+                window.D1API.get('acces'),
+                window.D1API.get('couts_licences')
             ]);
 
             const userAccess = (accessResult.data || []).filter(a => a.utilisateur_id === userId);
@@ -577,7 +577,7 @@ class UsersManager {
 
     async loadUserSoftwareForLeaving(userId) {
         try {
-            const accessResult = await window.D1API.get('acces);
+            const accessResult = await window.D1API.get('acces');
             const userAccess = (accessResult.data || []).filter(a => a.utilisateur_id === userId);
 
             const softwareList = document.getElementById('user-software-list');
@@ -623,7 +623,7 @@ class UsersManager {
             }
 
             // 2. Supprimer tous les accès de l'utilisateur
-            const accessResult = await window.D1API.get('acces);
+            const accessResult = await window.D1API.get('acces');
             const userAccess = (accessResult.data || []).filter(a => a.utilisateur_id === userId);
 
             for (const access of userAccess) {
@@ -774,8 +774,8 @@ class UsersManager {
         try {
             // Récupérer les logiciels de base et le droit "User"
             const [softwareResult, rightsResult] = await Promise.all([
-                window.D1API.get('logiciels),
-                window.D1API.get('droits)
+                window.D1API.get('logiciels'),
+                window.D1API.get('droits')
             ]);
 
             const baseSoftware = (softwareResult.data || []).filter(s => s.logiciel_de_base && !s.archived);
