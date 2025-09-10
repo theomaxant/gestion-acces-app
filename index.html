@@ -1,0 +1,810 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Gestion des Accès - Application</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/@fortawesome/fontawesome-free@6.4.0/css/all.min.css">
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
+    
+    <!-- ⚡ SUPABASE API - Solution finale tout-en-un -->
+    <script src="js/supabase-api.js"></script>
+
+</head>
+<body class="bg-gray-100">
+    <!-- Écran de connexion -->
+    <div id="login-screen" class="min-h-screen bg-gradient-to-br from-blue-600 to-blue-800 flex items-center justify-center">
+        <div class="bg-white rounded-lg shadow-2xl p-8 w-full max-w-md mx-4">
+            <div class="text-center mb-8">
+                <div class="mx-auto w-16 h-16 bg-blue-600 rounded-full flex items-center justify-center mb-4">
+                    <i class="fas fa-lock text-white text-2xl"></i>
+                </div>
+                <h2 class="text-2xl font-bold text-gray-800 mb-2">Accès sécurisé</h2>
+                <p class="text-gray-600">Veuillez saisir le mot de passe pour accéder à l'application</p>
+            </div>
+            
+            <form id="login-form" class="space-y-6">
+                <div>
+                    <label for="password" class="block text-sm font-medium text-gray-700 mb-2">
+                        Mot de passe
+                    </label>
+                    <div class="relative">
+                        <input 
+                            type="password" 
+                            id="password" 
+                            name="password"
+                            class="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-colors pl-12"
+                            placeholder="Saisissez votre mot de passe"
+                            required
+                        >
+                        <i class="fas fa-key absolute left-4 top-1/2 transform -translate-y-1/2 text-gray-400"></i>
+                    </div>
+                </div>
+                
+                <!-- Section captcha (cachée par défaut) -->
+                <div id="captcha-section" class="hidden">
+                    <label for="captcha-input" class="block text-sm font-medium text-gray-700 mb-2">
+                        Vérification anti-robot
+                    </label>
+                    <div class="bg-gray-50 border border-gray-300 rounded-lg p-4 mb-3">
+                        <div class="flex items-center justify-center space-x-3">
+                            <span id="captcha-question" class="text-lg font-mono bg-white px-3 py-2 rounded border text-center min-w-[120px]">
+                                <!-- Question générée automatiquement -->
+                            </span>
+                            <span class="text-lg font-semibold">=</span>
+                            <span class="text-lg font-semibold text-blue-600">?</span>
+                        </div>
+                    </div>
+                    <div class="relative">
+                        <input 
+                            type="number" 
+                            id="captcha-input"
+                            name="captcha-input"
+                            class="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-colors pl-12"
+                            placeholder="Entrez le résultat"
+                            required
+                            autocomplete="off"
+                        />
+                        <i class="fas fa-calculator absolute left-4 top-1/2 transform -translate-y-1/2 text-gray-400"></i>
+                    </div>
+                    <p class="text-sm text-gray-500 mt-2">
+                        <i class="fas fa-shield-alt mr-1"></i>
+                        Cette vérification permet d'éviter les accès automatisés
+                    </p>
+                </div>
+                
+                <!-- Section d'identification utilisateur (cachée par défaut) -->
+                <div id="user-identification" class="hidden">
+                    <label for="user-select" class="block text-sm font-medium text-gray-700 mb-2">
+                        Qui êtes-vous ?
+                    </label>
+                    <div class="relative">
+                        <select 
+                            id="user-select" 
+                            name="user-select"
+                            class="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-colors pl-12 appearance-none bg-white"
+                            required
+                        >
+                            <option value="">Chargement des utilisateurs...</option>
+                        </select>
+                        <i class="fas fa-user absolute left-4 top-1/2 transform -translate-y-1/2 text-gray-400"></i>
+                        <i class="fas fa-chevron-down absolute right-4 top-1/2 transform -translate-y-1/2 text-gray-400"></i>
+                    </div>
+                </div>
+                
+                <div id="error-message" class="hidden bg-red-50 border border-red-200 text-red-700 px-4 py-3 rounded-lg">
+                    <i class="fas fa-exclamation-triangle mr-2"></i>
+                    Mot de passe incorrect. Veuillez réessayer.
+                </div>
+                
+                <button 
+                    type="submit" 
+                    id="login-btn"
+                    class="w-full bg-blue-600 text-white py-3 px-4 rounded-lg hover:bg-blue-700 focus:ring-2 focus:ring-blue-500 focus:ring-offset-2 transition-colors font-medium"
+                >
+                    <i class="fas fa-sign-in-alt mr-2"></i>
+                    <span id="login-btn-text">Se connecter</span>
+                </button>
+            </form>
+            
+            <div class="mt-6 text-center">
+                <p class="text-xs text-gray-500">
+                    <i class="fas fa-info-circle mr-1"></i>
+                    Application de gestion des accès
+                </p>
+            </div>
+        </div>
+    </div>
+
+    <!-- Application principale (masquée par défaut) -->
+    <div id="app" class="min-h-screen" style="display: none;">
+        <!-- Header -->
+        <header class="bg-blue-600 text-white shadow-lg">
+            <div class="container mx-auto px-4 py-4">
+                <div class="flex items-center justify-between">
+                    <h1 class="text-xl md:text-2xl font-bold">
+                        <i class="fas fa-key mr-2"></i>
+                        <span class="hidden sm:inline">Gestion des Accès</span>
+                        <span class="sm:hidden">Accès</span>
+                    </h1>
+                    
+                    <!-- Desktop Navigation -->
+                    <nav class="hidden lg:flex space-x-2 xl:space-x-4">
+                        <button id="nav-dashboard" class="nav-btn active px-3 xl:px-4 py-2 rounded-lg bg-blue-500 hover:bg-blue-400 transition-colors text-sm xl:text-base">
+                            <i class="fas fa-tachometer-alt mr-1 xl:mr-2"></i>Dashboard
+                        </button>
+                        <button id="nav-schedule" class="nav-btn px-3 xl:px-4 py-2 rounded-lg hover:bg-blue-500 transition-colors text-sm xl:text-base">
+                            <i class="fas fa-calendar-alt mr-1 xl:mr-2"></i>Échéancier
+                        </button>
+                        <button id="nav-users" class="nav-btn px-3 xl:px-4 py-2 rounded-lg hover:bg-blue-500 transition-colors text-sm xl:text-base">
+                            <i class="fas fa-users mr-1 xl:mr-2"></i>Utilisateur
+                        </button>
+                        <button id="nav-software" class="nav-btn px-3 xl:px-4 py-2 rounded-lg hover:bg-blue-500 transition-colors text-sm xl:text-base">
+                            <i class="fas fa-desktop mr-1 xl:mr-2"></i>Logiciel
+                        </button>
+                        <button id="nav-access" class="nav-btn px-3 xl:px-4 py-2 rounded-lg hover:bg-blue-500 transition-colors text-sm xl:text-base">
+                            <i class="fas fa-shield-alt mr-1 xl:mr-2"></i>Accès
+                        </button>
+                        <button id="nav-reports" class="nav-btn px-3 xl:px-4 py-2 rounded-lg hover:bg-blue-500 transition-colors text-sm xl:text-base">
+                            <i class="fas fa-chart-bar mr-1 xl:mr-2"></i>Rapport
+                        </button>
+                        
+                        <!-- Menu Réglages avec sous-menu -->
+                        <div class="relative flex items-center">
+                            <button id="nav-settings" class="nav-btn px-3 xl:px-4 py-2 rounded-lg hover:bg-blue-500 transition-colors text-sm xl:text-base flex items-center">
+                                <i class="fas fa-cogs mr-1 xl:mr-2"></i>Réglages
+                                <i class="fas fa-chevron-down ml-1 text-xs transition-transform duration-200"></i>
+                            </button>
+                            
+                            <!-- Sous-menu Réglages -->
+                            <div id="settings-submenu" class="absolute right-0 top-full mt-1 w-48 bg-white rounded-lg shadow-lg border border-gray-200 hidden z-50">
+                                <div class="py-2">
+                                    <button id="nav-teams" class="submenu-btn w-full text-left px-4 py-3 hover:bg-gray-100 transition-colors text-gray-700 border-b border-gray-100">
+                                        <i class="fas fa-user-friends mr-3 w-5 text-blue-600"></i>Équipe
+                                    </button>
+                                    <button id="nav-rights" class="submenu-btn w-full text-left px-4 py-3 hover:bg-gray-100 transition-colors text-gray-700 border-b border-gray-100">
+                                        <i class="fas fa-user-shield mr-3 w-5 text-blue-600"></i>Types d'accès
+                                    </button>
+                                    <button id="nav-logs" class="submenu-btn w-full text-left px-4 py-3 hover:bg-gray-100 transition-colors text-gray-700 border-b border-gray-100">
+                                        <i class="fas fa-history mr-3 w-5 text-blue-600"></i>Logs
+                                    </button>
+                                    <button id="nav-tutorials" class="submenu-btn w-full text-left px-4 py-3 hover:bg-gray-100 transition-colors text-gray-700 border-b border-gray-100">
+                                        <i class="fas fa-cogs mr-3 w-5 text-blue-600"></i>Process
+                                    </button>
+                                    <button id="nav-logout" class="submenu-btn w-full text-left px-4 py-3 hover:bg-red-100 transition-colors text-red-600">
+                                        <i class="fas fa-sign-out-alt mr-3 w-5 text-red-600"></i>Déconnexion
+                                    </button>
+                                </div>
+                            </div>
+                        </div>
+                    </nav>
+                    
+                    <!-- Mobile Menu Button -->
+                    <button id="mobile-menu-btn" class="lg:hidden px-3 py-2 rounded-lg hover:bg-blue-500 transition-colors">
+                        <i class="fas fa-bars text-xl"></i>
+                    </button>
+                </div>
+                
+                <!-- Mobile Navigation Menu -->
+                <nav id="mobile-menu" class="lg:hidden mt-4 pb-4 border-t border-blue-500 hidden">
+                    <div class="space-y-2 pt-4">
+                        <button id="mobile-nav-dashboard" class="mobile-nav-btn active w-full text-left px-4 py-3 rounded-lg bg-blue-500 hover:bg-blue-400 transition-colors">
+                            <i class="fas fa-tachometer-alt mr-3 w-5"></i>Dashboard
+                        </button>
+                        <button id="mobile-nav-schedule" class="mobile-nav-btn w-full text-left px-4 py-3 rounded-lg hover:bg-blue-500 transition-colors">
+                            <i class="fas fa-calendar-alt mr-3 w-5"></i>Échéancier
+                        </button>
+                        <button id="mobile-nav-users" class="mobile-nav-btn w-full text-left px-4 py-3 rounded-lg hover:bg-blue-500 transition-colors">
+                            <i class="fas fa-users mr-3 w-5"></i>Utilisateur
+                        </button>
+                        <button id="mobile-nav-software" class="mobile-nav-btn w-full text-left px-4 py-3 rounded-lg hover:bg-blue-500 transition-colors">
+                            <i class="fas fa-desktop mr-3 w-5"></i>Logiciel
+                        </button>
+                        <button id="mobile-nav-access" class="mobile-nav-btn w-full text-left px-4 py-3 rounded-lg hover:bg-blue-500 transition-colors">
+                            <i class="fas fa-shield-alt mr-3 w-5"></i>Accès
+                        </button>
+                        <button id="mobile-nav-reports" class="mobile-nav-btn w-full text-left px-4 py-3 rounded-lg hover:bg-blue-500 transition-colors">
+                            <i class="fas fa-chart-bar mr-3 w-5"></i>Rapport
+                        </button>
+                        
+                        <!-- Section Réglages Mobile -->
+                        <div class="border-t border-blue-400 mt-4 pt-4">
+                            <div class="text-blue-200 text-sm font-medium px-4 pb-2">
+                                <i class="fas fa-cogs mr-2"></i>Réglages
+                            </div>
+                            <button id="mobile-nav-teams" class="mobile-nav-btn w-full text-left px-6 py-2 rounded-lg hover:bg-blue-500 transition-colors text-sm">
+                                <i class="fas fa-user-friends mr-3 w-5"></i>Équipe
+                            </button>
+                            <button id="mobile-nav-rights" class="mobile-nav-btn w-full text-left px-6 py-2 rounded-lg hover:bg-blue-500 transition-colors text-sm">
+                                <i class="fas fa-user-shield mr-3 w-5"></i>Types d'accès
+                            </button>
+                            <button id="mobile-nav-logs" class="mobile-nav-btn w-full text-left px-6 py-2 rounded-lg hover:bg-blue-500 transition-colors text-sm">
+                                <i class="fas fa-history mr-3 w-5"></i>Logs
+                            </button>
+                            <button id="mobile-nav-tutorials" class="mobile-nav-btn w-full text-left px-6 py-2 rounded-lg hover:bg-blue-500 transition-colors text-sm">
+                                <i class="fas fa-cogs mr-3 w-5"></i>Process
+                            </button>
+                            <button id="mobile-nav-logout" class="mobile-nav-btn w-full text-left px-6 py-2 rounded-lg hover:bg-red-500 transition-colors text-sm text-red-200">
+                                <i class="fas fa-sign-out-alt mr-3 w-5"></i>Déconnexion
+                            </button>
+                        </div>
+                    </div>
+                </nav>
+            </div>
+        </header>
+
+        <!-- Main Content -->
+        <main class="container mx-auto px-2 sm:px-4 py-4 sm:py-6">
+            <!-- Dashboard View -->
+            <div id="dashboard-view" class="view active">
+                <div class="mb-6">
+                    <h2 class="text-3xl font-bold text-gray-800 mb-2">Tableau de Bord</h2>
+                    <p class="text-gray-600">Vue d'ensemble de la gestion des accès</p>
+                </div>
+
+                <!-- Statistics Cards -->
+                <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4 sm:gap-6 mb-6 sm:mb-8">
+                    <div class="bg-white rounded-lg shadow-md p-6">
+                        <div class="flex items-center">
+                            <div class="flex-shrink-0 bg-blue-500 text-white p-3 rounded-lg">
+                                <i class="fas fa-users text-xl"></i>
+                            </div>
+                            <div class="ml-4">
+                                <p class="text-gray-600 text-sm">Utilisateurs Actifs</p>
+                                <p id="stat-users" class="text-2xl font-bold text-gray-900">0</p>
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <div class="bg-white rounded-lg shadow-md p-6">
+                        <div class="flex items-center">
+                            <div class="flex-shrink-0 bg-green-500 text-white p-3 rounded-lg">
+                                <i class="fas fa-desktop text-xl"></i>
+                            </div>
+                            <div class="ml-4">
+                                <p class="text-gray-600 text-sm">Logiciels Actifs</p>
+                                <p id="stat-software" class="text-2xl font-bold text-gray-900">0</p>
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <div class="bg-white rounded-lg shadow-md p-6">
+                        <div class="flex items-center">
+                            <div class="flex-shrink-0 bg-purple-500 text-white p-3 rounded-lg">
+                                <i class="fas fa-shield-alt text-xl"></i>
+                            </div>
+                            <div class="ml-4">
+                                <p class="text-gray-600 text-sm">Accès Accordés</p>
+                                <p id="stat-access" class="text-2xl font-bold text-gray-900">0</p>
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <div class="bg-white rounded-lg shadow-md p-6">
+                        <div class="flex items-center">
+                            <div class="flex-shrink-0 bg-red-500 text-white p-3 rounded-lg">
+                                <i class="fas fa-euro-sign text-xl"></i>
+                            </div>
+                            <div class="ml-4">
+                                <p class="text-gray-600 text-sm">Coût Total</p>
+                                <div class="space-y-1">
+                                    <div class="flex items-center">
+                                        <span class="text-sm text-gray-500 w-16">Mensuel:</span>
+                                        <span id="stat-cost-monthly" class="text-lg font-bold text-gray-900">0€</span>
+                                    </div>
+                                    <div class="flex items-center">
+                                        <span class="text-sm text-gray-500 w-16">Annuel:</span>
+                                        <span id="stat-cost-annual" class="text-lg font-bold text-blue-600">0€</span>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Team Statistics -->
+                <div class="mb-6 sm:mb-8">
+                    <h3 class="text-lg sm:text-xl font-semibold mb-4">Statistiques par Équipe</h3>
+                    <div id="team-stats-container" class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-4">
+                        <!-- Team stats will be loaded here -->
+                    </div>
+                </div>
+
+                <!-- Top 3 Sections -->
+                <div class="grid grid-cols-1 lg:grid-cols-2 gap-6 mb-8">
+                    <!-- Top 3 Logiciels -->
+                    <div class="bg-white rounded-lg shadow-md p-6">
+                        <h3 class="text-lg font-semibold mb-4 flex items-center">
+                            <i class="fas fa-trophy text-yellow-500 mr-2"></i>
+                            Top 3 Logiciels (Coût Annuel)
+                        </h3>
+                        <div id="top-software-container" class="space-y-3">
+                            <!-- Top software will be loaded here -->
+                        </div>
+                    </div>
+
+                    <!-- Top 3 Utilisateurs -->
+                    <div class="bg-white rounded-lg shadow-md p-6">
+                        <h3 class="text-lg font-semibold mb-4 flex items-center">
+                            <i class="fas fa-trophy text-yellow-500 mr-2"></i>
+                            Top 3 Utilisateurs (Coût Annuel)
+                        </h3>
+                        <div id="top-users-container" class="space-y-3">
+                            <!-- Top users will be loaded here -->
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Charts -->
+                <div class="grid grid-cols-1 lg:grid-cols-2 xl:grid-cols-3 gap-4 sm:gap-6">
+                    <div class="bg-white rounded-lg shadow-md p-6">
+                        <h3 class="text-lg font-semibold mb-4">Répartition des Coûts par Logiciel</h3>
+                        <div style="height: 300px;">
+                            <canvas id="costChart"></canvas>
+                        </div>
+                    </div>
+                    
+                    <div class="bg-white rounded-lg shadow-md p-6">
+                        <h3 class="text-lg font-semibold mb-4">Coûts par Équipe</h3>
+                        <div style="height: 300px;">
+                            <canvas id="teamCostChart"></canvas>
+                        </div>
+                    </div>
+
+                    <div class="bg-white rounded-lg shadow-md p-6">
+                        <h3 class="text-lg font-semibold mb-4">Moyens de Paiement</h3>
+                        <div style="height: 300px;">
+                            <canvas id="paymentMethodChart"></canvas>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Users View -->
+            <div id="users-view" class="view hidden">
+                <div class="mb-4 sm:mb-6">
+                    <div class="flex flex-col sm:flex-row justify-between items-start sm:items-center mb-4 gap-4">
+                        <div>
+                            <h2 class="text-2xl sm:text-3xl font-bold text-gray-800 mb-2">Gestion des Utilisateurs</h2>
+                            <p class="text-gray-600 text-sm sm:text-base">Gérer les utilisateurs et leurs accès</p>
+                        </div>
+                        <div class="flex space-x-2 sm:space-x-3">
+                            <button id="add-user-btn" class="bg-blue-600 text-white px-3 sm:px-4 py-2 rounded-lg hover:bg-blue-700 transition-colors text-sm sm:text-base">
+                                <i class="fas fa-plus mr-1 sm:mr-2"></i>
+                                <span class="hidden sm:inline">Nouvel Utilisateur</span>
+                                <span class="sm:hidden">Nouveau</span>
+                            </button>
+                            <button id="import-users-btn" class="bg-green-600 text-white px-3 sm:px-4 py-2 rounded-lg hover:bg-green-700 transition-colors text-sm sm:text-base">
+                                <i class="fas fa-file-excel mr-1 sm:mr-2"></i>
+                                <span class="hidden sm:inline">Importer Excel</span>
+                                <span class="sm:hidden">Import</span>
+                            </button>
+                        </div>
+                        <label class="flex items-center cursor-pointer text-sm sm:text-base">
+                            <input type="checkbox" id="show-archived-users" class="mr-2">
+                            <span class="text-gray-700">Afficher archivés</span>
+                        </label>
+                    </div>
+                    
+                    <!-- Search Bar -->
+                    <div class="relative w-full sm:w-64 sm:ml-auto mt-4">
+                        <input type="text" id="users-search" placeholder="Rechercher des utilisateurs..." 
+                               class="w-full pl-10 pr-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 text-sm sm:text-base">
+                        <i class="fas fa-search absolute left-3 top-3 text-gray-400"></i>
+                    </div>
+                </div>
+                
+                <div class="bg-white rounded-lg shadow-md overflow-hidden">
+                    <div id="users-table-container" class="overflow-x-auto">
+                        <!-- Table will be loaded here -->
+                    </div>
+                </div>
+            </div>
+
+            <!-- Software View -->
+            <div id="software-view" class="view hidden">
+                <div class="mb-6">
+                    <div class="flex flex-col sm:flex-row justify-between items-start sm:items-center mb-4 gap-4">
+                        <div>
+                            <h2 class="text-3xl font-bold text-gray-800 mb-2">Gestion des Logiciels</h2>
+                            <p class="text-gray-600">Gérer les logiciels et leurs coûts</p>
+                        </div>
+                        <div class="flex flex-col sm:flex-row space-y-2 sm:space-y-0 sm:space-x-3">
+                            <button id="add-software-btn" class="bg-blue-600 text-white px-4 py-2 rounded-lg hover:bg-blue-700 transition-colors">
+                                <i class="fas fa-plus mr-2"></i>Nouveau Logiciel
+                            </button>
+                            <label class="flex items-center cursor-pointer">
+                                <input type="checkbox" id="show-archived-software" class="mr-2">
+                                <span class="text-gray-700">Afficher archivés</span>
+                            </label>
+                        </div>
+                    </div>
+                    
+                    <!-- Search Bar -->
+                    <div class="relative w-full sm:w-64 sm:ml-auto">
+                        <input type="text" id="software-search" placeholder="Rechercher des logiciels..." 
+                               class="w-full pl-10 pr-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500">
+                        <i class="fas fa-search absolute left-3 top-3 text-gray-400"></i>
+                    </div>
+                </div>
+                
+                <div class="bg-white rounded-lg shadow-md">
+                    <div id="software-table-container">
+                        <!-- Table will be loaded here -->
+                    </div>
+                </div>
+            </div>
+
+            <!-- Rights View -->
+            <div id="rights-view" class="view hidden">
+                <div class="flex flex-col sm:flex-row justify-between items-start sm:items-center mb-6 space-y-4 sm:space-y-0">
+                    <div>
+                        <h2 class="text-3xl font-bold text-gray-800 mb-2">Gestion des Types d'Accès</h2>
+                        <p class="text-gray-600">Définir et gérer les différents types d'accès</p>
+                    </div>
+                    <div class="flex flex-col sm:flex-row space-y-2 sm:space-y-0 sm:space-x-4 w-full sm:w-auto">
+                        <div class="relative">
+                            <input type="text" id="rights-search" placeholder="Rechercher des types d'accès..." 
+                                   class="w-full sm:w-64 pl-10 pr-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500">
+                            <i class="fas fa-search absolute left-3 top-3 text-gray-400"></i>
+                        </div>
+                        <button id="add-right-btn" class="bg-blue-600 text-white px-4 py-2 rounded-lg hover:bg-blue-700 transition-colors whitespace-nowrap">
+                            <i class="fas fa-plus mr-2"></i>Nouveau Type
+                        </button>
+                    </div>
+                </div>
+
+                <!-- Statistics -->
+                <div class="grid grid-cols-1 sm:grid-cols-3 gap-4 mb-6">
+                    <div class="bg-white rounded-lg shadow-md p-6">
+                        <div class="flex items-center">
+                            <div class="flex-shrink-0 bg-blue-500 text-white p-3 rounded-lg">
+                                <i class="fas fa-user-shield text-xl"></i>
+                            </div>
+                            <div class="ml-4">
+                                <p class="text-gray-600 text-sm">Total Types</p>
+                                <p id="rights-count" class="text-2xl font-bold text-gray-900">0</p>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Rights Table -->
+                <div class="bg-white rounded-lg shadow-md overflow-hidden">
+                    <div class="overflow-x-auto">
+                        <table id="rights-table" class="min-w-full divide-y divide-gray-200">
+                            <thead class="bg-gray-50">
+                                <tr>
+                                    <th class="px-4 sm:px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                                        Nom du Type
+                                    </th>
+                                    <th class="px-4 sm:px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                                        Description
+                                    </th>
+                                    <th class="px-4 sm:px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider hidden sm:table-cell">
+                                        Créé le
+                                    </th>
+                                    <th class="px-4 sm:px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                                        Actions
+                                    </th>
+                                </tr>
+                            </thead>
+                            <tbody class="bg-white divide-y divide-gray-200">
+                                <!-- Rights will be loaded here -->
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Access View -->
+            <div id="access-view" class="view hidden">
+                <div class="flex justify-between items-center mb-6">
+                    <div>
+                        <h2 class="text-3xl font-bold text-gray-800 mb-2">Gestion des Accès</h2>
+                        <p class="text-gray-600">Attribuer et gérer les droits d'accès</p>
+                    </div>
+                    <button id="add-access-btn" class="bg-blue-600 text-white px-4 py-2 rounded-lg hover:bg-blue-700 transition-colors">
+                        <i class="fas fa-plus mr-2"></i>Nouvel Accès
+                    </button>
+                </div>
+                
+                <div class="bg-white rounded-lg shadow-md">
+                    <div id="access-table-container">
+                        <!-- Table will be loaded here -->
+                    </div>
+                </div>
+            </div>
+
+            <!-- Teams View -->
+            <div id="teams-view" class="view hidden">
+                <div class="flex flex-col sm:flex-row justify-between items-start sm:items-center mb-4 sm:mb-6 gap-4">
+                    <div>
+                        <h2 class="text-2xl sm:text-3xl font-bold text-gray-800 mb-2">Gestion des Équipes</h2>
+                        <p class="text-gray-600 text-sm sm:text-base">Gérer les équipes de l'entreprise</p>
+                    </div>
+                    <div class="flex flex-col sm:flex-row w-full sm:w-auto space-y-2 sm:space-y-0 sm:space-x-3">
+                        <div class="relative">
+                            <input type="text" id="teams-search" placeholder="Rechercher des équipes..." 
+                                   class="w-full sm:w-64 pl-10 pr-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 text-sm sm:text-base">
+                            <i class="fas fa-search absolute left-3 top-3 text-gray-400"></i>
+                        </div>
+                        <div class="flex flex-col sm:flex-row space-y-2 sm:space-y-0 sm:space-x-3">
+                            <button id="add-team-btn" class="bg-blue-600 text-white px-3 sm:px-4 py-2 rounded-lg hover:bg-blue-700 transition-colors text-sm sm:text-base">
+                                <i class="fas fa-plus mr-1 sm:mr-2"></i>
+                                <span class="hidden sm:inline">Nouvelle Équipe</span>
+                                <span class="sm:hidden">Nouvelle</span>
+                            </button>
+                            <label class="flex items-center cursor-pointer text-sm sm:text-base">
+                                <input type="checkbox" id="show-archived-teams" class="mr-2">
+                                <span class="text-gray-700">Afficher archivées</span>
+                            </label>
+                        </div>
+                    </div>
+                </div>
+                
+                <div class="bg-white rounded-lg shadow-md overflow-hidden">
+                    <div id="teams-table-container" class="overflow-x-auto">
+                        <!-- Table will be loaded here -->
+                    </div>
+                </div>
+            </div>
+
+            <!-- Reports View -->
+            <div id="reports-view" class="view hidden">
+                <div class="mb-6">
+                    <h2 class="text-3xl font-bold text-gray-800 mb-2">Rapports et Analyses</h2>
+                    <p class="text-gray-600">Vues détaillées par utilisateur et par logiciel</p>
+                </div>
+
+                <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6 mb-6">
+                    <button id="view-by-software-btn" class="bg-white rounded-lg shadow-md p-6 hover:shadow-lg transition-shadow text-left">
+                        <div class="flex items-center">
+                            <div class="flex-shrink-0 bg-blue-500 text-white p-3 rounded-lg">
+                                <i class="fas fa-desktop text-xl"></i>
+                            </div>
+                            <div class="ml-4">
+                                <h3 class="text-lg font-semibold text-gray-900">Vue par Logiciel</h3>
+                                <p class="text-gray-600">Utilisateurs et coûts par logiciel</p>
+                            </div>
+                        </div>
+                    </button>
+                    
+                    <button id="view-by-user-btn" class="bg-white rounded-lg shadow-md p-6 hover:shadow-lg transition-shadow text-left">
+                        <div class="flex items-center">
+                            <div class="flex-shrink-0 bg-green-500 text-white p-3 rounded-lg">
+                                <i class="fas fa-user text-xl"></i>
+                            </div>
+                            <div class="ml-4">
+                                <h3 class="text-lg font-semibold text-gray-900">Vue par Utilisateur</h3>
+                                <p class="text-gray-600">Logiciels et coûts par utilisateur</p>
+                            </div>
+                        </div>
+                    </button>
+
+                    <button id="view-by-team-btn" class="bg-white rounded-lg shadow-md p-6 hover:shadow-lg transition-shadow text-left">
+                        <div class="flex items-center">
+                            <div class="flex-shrink-0 bg-purple-500 text-white p-3 rounded-lg">
+                                <i class="fas fa-user-friends text-xl"></i>
+                            </div>
+                            <div class="ml-4">
+                                <h3 class="text-lg font-semibold text-gray-900">Vue par Équipe</h3>
+                                <p class="text-gray-600">Budget et logiciels par équipe</p>
+                            </div>
+                        </div>
+                    </button>
+                </div>
+
+                <div id="detailed-reports-container" class="bg-white rounded-lg shadow-md p-6 hidden">
+                    <!-- Detailed reports will be loaded here -->
+                </div>
+            </div>
+
+            <!-- Schedule View -->
+            <div id="schedule-view" class="view hidden">
+                <div class="mb-6">
+                    <h2 class="text-3xl font-bold text-gray-800 mb-2">Échéancier des Paiements</h2>
+                    <p class="text-gray-600">Prévisions des prélèvements à venir</p>
+                </div>
+
+                <!-- Blocs des 3 prochains mois -->
+                <div class="grid grid-cols-1 md:grid-cols-3 gap-6 mb-8">
+                    <div id="month-1-block" class="bg-white rounded-lg shadow-md p-6">
+                        <h3 class="text-lg font-semibold text-gray-800 mb-4"></h3>
+                        <div class="text-3xl font-bold text-blue-600 mb-2"></div>
+                        <div class="text-sm text-gray-600"></div>
+                    </div>
+                    <div id="month-2-block" class="bg-white rounded-lg shadow-md p-6">
+                        <h3 class="text-lg font-semibold text-gray-800 mb-4"></h3>
+                        <div class="text-3xl font-bold text-green-600 mb-2"></div>
+                        <div class="text-sm text-gray-600"></div>
+                    </div>
+                    <div id="month-3-block" class="bg-white rounded-lg shadow-md p-6">
+                        <h3 class="text-lg font-semibold text-gray-800 mb-4"></h3>
+                        <div class="text-3xl font-bold text-purple-600 mb-2"></div>
+                        <div class="text-sm text-gray-600"></div>
+                    </div>
+                </div>
+
+                <!-- Calendrier du mois en cours -->
+                <div class="bg-white rounded-lg shadow-md p-6">
+                    <div class="flex flex-col sm:flex-row justify-between items-start sm:items-center mb-6 space-y-4 sm:space-y-0">
+                        <h3 class="text-xl font-semibold text-gray-800">Calendrier des échéances</h3>
+                        <div class="flex space-x-2">
+                            <button id="prev-month-btn" class="px-3 py-1 border border-gray-300 rounded hover:bg-gray-50">
+                                <i class="fas fa-chevron-left"></i>
+                            </button>
+                            <span id="current-month-year" class="px-4 py-1 font-medium"></span>
+                            <button id="next-month-btn" class="px-3 py-1 border border-gray-300 rounded hover:bg-gray-50">
+                                <i class="fas fa-chevron-right"></i>
+                            </button>
+                        </div>
+                    </div>
+                    
+                    <!-- Légende des couleurs -->
+                    <div class="mb-4 p-3 bg-gray-50 rounded-lg">
+                        <div class="flex flex-wrap items-center space-x-6 text-sm">
+                            <span class="font-medium text-gray-700 mb-2 sm:mb-0">Périodicité :</span>
+                            <div class="flex items-center space-x-1 mb-2 sm:mb-0">
+                                <div class="w-3 h-3 bg-blue-100 border border-blue-200 rounded"></div>
+                                <span class="text-blue-800">Mensuel</span>
+                            </div>
+                            <div class="flex items-center space-x-1 mb-2 sm:mb-0">
+                                <div class="w-3 h-3 bg-green-100 border border-green-200 rounded"></div>
+                                <span class="text-green-800">Trimestriel</span>
+                            </div>
+                            <div class="flex items-center space-x-1 mb-2 sm:mb-0">
+                                <div class="w-3 h-3 bg-purple-100 border border-purple-200 rounded"></div>
+                                <span class="text-purple-800">Semestriel</span>
+                            </div>
+                            <div class="flex items-center space-x-1">
+                                <div class="w-3 h-3 bg-red-100 border border-red-200 rounded"></div>
+                                <span class="text-red-800">Annuel</span>
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <div id="calendar-container" class="max-w-4xl mx-auto">
+                        <!-- Calendar will be generated here -->
+                    </div>
+                </div>
+            </div>
+            
+            <!-- Logs View -->
+            <div id="logs-view" class="view hidden">
+                <div id="main-content">
+                    <!-- Le contenu sera généré par LogsManager -->
+                </div>
+            </div>
+
+            <!-- Tutorials View -->
+            <div id="tutorials-view" class="view hidden">
+                <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-6 sm:py-8">
+                    <!-- Header with navigation -->
+                    <div class="bg-white rounded-lg shadow-md p-6 mb-6">
+                        <div class="flex flex-col sm:flex-row sm:items-center sm:justify-between">
+                            <div>
+                                <h1 class="text-2xl font-bold text-gray-900 mb-2">
+                                    <i class="fas fa-cogs text-blue-600 mr-2"></i>
+                                    Processus
+                                </h1>
+                                <p class="text-gray-600">Guides pratiques étape par étape pour utiliser l'application</p>
+                            </div>
+                            <div class="mt-4 sm:mt-0">
+                                <div class="flex flex-wrap gap-2">
+                                    <button id="btn-all-processes" class="process-nav-btn active px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors text-sm">
+                                        <i class="fas fa-list mr-1"></i>Tous
+                                    </button>
+                                    <button id="btn-process-connection" class="process-nav-btn px-4 py-2 bg-gray-200 text-gray-700 rounded-lg hover:bg-gray-300 transition-colors text-sm">
+                                        Connexion
+                                    </button>
+                                    <button id="btn-process-creation" class="process-nav-btn px-4 py-2 bg-gray-200 text-gray-700 rounded-lg hover:bg-gray-300 transition-colors text-sm">
+                                        Création
+                                    </button>
+                                    <button id="btn-process-modification" class="process-nav-btn px-4 py-2 bg-gray-200 text-gray-700 rounded-lg hover:bg-gray-300 transition-colors text-sm">
+                                        Modification
+                                    </button>
+                                    <button id="btn-process-archiving" class="process-nav-btn px-4 py-2 bg-gray-200 text-gray-700 rounded-lg hover:bg-gray-300 transition-colors text-sm">
+                                        Archivage
+                                    </button>
+                                    <button id="btn-process-access" class="process-nav-btn px-4 py-2 bg-gray-200 text-gray-700 rounded-lg hover:bg-gray-300 transition-colors text-sm">
+                                        Accès
+                                    </button>
+                                    
+                                    <!-- Séparateur et bouton export -->
+                                    <div class="hidden sm:block w-px h-8 bg-gray-300 mx-2"></div>
+                                    <button id="btn-export-markdown" class="px-4 py-2 bg-green-600 text-white rounded-lg hover:bg-green-700 transition-colors text-sm">
+                                        <i class="fas fa-download mr-1"></i>Export MD
+                                    </button>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Content area -->
+                    <div id="process-content" class="bg-white rounded-lg shadow-md">
+                        <!-- Process content will be loaded here -->
+                    </div>
+                </div>
+            </div>
+        </main>
+    </div>
+
+    <!-- Rights Modal -->
+    <div id="right-modal" class="fixed inset-0 bg-gray-600 bg-opacity-50 hidden z-50">
+        <div class="flex items-center justify-center min-h-screen p-4">
+            <div class="bg-white rounded-lg max-w-md w-full p-6">
+                <h3 id="modal-title" class="text-lg font-medium text-gray-900 mb-4">Ajouter un Droit</h3>
+                <form id="right-form">
+                    <div class="space-y-4">
+                        <div>
+                            <label for="right-name" class="block text-sm font-medium text-gray-700 mb-1">
+                                Nom du droit *
+                            </label>
+                            <input type="text" id="right-name" required 
+                                   class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+                                   placeholder="Ex: Admin, User, Reader...">
+                        </div>
+                        
+                        <div>
+                            <label for="right-description" class="block text-sm font-medium text-gray-700 mb-1">
+                                Description
+                            </label>
+                            <textarea id="right-description" rows="3"
+                                      class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+                                      placeholder="Description des permissions accordées..."></textarea>
+                        </div>
+                        
+
+                        
+                        <div>
+                            <label for="right-color" class="block text-sm font-medium text-gray-700 mb-1">
+                                Couleur d'identification
+                            </label>
+                            <div class="flex items-center space-x-2">
+                                <input type="color" id="right-color" value="#3B82F6"
+                                       class="w-12 h-10 border border-gray-300 rounded cursor-pointer">
+                                <span class="text-sm text-gray-600">Couleur pour identifier visuellement ce type d'accès</span>
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <div class="flex justify-end space-x-3 mt-6">
+                        <button type="button" id="cancel-right-btn" 
+                                class="px-4 py-2 border border-gray-300 rounded-lg text-gray-700 hover:bg-gray-50 transition-colors">
+                            Annuler
+                        </button>
+                        <button type="button" id="save-right-btn" 
+                                class="px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors">
+                            Enregistrer
+                        </button>
+                    </div>
+                </form>
+            </div>
+        </div>
+    </div>
+
+    <!-- Modals will be added here by JavaScript -->
+    <div id="modal-container"></div>
+
+    <!-- Script d'authentification (doit être chargé en premier) -->
+    <script src="js/auth.js"></script>
+    <!-- Script de gestion du menu -->
+    <script src="js/menu.js"></script>
+    <!-- Système de logging -->
+    <script src="js/logger.js"></script>
+    <script src="js/logs.js"></script>
+    <script src="js/app.js"></script>
+    <script src="js/teams.js"></script>
+    <script src="js/users.js"></script>
+    <script src="js/software.js"></script>
+    <script src="js/rights.js"></script>
+    <script src="js/access.js"></script>
+    <script src="js/reports.js"></script>
+    <script src="js/import.js"></script>
+    <script src="js/schedule.js"></script>
+    <script src="js/tutorials.js"></script>
+</body>
+</html>
