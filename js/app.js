@@ -224,13 +224,12 @@ class AccessManagementApp {
 
     async loadDashboard() {
         try {
-            // Charger les statistiques
+            // Charger les statistiques via Supabase API
             const [usersResult, softwareResult, accessResult] = await Promise.all([
                 window.D1API.get('utilisateurs'),
                 window.D1API.get('logiciels'),
                 window.D1API.get('acces')
             ]);
-
 
             const activeUsers = (usersResult.data || []).filter(u => !u.archived);
             const activeSoftware = (softwareResult.data || []).filter(s => !s.archived);
@@ -265,9 +264,9 @@ class AccessManagementApp {
     async calculateTotalCost() {
         try {
             const [accessResult, costsResult, droitsResult] = await Promise.all([
-                fetch('tables/acces').then(r => r.json()),
-                fetch('tables/couts_licences').then(r => r.json()),
-                fetch('tables/droits').then(r => r.json())
+                window.D1API.get('acces'),
+                window.D1API.get('couts_licences'),
+                window.D1API.get('droits')
             ]);
 
             const access = accessResult.data || [];
@@ -304,11 +303,11 @@ class AccessManagementApp {
     async loadTeamStats() {
         try {
             const [teamsResult, usersResult, accessResult, costsResult, droitsResult] = await Promise.all([
-                fetch('tables/equipes').then(r => r.json()),
-                fetch('tables/utilisateurs').then(r => r.json()),
-                fetch('tables/acces').then(r => r.json()),
-                fetch('tables/couts_licences').then(r => r.json()),
-                fetch('tables/droits').then(r => r.json())
+                window.D1API.get('equipes'),
+                window.D1API.get('utilisateurs'),
+                window.D1API.get('acces'),
+                window.D1API.get('couts_licences'),
+                window.D1API.get('droits')
             ]);
 
             const teams = (teamsResult.data || []).filter(t => !t.archived);
@@ -391,10 +390,10 @@ class AccessManagementApp {
 
         try {
             const [accessResult, costsResult, softwareResult, droitsResult] = await Promise.all([
-                fetch('tables/acces').then(r => r.json()),
-                fetch('tables/couts_licences').then(r => r.json()),
-                fetch('tables/logiciels').then(r => r.json()),
-                fetch('tables/droits').then(r => r.json())
+                window.D1API.get('acces'),
+                window.D1API.get('couts_licences'),
+                window.D1API.get('logiciels'),
+                window.D1API.get('droits')
             ]);
 
             const access = accessResult.data || [];
@@ -461,7 +460,7 @@ class AccessManagementApp {
         if (!ctx) return;
 
         try {
-            const accessResult = await fetch('tables/acces').then(r => r.json());
+            const accessResult = await window.D1API.get('acces');
             const access = accessResult.data || [];
 
             const rightsCount = {};
@@ -512,11 +511,11 @@ class AccessManagementApp {
 
         try {
             const [teamsResult, usersResult, accessResult, costsResult, droitsResult] = await Promise.all([
-                fetch('tables/equipes').then(r => r.json()),
-                fetch('tables/utilisateurs').then(r => r.json()),
-                fetch('tables/acces').then(r => r.json()),
-                fetch('tables/couts_licences').then(r => r.json()),
-                fetch('tables/droits').then(r => r.json())
+                window.D1API.get('equipes'),
+                window.D1API.get('utilisateurs'),
+                window.D1API.get('acces'),
+                window.D1API.get('couts_licences'),
+                window.D1API.get('droits')
             ]);
 
             const teams = (teamsResult.data || []).filter(t => !t.archived);
@@ -655,10 +654,10 @@ class AccessManagementApp {
     async loadTopSoftware() {
         try {
             const [softwareResult, accessResult, costsResult, droitsResult] = await Promise.all([
-                fetch('tables/logiciels').then(r => r.json()),
-                fetch('tables/acces').then(r => r.json()),
-                fetch('tables/couts_licences').then(r => r.json()),
-                fetch('tables/droits').then(r => r.json())
+                window.D1API.get('logiciels'),
+                window.D1API.get('acces'),
+                window.D1API.get('couts_licences'),
+                window.D1API.get('droits')
             ]);
             
             const software = (softwareResult.data || []).filter(s => !s.archived);
@@ -715,11 +714,11 @@ class AccessManagementApp {
     async loadTopUsers() {
         try {
             const [usersResult, accessResult, costsResult, softwareResult, droitsResult] = await Promise.all([
-                fetch('tables/utilisateurs').then(r => r.json()),
-                fetch('tables/acces').then(r => r.json()),
-                fetch('tables/couts_licences').then(r => r.json()),
-                fetch('tables/logiciels').then(r => r.json()),
-                fetch('tables/droits').then(r => r.json())
+                window.D1API.get('utilisateurs'),
+                window.D1API.get('acces'),
+                window.D1API.get('couts_licences'),
+                window.D1API.get('logiciels'),
+                window.D1API.get('droits')
             ]);
             
             const users = (usersResult.data || []).filter(u => !u.archived);
@@ -849,10 +848,10 @@ class AccessManagementApp {
 
         try {
             const [softwareResult, accessResult, costsResult, droitsResult] = await Promise.all([
-                fetch('tables/logiciels').then(r => r.json()),
-                fetch('tables/acces').then(r => r.json()),
-                fetch('tables/couts_licences').then(r => r.json()),
-                fetch('tables/droits').then(r => r.json())
+                window.D1API.get('logiciels'),
+                window.D1API.get('acces'),
+                window.D1API.get('couts_licences'),
+                window.D1API.get('droits')
             ]);
             
             const software = (softwareResult.data || []).filter(s => !s.archived);

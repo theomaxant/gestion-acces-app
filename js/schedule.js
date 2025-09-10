@@ -27,10 +27,10 @@ class ScheduleManager {
     async loadData() {
         try {
             const [softwareResult, accessResult, costsResult, droitsResult] = await Promise.all([
-                fetch('tables/logiciels').then(r => r.json()),
-                fetch('tables/acces').then(r => r.json()),
-                fetch('tables/couts_licences').then(r => r.json()),
-                fetch('tables/droits').then(r => r.json())
+                window.D1API.get('logiciels'),
+                window.D1API.get('acces'),
+                window.D1API.get('couts_licences'),
+                window.D1API.get('droits')
             ]);
             
             const software = (softwareResult.data || []).filter(s => !s.archived);

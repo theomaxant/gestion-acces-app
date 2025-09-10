@@ -17,8 +17,7 @@ class ReportsManager {
 
     async loadDroits() {
         try {
-            const response = await fetch('tables/droits');
-            const result = await response.json();
+            const result = await window.D1API.get('droits');
             this.droits = result.data || [];
         } catch (error) {
             console.error('Erreur lors du chargement des droits:', error);
