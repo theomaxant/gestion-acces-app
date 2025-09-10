@@ -24,6 +24,7 @@ class AccessManager {
         }
     }
 
+
     setupEventListeners() {
         document.getElementById('add-access-btn')?.addEventListener('click', () => {
             this.showAddAccessModal();
