@@ -276,21 +276,18 @@ class UsersManager {
             let newUserId = userId;
             if (userId) {
                 // Mise à jour
-                await fetch(`tables/utilisateurs/${userId}`, {
-                    method: 'PUT',
-                    headers: { 'Content-Type': 'application/json' },
-                    body: JSON.stringify(userData)
-                });
+                const result = await window.D1API.update('utilisateurs', userId, userData);
+                if (!result.success) {
+                    throw new Error(result.error);
+                }
                 window.app?.showAlert('Utilisateur modifié avec succès', 'success');
             } else {
                 // Création
-                const response = await window.D1API.get('utilisateurs', {
-                    method: 'POST',
-                    headers: { 'Content-Type': 'application/json' },
-                    body: JSON.stringify(userData)
-                });
-                const newUser = await response.json();
-                newUserId = newUser.id;
+                const result = await window.D1API.create('utilisateurs', userData);
+                if (!result.success) {
+                    throw new Error(result.error);
+                }
+                newUserId = result.data.id;
                 
                 // Ajouter les accès de base si demandé
                 if (addBaseAccess) {
@@ -451,9 +448,10 @@ class UsersManager {
 
     async removeUserAccess(accessId) {
         try {
-            await fetch(`tables/acces/${accessId}`, {
-                method: 'DELETE'
-            });
+            const result = await window.D1API.delete('acces', accessId);
+            if (!result.success) {
+                throw new Error(result.error);
+            }
             window.app?.showAlert('Accès supprimé avec succès', 'success');
             // Recharger la vue
             const modal = document.querySelector('.fixed');
@@ -615,11 +613,10 @@ class UsersManager {
             // 1. Archiver l'utilisateur
             const user = this.users.find(u => u.id === userId);
             if (user) {
-                await fetch(`tables/utilisateurs/${userId}`, {
-                    method: 'PUT',
-                    headers: { 'Content-Type': 'application/json' },
-                    body: JSON.stringify({ ...user, archived: true })
-                });
+                const result = await window.D1API.update('utilisateurs', userId, { ...user, archived: true });
+                if (!result.success) {
+                    throw new Error(result.error);
+                }
             }
 
             // 2. Supprimer tous les accès de l'utilisateur
@@ -627,9 +624,10 @@ class UsersManager {
             const userAccess = (accessResult.data || []).filter(a => a.utilisateur_id === userId);
 
             for (const access of userAccess) {
-                await fetch(`tables/acces/${access.id}`, {
-                    method: 'DELETE'
-                });
+                const result = await window.D1API.delete('acces', access.id);
+                if (!result.success) {
+                    throw new Error(result.error);
+                }
             }
 
             document.querySelector('.fixed')?.remove();
@@ -645,11 +643,10 @@ class UsersManager {
         try {
             const user = this.users.find(u => u.id === userId);
             if (user) {
-                await fetch(`tables/utilisateurs/${userId}`, {
-                    method: 'PUT',
-                    headers: { 'Content-Type': 'application/json' },
-                    body: JSON.stringify({ ...user, archived: false })
-                });
+                const result = await window.D1API.update('utilisateurs', userId, { ...user, archived: false });
+                if (!result.success) {
+                    throw new Error(result.error);
+                }
 
                 window.app?.showAlert('Utilisateur désarchivé avec succès', 'success');
                 await this.loadUsers();
