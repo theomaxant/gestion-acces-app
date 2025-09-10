@@ -101,7 +101,7 @@ class UsersManager {
                             <span class="sm:hidden">@</span>
                         </th>
                         <th class="px-3 sm:px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider cursor-pointer hover:bg-gray-100" onclick="window.usersManager.sortTable('equipe')">
-                            Équipe <i class="fas fa-sort ml-1"></i>
+                            Ãquipe <i class="fas fa-sort ml-1"></i>
                         </th>
                         <th class="hidden xl:table-cell px-3 sm:px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Poste</th>
                         <th class="px-3 sm:px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider cursor-pointer hover:bg-gray-100" onclick="window.usersManager.sortTable('nb_logiciels')">
@@ -110,8 +110,8 @@ class UsersManager {
                             <i class="fas fa-sort ml-1"></i>
                         </th>
                         <th class="px-3 sm:px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider cursor-pointer hover:bg-gray-100" onclick="window.usersManager.sortTable('cout')">
-                            <span class="hidden sm:inline">Coût/Mois</span>
-                            <span class="sm:hidden">€</span>
+                            <span class="hidden sm:inline">CoÃ»t/Mois</span>
+                            <span class="sm:hidden">â¬</span>
                             <i class="fas fa-sort ml-1"></i>
                         </th>
                         <th class="hidden sm:table-cell px-3 sm:px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Statut</th>
@@ -122,7 +122,7 @@ class UsersManager {
                     ${filteredUsers.map(user => this.renderUserRow(user)).join('')}
                 </tbody>
             </table>
-            ${filteredUsers.length === 0 ? '<div class="text-center py-8 text-gray-500 text-sm sm:text-base">Aucun utilisateur trouvé</div>' : ''}
+            ${filteredUsers.length === 0 ? '<div class="text-center py-8 text-gray-500 text-sm sm:text-base">Aucun utilisateur trouvÃ©</div>' : ''}
         `;
 
         container.innerHTML = tableHtml;
@@ -139,25 +139,25 @@ class UsersManager {
                     <div class="text-sm font-medium text-gray-900">${user.nom} ${user.prenom || ''}</div>
                 </td>
                 <td class="px-3 sm:px-6 py-3 sm:py-4 w-1/3 min-w-0">
-                    <div class="text-sm text-gray-600 truncate">${user.email || 'Non renseigné'}</div>
+                    <div class="text-sm text-gray-600 truncate">${user.email || 'Non renseignÃ©'}</div>
                 </td>
                 <td class="px-3 sm:px-6 py-3 sm:py-4 whitespace-nowrap">
-                    <div class="text-sm text-gray-600">${team?.nom || 'Aucune équipe'}</div>
+                    <div class="text-sm text-gray-600">${team?.nom || 'Aucune Ã©quipe'}</div>
                 </td>
                 <td class="hidden xl:table-cell px-3 sm:px-6 py-3 sm:py-4 whitespace-nowrap">
-                    <div class="text-sm text-gray-600">${user.poste || 'Non renseigné'}</div>
+                    <div class="text-sm text-gray-600">${user.poste || 'Non renseignÃ©'}</div>
                 </td>
                 <td class="px-3 sm:px-6 py-3 sm:py-4 whitespace-nowrap text-center">
                     <div class="text-sm text-gray-900">${nbLogiciels}</div>
                 </td>
                 <td class="px-3 sm:px-6 py-3 sm:py-4 whitespace-nowrap text-center">
-                    <div class="text-sm font-bold text-blue-600">${userCost.toFixed(2)}€</div>
+                    <div class="text-sm font-bold text-blue-600">${userCost.toFixed(2)}â¬</div>
                 </td>
                 <td class="hidden sm:table-cell px-3 sm:px-6 py-3 sm:py-4 whitespace-nowrap">
                     <span class="px-2 inline-flex text-xs leading-5 font-semibold rounded-full ${
                         user.archived ? 'bg-red-100 text-red-800' : 'bg-green-100 text-green-800'
                     }">
-                        ${user.archived ? 'Archivé' : 'Actif'}
+                        ${user.archived ? 'ArchivÃ©' : 'Actif'}
                     </span>
                 </td>
                 <td class="px-3 sm:px-6 py-3 sm:py-4 whitespace-nowrap text-right text-sm font-medium">
@@ -167,11 +167,11 @@ class UsersManager {
                             <i class="fas fa-edit text-sm"></i>
                         </button>
                         <button onclick="window.usersManager.manageUserAccess('${user.id}')" 
-                                class="text-purple-600 hover:text-purple-900 p-1" title="Gérer les accès">
+                                class="text-purple-600 hover:text-purple-900 p-1" title="GÃ©rer les accÃ¨s">
                             <i class="fas fa-shield-alt text-sm"></i>
                         </button>
                         <button onclick="window.usersManager.viewUserCosts('${user.id}')" 
-                                class="hidden sm:inline-block text-green-600 hover:text-green-900 p-1" title="Voir les coûts">
+                                class="hidden sm:inline-block text-green-600 hover:text-green-900 p-1" title="Voir les coÃ»ts">
                             <i class="fas fa-euro-sign text-sm"></i>
                         </button>
                         ${!user.archived ? 
@@ -180,7 +180,7 @@ class UsersManager {
                                 <i class="fas fa-sign-out-alt text-sm"></i>
                              </button>` :
                             `<button onclick="window.usersManager.unarchiveUser('${user.id}')" 
-                                     class="text-green-600 hover:text-green-900 p-1" title="Désarchiver">
+                                     class="text-green-600 hover:text-green-900 p-1" title="DÃ©sarchiver">
                                 <i class="fas fa-undo text-sm"></i>
                              </button>`
                         }
@@ -201,7 +201,7 @@ class UsersManager {
                                    class="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500">
                         </div>
                         <div>
-                            <label class="block text-sm font-medium text-gray-700 mb-1">Prénom</label>
+                            <label class="block text-sm font-medium text-gray-700 mb-1">PrÃ©nom</label>
                             <input type="text" id="user-prenom"
                                    class="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500">
                         </div>
@@ -217,10 +217,10 @@ class UsersManager {
                                class="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500">
                     </div>
                     <div>
-                        <label class="block text-sm font-medium text-gray-700 mb-1">Équipe</label>
+                        <label class="block text-sm font-medium text-gray-700 mb-1">Ãquipe</label>
                         <select id="user-equipe"
                                 class="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500">
-                            <option value="">Aucune équipe</option>
+                            <option value="">Aucune Ã©quipe</option>
                             ${this.teams.filter(t => !t.archived).map(team => 
                                 `<option value="${team.id}">${team.nom}</option>`
                             ).join('')}
@@ -231,7 +231,7 @@ class UsersManager {
                             <input type="checkbox" id="user-add-base-access" checked
                                    class="h-4 w-4 text-blue-600 focus:ring-blue-500 border-gray-300 rounded">
                             <label for="user-add-base-access" class="ml-2 block text-sm text-gray-700">
-                                Ajouter automatiquement les accès aux logiciels de base (droit "User")
+                                Ajouter automatiquement les accÃ¨s aux logiciels de base (droit "User")
                             </label>
                         </div>
                     </div>
@@ -275,29 +275,29 @@ class UsersManager {
 
             let newUserId = userId;
             if (userId) {
-                // Mise à jour
+                // Mise Ã  jour
                 const result = await window.D1API.update('utilisateurs', userId, userData);
                 if (!result.success) {
                     throw new Error(result.error);
                 }
-                window.app?.showAlert('Utilisateur modifié avec succès', 'success');
+                window.app?.showAlert('Utilisateur modifiÃ© avec succÃ¨s', 'success');
             } else {
-                // Création
+                // CrÃ©ation
                 const result = await window.D1API.create('utilisateurs', userData);
                 if (!result.success) {
                     throw new Error(result.error);
                 }
                 newUserId = result.data.id;
                 
-                // Ajouter les accès de base si demandé
+                // Ajouter les accÃ¨s de base si demandÃ©
                 if (addBaseAccess) {
                     await this.addBaseAccessForUser(newUserId);
                 }
                 
-                window.app?.showAlert('Utilisateur ajouté avec succès', 'success');
+                window.app?.showAlert('Utilisateur ajoutÃ© avec succÃ¨s', 'success');
             }
 
-            // Fermer le modal et recharger les données
+            // Fermer le modal et recharger les donnÃ©es
             const modal = document.querySelector('.fixed');
             if (modal) {
                 modal.remove();
@@ -306,7 +306,7 @@ class UsersManager {
         } catch (error) {
             console.error('Erreur lors de la sauvegarde:', error);
             window.app?.showAlert('Erreur lors de la sauvegarde', 'error');
-            // Fermer le modal même en cas d'erreur
+            // Fermer le modal mÃªme en cas d'erreur
             const modal = document.querySelector('.fixed');
             if (modal) {
                 modal.remove();
@@ -328,7 +328,7 @@ class UsersManager {
                                    class="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500">
                         </div>
                         <div>
-                            <label class="block text-sm font-medium text-gray-700 mb-1">Prénom</label>
+                            <label class="block text-sm font-medium text-gray-700 mb-1">PrÃ©nom</label>
                             <input type="text" id="user-prenom" value="${user.prenom || ''}"
                                    class="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500">
                         </div>
@@ -344,10 +344,10 @@ class UsersManager {
                                class="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500">
                     </div>
                     <div>
-                        <label class="block text-sm font-medium text-gray-700 mb-1">Équipe</label>
+                        <label class="block text-sm font-medium text-gray-700 mb-1">Ãquipe</label>
                         <select id="user-equipe"
                                 class="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500">
-                            <option value="">Aucune équipe</option>
+                            <option value="">Aucune Ã©quipe</option>
                             ${this.teams.filter(t => !t.archived).map(team => 
                                 `<option value="${team.id}" ${team.id === user.equipe_id ? 'selected' : ''}>${team.nom}</option>`
                             ).join('')}
@@ -379,7 +379,7 @@ class UsersManager {
 
             const modalContent = `
                 <div class="space-y-4">
-                    <h4 class="font-medium text-gray-900">Accès pour: ${user.nom} ${user.prenom || ''}</h4>
+                    <h4 class="font-medium text-gray-900">AccÃ¨s pour: ${user.nom} ${user.prenom || ''}</h4>
                     <div class="max-h-60 overflow-y-auto space-y-2">
                         ${userAccess.map(acc => {
                             const software = this.software.find(s => s.id === acc.logiciel_id);
@@ -399,14 +399,14 @@ class UsersManager {
                         }).join('')}
                     </div>
                     <div class="border-t pt-4">
-                        <h5 class="text-sm font-medium mb-2">Ajouter un accès</h5>
+                        <h5 class="text-sm font-medium mb-2">Ajouter un accÃ¨s</h5>
                         <div class="space-y-2 sm:space-y-0 sm:flex sm:space-x-2">
                             <select id="select-software" class="w-full sm:flex-1 px-2 py-1 border border-gray-300 rounded text-sm">
-                                <option value="">Sélectionner un logiciel</option>
+                                <option value="">SÃ©lectionner un logiciel</option>
                                 ${activeSoftware.map(soft => `<option value="${soft.id}">${soft.nom}</option>`).join('')}
                             </select>
                             <select id="select-right" class="w-full sm:flex-1 px-2 py-1 border border-gray-300 rounded text-sm">
-                                <option value="">Sélectionner un droit</option>
+                                <option value="">SÃ©lectionner un droit</option>
                                 ${this.droits.map(droit => `<option value="${droit.id}">${droit.nom}</option>`).join('')}
                             </select>
                             <button onclick="window.usersManager.addUserAccess('${userId}')" 
@@ -419,10 +419,10 @@ class UsersManager {
                 </div>
             `;
 
-            window.app?.showModal('Gérer les accès', modalContent, []);
+            window.app?.showModal('GÃ©rer les accÃ¨s', modalContent, []);
         } catch (error) {
-            console.error('Erreur lors du chargement des accès:', error);
-            window.app?.showAlert('Erreur lors du chargement des accès', 'error');
+            console.error('Erreur lors du chargement des accÃ¨s:', error);
+            window.app?.showAlert('Erreur lors du chargement des accÃ¨s', 'error');
         }
     }
 
@@ -431,27 +431,26 @@ class UsersManager {
         const rightId = document.getElementById('select-right')?.value;
 
         if (!softwareId || !rightId) {
-            window.app?.showAlert('Veuillez sélectionner un logiciel et un droit', 'error');
+            window.app?.showAlert('Veuillez sÃ©lectionner un logiciel et un droit', 'error');
             return;
         }
 
         try {
-            await window.D1API.get('acces', {
-                method: 'POST',
-                headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify({
-                    utilisateur_id: userId,
-                    logiciel_id: softwareId,
-                    droit_id: rightId
-                })
+            const result = await window.D1API.create('acces', {
+                utilisateur_id: userId,
+                logiciel_id: softwareId,
+                droit_id: rightId
             });
+            if (!result.success) {
+                throw new Error(result.error);
+            }
 
-            window.app?.showAlert('Accès ajouté avec succès', 'success');
+            window.app?.showAlert('AccÃ¨s ajoutÃ© avec succÃ¨s', 'success');
             document.querySelector('.fixed')?.remove();
             this.manageUserAccess(userId); // Recharger la modal
         } catch (error) {
-            console.error('Erreur lors de l\'ajout de l\'accès:', error);
-            window.app?.showAlert('Erreur lors de l\'ajout de l\'accès', 'error');
+            console.error('Erreur lors de l\'ajout de l\'accÃ¨s:', error);
+            window.app?.showAlert('Erreur lors de l\'ajout de l\'accÃ¨s', 'error');
         }
     }
 
@@ -461,7 +460,7 @@ class UsersManager {
             if (!result.success) {
                 throw new Error(result.error);
             }
-            window.app?.showAlert('Accès supprimé avec succès', 'success');
+            window.app?.showAlert('AccÃ¨s supprimÃ© avec succÃ¨s', 'success');
             // Recharger la vue
             const modal = document.querySelector('.fixed');
             if (modal) {
@@ -472,8 +471,8 @@ class UsersManager {
                 }
             }
         } catch (error) {
-            console.error('Erreur lors de la suppression de l\'accès:', error);
-            window.app?.showAlert('Erreur lors de la suppression de l\'accès', 'error');
+            console.error('Erreur lors de la suppression de l\'accÃ¨s:', error);
+            window.app?.showAlert('Erreur lors de la suppression de l\'accÃ¨s', 'error');
         }
     }
 
@@ -502,11 +501,11 @@ class UsersManager {
                 if (cost) {
                     let costToAdd = cost.cout_mensuel;
                     
-                    // Pour les accès communs, ne compter qu'une fois
-                    if (droit && droit.nom === 'Accès communs') {
+                    // Pour les accÃ¨s communs, ne compter qu'une fois
+                    if (droit && droit.nom === 'AccÃ¨s communs') {
                         const sharedKey = `${acc.logiciel_id}_${acc.droit_id}`;
                         if (processedShared.has(sharedKey)) {
-                            costToAdd = 0; // Déjà compté
+                            costToAdd = 0; // DÃ©jÃ  comptÃ©
                         } else {
                             processedShared.add(sharedKey);
                         }
@@ -523,30 +522,30 @@ class UsersManager {
 
             const modalContent = `
                 <div class="space-y-4">
-                    <h4 class="font-medium text-gray-900">Coûts pour: ${user.nom} ${user.prenom || ''}</h4>
+                    <h4 class="font-medium text-gray-900">CoÃ»ts pour: ${user.nom} ${user.prenom || ''}</h4>
                     <div class="bg-blue-50 p-4 rounded-lg">
-                        <div class="text-2xl font-bold text-blue-900">${totalCost.toFixed(2)}€ / mois</div>
-                        <div class="text-sm text-blue-700">Coût total</div>
+                        <div class="text-2xl font-bold text-blue-900">${totalCost.toFixed(2)}â¬ / mois</div>
+                        <div class="text-sm text-blue-700">CoÃ»t total</div>
                     </div>
                     <div class="max-h-60 overflow-y-auto space-y-2">
-                        <h5 class="text-sm font-medium">Détail des coûts:</h5>
+                        <h5 class="text-sm font-medium">DÃ©tail des coÃ»ts:</h5>
                         ${costDetails.map(detail => `
                             <div class="flex justify-between items-center p-2 border rounded">
                                 <div>
                                     <span class="text-sm font-medium">${detail.software}</span>
                                     <span class="text-xs text-gray-500 ml-2">(${detail.droit})</span>
                                 </div>
-                                <span class="text-sm font-medium">${detail.cost.toFixed(2)}€</span>
+                                <span class="text-sm font-medium">${detail.cost.toFixed(2)}â¬</span>
                             </div>
                         `).join('')}
                     </div>
                 </div>
             `;
 
-            window.app?.showModal('Coûts utilisateur', modalContent, []);
+            window.app?.showModal('CoÃ»ts utilisateur', modalContent, []);
         } catch (error) {
-            console.error('Erreur lors du calcul des coûts:', error);
-            window.app?.showAlert('Erreur lors du calcul des coûts', 'error');
+            console.error('Erreur lors du calcul des coÃ»ts:', error);
+            window.app?.showAlert('Erreur lors du calcul des coÃ»ts', 'error');
         }
     }
 
@@ -561,11 +560,11 @@ class UsersManager {
                         <strong>${user.nom} ${user.prenom || ''}</strong> ne fait plus partie de l'entreprise.
                     </p>
                     <p class="text-sm text-orange-700 mt-2">
-                        Cette action va archiver l'utilisateur et vous permettra de gérer ses accès.
+                        Cette action va archiver l'utilisateur et vous permettra de gÃ©rer ses accÃ¨s.
                     </p>
                 </div>
                 <div id="user-software-list" class="max-h-60 overflow-y-auto">
-                    <!-- Liste des logiciels sera chargée ici -->
+                    <!-- Liste des logiciels sera chargÃ©e ici -->
                 </div>
             </div>
         `;
@@ -591,12 +590,12 @@ class UsersManager {
             if (!softwareList) return;
 
             if (userAccess.length === 0) {
-                softwareList.innerHTML = '<p class="text-gray-500 text-center py-4">Aucun accès à supprimer</p>';
+                softwareList.innerHTML = '<p class="text-gray-500 text-center py-4">Aucun accÃ¨s Ã  supprimer</p>';
                 return;
             }
 
             const softwareHtml = `
-                <h5 class="text-sm font-medium mb-2">Accès qui seront supprimés:</h5>
+                <h5 class="text-sm font-medium mb-2">AccÃ¨s qui seront supprimÃ©s:</h5>
                 <div class="space-y-2">
                     ${userAccess.map(acc => {
                         const software = this.software.find(s => s.id === acc.logiciel_id);
@@ -613,7 +612,7 @@ class UsersManager {
 
             softwareList.innerHTML = softwareHtml;
         } catch (error) {
-            console.error('Erreur lors du chargement des accès utilisateur:', error);
+            console.error('Erreur lors du chargement des accÃ¨s utilisateur:', error);
         }
     }
 
@@ -628,7 +627,7 @@ class UsersManager {
                 }
             }
 
-            // 2. Supprimer tous les accès de l'utilisateur
+            // 2. Supprimer tous les accÃ¨s de l'utilisateur
             const accessResult = await window.D1API.get('acces');
             const userAccess = (accessResult.data || []).filter(a => a.utilisateur_id === userId);
 
@@ -640,7 +639,7 @@ class UsersManager {
             }
 
             document.querySelector('.fixed')?.remove();
-            window.app?.showAlert('Utilisateur archivé et accès supprimés avec succès', 'success');
+            window.app?.showAlert('Utilisateur archivÃ© et accÃ¨s supprimÃ©s avec succÃ¨s', 'success');
             await this.loadUsers();
         } catch (error) {
             console.error('Erreur lors de l\'archivage:', error);
@@ -657,12 +656,12 @@ class UsersManager {
                     throw new Error(result.error);
                 }
 
-                window.app?.showAlert('Utilisateur désarchivé avec succès', 'success');
+                window.app?.showAlert('Utilisateur dÃ©sarchivÃ© avec succÃ¨s', 'success');
                 await this.loadUsers();
             }
         } catch (error) {
-            console.error('Erreur lors du désarchivage:', error);
-            window.app?.showAlert('Erreur lors du désarchivage', 'error');
+            console.error('Erreur lors du dÃ©sarchivage:', error);
+            window.app?.showAlert('Erreur lors du dÃ©sarchivage', 'error');
         }
     }
 
@@ -676,7 +675,7 @@ class UsersManager {
         const processedShared = new Set();
 
         for (const acc of userAccess) {
-            // Vérifier que le logiciel est toujours actif
+            // VÃ©rifier que le logiciel est toujours actif
             const software = activeSoftware.find(s => s.id === acc.logiciel_id);
             if (!software) continue;
 
@@ -684,7 +683,7 @@ class UsersManager {
             const droit = this.droits.find(d => d.id === acc.droit_id);
             
             if (cost && droit) {
-                if (droit.nom === 'Accès communs') {
+                if (droit.nom === 'AccÃ¨s communs') {
                     const sharedKey = `${acc.logiciel_id}_${acc.droit_id}`;
                     if (!processedShared.has(sharedKey)) {
                         totalCost += cost.cout_mensuel;
@@ -705,7 +704,7 @@ class UsersManager {
         const userAccess = this.access.filter(a => a.utilisateur_id === userId);
         const activeSoftware = this.software.filter(s => !s.archived);
         
-        // Compter les logiciels uniques auxquels l'utilisateur a accès
+        // Compter les logiciels uniques auxquels l'utilisateur a accÃ¨s
         const uniqueSoftware = new Set();
         for (const acc of userAccess) {
             const software = activeSoftware.find(s => s.id === acc.logiciel_id);
@@ -764,11 +763,11 @@ class UsersManager {
             }
         });
 
-        // Réassigner les utilisateurs triés
+        // RÃ©assigner les utilisateurs triÃ©s
         if (this.showArchived) {
             this.users = filteredUsers;
         } else {
-            // Garder les utilisateurs archivés à leur place
+            // Garder les utilisateurs archivÃ©s Ã  leur place
             const archivedUsers = this.users.filter(u => u.archived);
             this.users = [...filteredUsers, ...archivedUsers];
         }
@@ -778,7 +777,7 @@ class UsersManager {
 
     async addBaseAccessForUser(userId) {
         try {
-            // Récupérer les logiciels de base et le droit "User"
+            // RÃ©cupÃ©rer les logiciels de base et le droit "User"
             const [softwareResult, rightsResult] = await Promise.all([
                 window.D1API.get('logiciels'),
                 window.D1API.get('droits')
@@ -788,29 +787,28 @@ class UsersManager {
             const userRight = (rightsResult.data || []).find(d => d.nom === 'User');
 
             if (!userRight) {
-                console.warn('Droit "User" non trouvé');
+                console.warn('Droit "User" non trouvÃ©');
                 return;
             }
 
-            // Créer les accès pour chaque logiciel de base
+            // CrÃ©er les accÃ¨s pour chaque logiciel de base
             for (const software of baseSoftware) {
-                await window.D1API.get('acces', {
-                    method: 'POST',
-                    headers: { 'Content-Type': 'application/json' },
-                    body: JSON.stringify({
-                        utilisateur_id: userId,
-                        logiciel_id: software.id,
-                        droit_id: userRight.id
-                    })
+                const result = await window.D1API.create('acces', {
+                    utilisateur_id: userId,
+                    logiciel_id: software.id,
+                    droit_id: userRight.id
                 });
+                if (!result.success) {
+                    console.error('Erreur lors de l\'ajout d\'accÃ¨s de base:', result.error);
+                }
             }
 
             if (baseSoftware.length > 0) {
-                window.app?.showAlert(`${baseSoftware.length} accès de base ajoutés automatiquement`, 'info');
+                window.app?.showAlert(`${baseSoftware.length} accÃ¨s de base ajoutÃ©s automatiquement`, 'info');
             }
         } catch (error) {
-            console.error('Erreur lors de l\'ajout des accès de base:', error);
-            window.app?.showAlert('Erreur lors de l\'ajout des accès de base', 'warning');
+            console.error('Erreur lors de l\'ajout des accÃ¨s de base:', error);
+            window.app?.showAlert('Erreur lors de l\'ajout des accÃ¨s de base', 'warning');
         }
     }
 }
