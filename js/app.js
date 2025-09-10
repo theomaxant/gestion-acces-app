@@ -460,12 +460,40 @@ class AccessManagementApp {
                         ]
                     }]
                 },
+                plugins: [ChartDataLabels],
                 options: {
                     responsive: true,
                     maintainAspectRatio: false,
                     plugins: {
                         legend: {
                             position: 'bottom'
+                        },
+                        tooltip: {
+                            callbacks: {
+                                label: function(context) {
+                                    const label = context.label || '';
+                                    const value = context.raw || 0;
+                                    const percentage = ((value / context.dataset.data.reduce((a, b) => a + b, 0)) * 100).toFixed(1);
+                                    return `${label}: ${value}€/mois (${percentage}%)`;
+                                }
+                            }
+                        },
+                        datalabels: {
+                            display: function(context) {
+                                const value = context.dataset.data[context.dataIndex];
+                                const total = context.dataset.data.reduce((a, b) => a + b, 0);
+                                const percentage = (value / total) * 100;
+                                return percentage > 5; // Afficher seulement si > 5%
+                            },
+                            color: '#fff',
+                            font: {
+                                weight: 'bold',
+                                size: 12
+                            },
+                            formatter: function(value, context) {
+                                if (value === 0) return '';
+                                return value + '€';
+                            }
                         }
                     }
                 }
@@ -607,12 +635,33 @@ class AccessManagementApp {
                         backgroundColor: '#10B981'
                     }]
                 },
+                plugins: [ChartDataLabels],
                 options: {
                     responsive: true,
                     maintainAspectRatio: false,
                     plugins: {
                         legend: {
                             display: false
+                        },
+                        tooltip: {
+                            callbacks: {
+                                label: function(context) {
+                                    return `${context.label}: ${context.raw}€/mois`;
+                                }
+                            }
+                        },
+                        datalabels: {
+                            anchor: 'end',
+                            align: 'top',
+                            color: '#374151',
+                            font: {
+                                weight: 'bold',
+                                size: 11
+                            },
+                            formatter: function(value) {
+                                if (value === 0) return '';
+                                return value + '€';
+                            }
                         }
                     },
                     scales: {
@@ -986,6 +1035,7 @@ class AccessManagementApp {
                         borderColor: '#ffffff'
                     }]
                 },
+                plugins: [ChartDataLabels],
                 options: {
                     responsive: true,
                     maintainAspectRatio: false,
@@ -1005,8 +1055,26 @@ class AccessManagementApp {
                                 label: function(context) {
                                     const method = Object.keys(paymentMethods)[context.dataIndex];
                                     const pm = paymentMethods[method];
-                                    return `${context.label}: ${context.parsed.toFixed(2)}€/an (${pm.count} logiciel${pm.count > 1 ? 's' : ''})`;
+                                    const percentage = ((context.raw / data.reduce((a, b) => a + b, 0)) * 100).toFixed(1);
+                                    return `${context.label}: ${context.raw.toFixed(0)}€/an (${pm.count} logiciel${pm.count > 1 ? 's' : ''}) - ${percentage}%`;
                                 }
+                            }
+                        },
+                        datalabels: {
+                            display: function(context) {
+                                const value = context.dataset.data[context.dataIndex];
+                                const total = context.dataset.data.reduce((a, b) => a + b, 0);
+                                const percentage = (value / total) * 100;
+                                return percentage > 8; // Afficher seulement si > 8%
+                            },
+                            color: '#fff',
+                            font: {
+                                weight: 'bold',
+                                size: 11
+                            },
+                            formatter: function(value, context) {
+                                if (value === 0) return '';
+                                return Math.round(value) + '€';
                             }
                         }
                     }
