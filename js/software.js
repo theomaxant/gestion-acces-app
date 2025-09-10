@@ -7,6 +7,7 @@ class SoftwareManager {
         this.access = [];
         this.users = [];
         this.showArchived = false;
+        this.showShopifyOnly = false;
         this.sortColumn = 'nom';
         this.sortDirection = 'asc';
         this.init();
@@ -33,6 +34,11 @@ class SoftwareManager {
 
         document.getElementById('show-archived-software')?.addEventListener('change', (e) => {
             this.showArchived = e.target.checked;
+            this.loadSoftware();
+        });
+
+        document.getElementById('show-shopify-only')?.addEventListener('change', (e) => {
+            this.showShopifyOnly = e.target.checked;
             this.loadSoftware();
         });
 
@@ -86,9 +92,17 @@ class SoftwareManager {
         const container = document.getElementById('software-table-container');
         if (!container) return;
 
-        const filteredSoftware = this.showArchived ? 
-            this.software : 
-            this.software.filter(s => !s.archived);
+        let filteredSoftware = this.software;
+        
+        // Filtre archivé
+        if (!this.showArchived) {
+            filteredSoftware = filteredSoftware.filter(s => !s.archived);
+        }
+        
+        // Filtre Shopify uniquement
+        if (this.showShopifyOnly) {
+            filteredSoftware = filteredSoftware.filter(s => s.application_shopify === true);
+        }
 
         const tableHtml = `
             <table class="min-w-full table-auto">
@@ -98,6 +112,7 @@ class SoftwareManager {
                             Logiciel <i class="fas fa-sort ml-1"></i>
                         </th>
                         <th class="hidden sm:table-cell px-3 sm:px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Équipe</th>
+                        <th class="hidden lg:table-cell px-3 sm:px-6 py-3 text-center text-xs font-medium text-gray-500 uppercase tracking-wider">🛒 Shopify</th>
                         <th class="hidden sm:table-cell px-3 sm:px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Accès</th>
                         <th class="hidden sm:table-cell px-3 sm:px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Qui paye</th>
                         <th class="hidden lg:table-cell px-3 sm:px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Paiement</th>
@@ -147,6 +162,14 @@ class SoftwareManager {
                 </td>
                 <td class="hidden sm:table-cell px-3 sm:px-6 py-3 sm:py-4">
                     <div class="text-sm text-gray-900">${team ? team.nom : '-'}</div>
+                </td>
+                <td class="hidden lg:table-cell px-3 sm:px-6 py-3 sm:py-4">
+                    <div class="text-center">
+                        ${software.application_shopify ? 
+                            '<span class="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-orange-100 text-orange-800">🛒 Shopify</span>' : 
+                            '<span class="text-gray-400 text-sm">-</span>'
+                        }
+                    </div>
                 </td>
                 <td class="hidden sm:table-cell px-3 sm:px-6 py-3 sm:py-4">
                     <div class="text-sm text-center">
@@ -303,12 +326,21 @@ class SoftwareManager {
                         </div>
                     </div>
                     
-                    <div class="flex items-center">
-                        <input type="checkbox" id="software-base" 
-                               class="h-4 w-4 text-blue-600 focus:ring-blue-500 border-gray-300 rounded">
-                        <label for="software-base" class="ml-2 block text-sm text-gray-700">
-                            Logiciel de base (accès automatique pour les nouveaux utilisateurs)
-                        </label>
+                    <div class="space-y-3">
+                        <div class="flex items-center">
+                            <input type="checkbox" id="software-base" 
+                                   class="h-4 w-4 text-blue-600 focus:ring-blue-500 border-gray-300 rounded">
+                            <label for="software-base" class="ml-2 block text-sm text-gray-700">
+                                Logiciel de base (accès automatique pour les nouveaux utilisateurs)
+                            </label>
+                        </div>
+                        <div class="flex items-center">
+                            <input type="checkbox" id="software-shopify" 
+                                   class="h-4 w-4 text-orange-600 focus:ring-orange-500 border-gray-300 rounded">
+                            <label for="software-shopify" class="ml-2 block text-sm text-gray-700">
+                                🛒 Application Shopify (e-commerce)
+                            </label>
+                        </div>
                     </div>
                 </div>
             </form>
@@ -329,12 +361,14 @@ class SoftwareManager {
         const nom = document.getElementById('software-nom').value.trim();
         const description = document.getElementById('software-description').value.trim();
         const logiciel_de_base = document.getElementById('software-base').checked;
+        const application_shopify = document.getElementById('software-shopify').checked;
         const equipe_id = document.getElementById('software-team').value;
         const payer_id = document.getElementById('software-payer').value;
         const moyen_paiement = document.getElementById('software-payment-method').value;
         const periodicite = document.getElementById('software-periodicity').value;
         const date_souscription = document.getElementById('software-subscription-date').value;
 
+        // Validation des champs obligatoires
         if (!nom) {
             window.app?.showAlert('Le nom du logiciel est requis', 'error');
             return;
@@ -345,13 +379,34 @@ class SoftwareManager {
             return;
         }
 
+        if (!payer_id) {
+            window.app?.showAlert('Le champ "Qui paye ?" est requis', 'error');
+            return;
+        }
+
+        if (!moyen_paiement) {
+            window.app?.showAlert('Le moyen de paiement est requis', 'error');
+            return;
+        }
+
+        if (!periodicite) {
+            window.app?.showAlert('La périodicité de paiement est requise', 'error');
+            return;
+        }
+
+        if (!date_souscription) {
+            window.app?.showAlert('La date de souscription est requise', 'error');
+            return;
+        }
+
         try {
             const softwareData = {
                 nom,
                 description,
                 logiciel_de_base,
+                application_shopify,
                 equipe_id,
-                payer_id: payer_id || null, // Convertir chaîne vide en null
+                payer_id,
                 moyen_paiement,
                 periodicite,
                 date_souscription,
@@ -443,8 +498,8 @@ class SoftwareManager {
                             </select>
                         </div>
                         <div>
-                            <label class="block text-sm font-medium text-gray-700 mb-1">Qui paye ?</label>
-                            <select id="software-payer" 
+                            <label class="block text-sm font-medium text-gray-700 mb-1">Qui paye ? *</label>
+                            <select id="software-payer" required
                                     class="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500">
                                 <option value="">Sélectionner un utilisateur</option>
                                 ${usersOptions}
@@ -454,37 +509,51 @@ class SoftwareManager {
                     
                     <div class="grid grid-cols-1 md:grid-cols-3 gap-4">
                         <div>
-                            <label class="block text-sm font-medium text-gray-700 mb-1">Moyen de paiement</label>
-                            <select id="software-payment-method" 
+                            <label class="block text-sm font-medium text-gray-700 mb-1">Moyen de paiement *</label>
+                            <select id="software-payment-method" required
                                     class="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500">
+                                <option value="">Sélectionner un moyen de paiement</option>
                                 <option value="carte" ${software.moyen_paiement === 'carte' ? 'selected' : ''}>Carte bancaire</option>
                                 <option value="prelevement" ${software.moyen_paiement === 'prelevement' ? 'selected' : ''}>Prélèvement automatique</option>
                                 <option value="virement" ${software.moyen_paiement === 'virement' ? 'selected' : ''}>Virement</option>
+                                <option value="cheque" ${software.moyen_paiement === 'cheque' ? 'selected' : ''}>Chèque</option>
+                                <option value="especes" ${software.moyen_paiement === 'especes' ? 'selected' : ''}>Espèces</option>
                             </select>
                         </div>
                         <div>
-                            <label class="block text-sm font-medium text-gray-700 mb-1">Périodicité de paiement</label>
-                            <select id="software-periodicity" 
+                            <label class="block text-sm font-medium text-gray-700 mb-1">Périodicité de paiement *</label>
+                            <select id="software-periodicity" required
                                     class="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500">
-                                <option value="mensuel" ${(software.periodicite === 'mensuel' || !software.periodicite) ? 'selected' : ''}>Mensuel</option>
+                                <option value="">Sélectionner une périodicité</option>
+                                <option value="mensuel" ${software.periodicite === 'mensuel' ? 'selected' : ''}>Mensuel</option>
                                 <option value="trimestriel" ${software.periodicite === 'trimestriel' ? 'selected' : ''}>Trimestriel</option>
                                 <option value="semestriel" ${software.periodicite === 'semestriel' ? 'selected' : ''}>Semestriel</option>
                                 <option value="annuel" ${software.periodicite === 'annuel' ? 'selected' : ''}>Annuel</option>
+                                <option value="ponctuel" ${software.periodicite === 'ponctuel' ? 'selected' : ''}>Ponctuel (achat unique)</option>
                             </select>
                         </div>
                         <div>
-                            <label class="block text-sm font-medium text-gray-700 mb-1">Date de souscription</label>
-                            <input type="date" id="software-subscription-date" value="${software.date_souscription || ''}"
+                            <label class="block text-sm font-medium text-gray-700 mb-1">Date de souscription *</label>
+                            <input type="date" id="software-subscription-date" required value="${software.date_souscription || ''}"
                                    class="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500">
                         </div>
                     </div>
                     
-                    <div class="flex items-center">
-                        <input type="checkbox" id="software-base" ${software.logiciel_de_base ? 'checked' : ''}
-                               class="h-4 w-4 text-blue-600 focus:ring-blue-500 border-gray-300 rounded">
-                        <label for="software-base" class="ml-2 block text-sm text-gray-700">
-                            Logiciel de base (accès automatique pour les nouveaux utilisateurs)
-                        </label>
+                    <div class="space-y-3">
+                        <div class="flex items-center">
+                            <input type="checkbox" id="software-base" ${software.logiciel_de_base ? 'checked' : ''}
+                                   class="h-4 w-4 text-blue-600 focus:ring-blue-500 border-gray-300 rounded">
+                            <label for="software-base" class="ml-2 block text-sm text-gray-700">
+                                Logiciel de base (accès automatique pour les nouveaux utilisateurs)
+                            </label>
+                        </div>
+                        <div class="flex items-center">
+                            <input type="checkbox" id="software-shopify" ${software.application_shopify ? 'checked' : ''}
+                                   class="h-4 w-4 text-orange-600 focus:ring-orange-500 border-gray-300 rounded">
+                            <label for="software-shopify" class="ml-2 block text-sm text-gray-700">
+                                🛒 Application Shopify (e-commerce)
+                            </label>
+                        </div>
                     </div>
                 </div>
             </form>
