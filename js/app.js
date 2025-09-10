@@ -197,6 +197,10 @@ class AccessManagementApp {
                 }
                 break;
             case 'reports':
+                // S'assurer que le ReportsManager est initialisé
+                if (!window.reportsManager && window.initReportsManager) {
+                    window.initReportsManager();
+                }
                 if (window.reportsManager) {
                     await window.reportsManager.loadReports();
                 }

@@ -25,17 +25,40 @@ class ReportsManager {
     }
 
     setupEventListeners() {
-        document.getElementById('view-by-software-btn')?.addEventListener('click', () => {
-            this.showSoftwareView();
-        });
+        console.log('📊 Setup event listeners pour les rapports');
+        
+        const softwareBtn = document.getElementById('view-by-software-btn');
+        if (softwareBtn) {
+            softwareBtn.addEventListener('click', () => {
+                console.log('🔄 Clic sur vue par logiciel');
+                this.showSoftwareView();
+            });
+            console.log('✅ Event listener ajouté pour view-by-software-btn');
+        } else {
+            console.warn('⚠️ Élément view-by-software-btn non trouvé');
+        }
 
-        document.getElementById('view-by-user-btn')?.addEventListener('click', () => {
-            this.showUserView();
-        });
+        const userBtn = document.getElementById('view-by-user-btn');
+        if (userBtn) {
+            userBtn.addEventListener('click', () => {
+                console.log('🔄 Clic sur vue par utilisateur');
+                this.showUserView();
+            });
+            console.log('✅ Event listener ajouté pour view-by-user-btn');
+        } else {
+            console.warn('⚠️ Élément view-by-user-btn non trouvé');
+        }
 
-        document.getElementById('view-by-team-btn')?.addEventListener('click', () => {
-            this.showTeamView();
-        });
+        const teamBtn = document.getElementById('view-by-team-btn');
+        if (teamBtn) {
+            teamBtn.addEventListener('click', () => {
+                console.log('🔄 Clic sur vue par équipe');
+                this.showTeamView();
+            });
+            console.log('✅ Event listener ajouté pour view-by-team-btn');
+        } else {
+            console.warn('⚠️ Élément view-by-team-btn non trouvé');
+        }
     }
 
     async loadReports() {
@@ -58,6 +81,7 @@ class ReportsManager {
     }
 
     async showSoftwareView() {
+        console.log('📊 Affichage de la vue par logiciel');
         await this.loadReports();
         this.currentView = 'software';
         
@@ -221,6 +245,7 @@ class ReportsManager {
     }
 
     async showUserView() {
+        console.log('👤 Affichage de la vue par utilisateur');
         await this.loadReports();
         this.currentView = 'user';
         
@@ -526,6 +551,7 @@ class ReportsManager {
     }
 
     async showTeamView() {
+        console.log('👥 Affichage de la vue par équipe');
         try {
             const [teamsResult, softwareResult, usersResult, accessResult, costsResult] = await Promise.all([
                 window.D1API.get('equipes'),
@@ -751,6 +777,20 @@ class ReportsManager {
 }
 
 // Initialiser le gestionnaire de rapports
-document.addEventListener('DOMContentLoaded', () => {
-    window.reportsManager = new ReportsManager();
-});
+function initReportsManager() {
+    if (!window.reportsManager) {
+        window.reportsManager = new ReportsManager();
+        console.log('📊 ReportsManager initialisé');
+    }
+    return window.reportsManager;
+}
+
+// Initialiser dès que possible
+if (document.readyState === 'loading') {
+    document.addEventListener('DOMContentLoaded', initReportsManager);
+} else {
+    initReportsManager();
+}
+
+// S'assurer que le manager est disponible globalement
+window.initReportsManager = initReportsManager;
