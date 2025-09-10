@@ -12,20 +12,33 @@ class RightsManager {
     }
 
     setupEventListeners() {
-        // Add right button
-        document.getElementById('add-right-btn').addEventListener('click', () => {
-            this.openModal();
-        });
+        // Vérifier que les éléments existent avant d'ajouter les event listeners
+        const addBtn = document.getElementById('add-right-btn');
+        if (addBtn) {
+            addBtn.addEventListener('click', () => {
+                this.openModal();
+            });
+        } else {
+            console.warn('⚠️ Élément add-right-btn non trouvé');
+        }
 
-        // Save right form
-        document.getElementById('save-right-btn').addEventListener('click', () => {
-            this.saveRight();
-        });
+        const saveBtn = document.getElementById('save-right-btn');
+        if (saveBtn) {
+            saveBtn.addEventListener('click', () => {
+                this.saveRight();
+            });
+        } else {
+            console.warn('⚠️ Élément save-right-btn non trouvé');
+        }
 
-        // Cancel button
-        document.getElementById('cancel-right-btn').addEventListener('click', () => {
-            this.closeModal();
-        });
+        const cancelBtn = document.getElementById('cancel-right-btn');
+        if (cancelBtn) {
+            cancelBtn.addEventListener('click', () => {
+                this.closeModal();
+            });
+        } else {
+            console.warn('⚠️ Élément cancel-right-btn non trouvé');
+        }
 
         // Modal background click
         document.getElementById('right-modal').addEventListener('click', (e) => {
@@ -117,24 +130,39 @@ class RightsManager {
 
     openModal(right = null) {
         this.currentEditingRight = right;
+        
+        // Vérifier que tous les éléments existent
         const modal = document.getElementById('right-modal');
         const form = document.getElementById('right-form');
         const title = document.getElementById('modal-title');
+        
+        if (!modal || !form || !title) {
+            console.error('❌ Éléments modal manquants:', {
+                modal: !!modal,
+                form: !!form,
+                title: !!title
+            });
+            return;
+        }
 
         // Reset form
         form.reset();
 
+        const nameInput = document.getElementById('right-name');
+        const descInput = document.getElementById('right-description');
+        const colorInput = document.getElementById('right-color');
+
         if (right) {
             title.textContent = 'Modifier le Type d\'Accès';
-            document.getElementById('right-name').value = right.nom || '';
-            document.getElementById('right-description').value = right.description || '';
-            document.getElementById('right-color').value = right.couleur || '#3B82F6';
+            if (nameInput) nameInput.value = right.nom || '';
+            if (descInput) descInput.value = right.description || '';
+            if (colorInput) colorInput.value = right.couleur || '#3B82F6';
         } else {
             title.textContent = 'Ajouter un Type d\'Accès';
         }
 
         modal.classList.remove('hidden');
-        document.getElementById('right-name').focus();
+        if (nameInput) nameInput.focus();
     }
 
     closeModal() {

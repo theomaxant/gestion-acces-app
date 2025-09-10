@@ -508,11 +508,15 @@ class Logger {
      */
     createSimpleMessage(action, tableName, contextInfo, oldValues, newValues, customDetails = '') {
         const currentUser = window.auth?.getCurrentUser();
-        const actor = currentUser && currentUser !== 'Utilisateur non identifié' ? currentUser : 'Système';
+        const actor = this.getActorName(currentUser);
         
-        // Si un message personnalisé est fourni, l'utiliser
-        if (customDetails && !customDetails.includes('Action effectuée par')) {
-            return customDetails;
+        // Si un message personnalisé est fourni, s'assurer qu'il inclut l'acteur
+        if (customDetails) {
+            if (customDetails.includes(actor) || customDetails.toLowerCase().includes('système')) {
+                return customDetails;
+            } else {
+                return `${actor} - ${customDetails}`;
+            }
         }
         
         // Messages par défaut selon le type d'action et la table
@@ -529,6 +533,30 @@ class Logger {
     }
     
     /**
+     * Obtenir le nom de l'acteur de manière claire
+     */
+    getActorName(currentUser) {
+        if (!currentUser || currentUser === 'Utilisateur non identifié') {
+            return '⚙️ SYSTÈME';
+        }
+        
+        // Si c'est juste un email, extraire le nom
+        if (currentUser.includes('@')) {
+            const emailPart = currentUser.split('@')[0];
+            const parts = emailPart.split('.');
+            if (parts.length >= 2) {
+                const prenom = parts[0].charAt(0).toUpperCase() + parts[0].slice(1);
+                const nom = parts[1].charAt(0).toUpperCase() + parts[1].slice(1);
+                return `👤 ${prenom} ${nom}`;
+            }
+            return `👤 ${emailPart}`;
+        }
+        
+        // Sinon, utiliser le nom tel quel
+        return `👤 ${currentUser}`;
+    }
+    
+    /**
      * Messages pour les actions sur les utilisateurs
      */
     createUserMessage(action, actor, contextInfo, oldValues, newValues) {
@@ -536,16 +564,16 @@ class Logger {
         
         switch (action) {
             case 'CREATE':
-                return `${actor} a créé l'utilisateur ${userName}`;
+                return `${actor} a créé l'utilisateur "${userName}"`;
             case 'UPDATE':
                 const changes = this.detectUserChanges(oldValues, newValues);
-                return `${actor} a modifié l'utilisateur ${userName}${changes}`;
+                return `${actor} a modifié l'utilisateur "${userName}"${changes}`;
             case 'DELETE':
-                return `${actor} a supprimé l'utilisateur ${userName}`;
+                return `${actor} a supprimé l'utilisateur "${userName}"`;
             case 'ARCHIVE':
-                return `${actor} a archivé l'utilisateur ${userName}`;
+                return `${actor} a archivé l'utilisateur "${userName}"`;
             default:
-                return `${actor} - action ${action} sur l'utilisateur ${userName}`;
+                return `${actor} a effectué l'action "${action}" sur l'utilisateur "${userName}"`;
         }
     }
     
@@ -581,21 +609,21 @@ class Logger {
         switch (action) {
             case 'CREATE':
                 const newRole = this.getRoleName(newValues?.role);
-                return `${actor} a créé un accès à ${userName} pour le logiciel "${softwareName}" en tant que ${newRole}`;
+                return `${actor} a créé un accès pour "${userName}" au logiciel "${softwareName}" avec le rôle "${newRole}"`;
             case 'UPDATE':
                 const oldRole = this.getRoleName(oldValues?.role);
                 const updatedRole = this.getRoleName(newValues?.role);
                 if (oldRole !== updatedRole) {
-                    return `${actor} a modifié l'accès de ${userName} pour le logiciel "${softwareName}", de ${oldRole} à ${updatedRole}`;
+                    return `${actor} a modifié l'accès de "${userName}" pour "${softwareName}" : "${oldRole}" → "${updatedRole}"`;
                 } else {
-                    return `${actor} a modifié l'accès de ${userName} pour le logiciel "${softwareName}"`;
+                    return `${actor} a modifié l'accès de "${userName}" pour "${softwareName}"`;
                 }
             case 'DELETE':
-                return `${actor} a supprimé l'accès de ${userName} pour le logiciel "${softwareName}"`;
+                return `${actor} a supprimé l'accès de "${userName}" pour "${softwareName}"`;
             case 'ARCHIVE':
-                return `${actor} a archivé l'accès de ${userName} pour le logiciel "${softwareName}"`;
+                return `${actor} a archivé l'accès de "${userName}" pour "${softwareName}"`;
             default:
-                return `${actor} - action ${action} sur l'accès de ${userName} pour "${softwareName}"`;
+                return `${actor} a effectué l'action "${action}" sur l'accès de "${userName}" pour "${softwareName}"`;
         }
     }
     
