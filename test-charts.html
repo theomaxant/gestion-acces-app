@@ -1,0 +1,156 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Test Charts</title>
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <script src="https://cdn.tailwindcss.com"></script>
+</head>
+<body class="bg-gray-100 p-8">
+    <div class="max-w-4xl mx-auto">
+        <h1 class="text-2xl font-bold mb-8">Test des Graphiques</h1>
+        
+        <div class="grid grid-cols-1 lg:grid-cols-2 gap-6">
+            <!-- Graphique 1 -->
+            <div class="bg-white rounded-lg shadow-md p-6">
+                <h3 class="text-lg font-semibold mb-4">Test Graphique Coûts</h3>
+                <div style="height: 300px;">
+                    <canvas id="testCostChart"></canvas>
+                </div>
+            </div>
+            
+            <!-- Graphique 2 -->
+            <div class="bg-white rounded-lg shadow-md p-6">
+                <h3 class="text-lg font-semibold mb-4">Test Graphique Équipes</h3>
+                <div style="height: 300px;">
+                    <canvas id="testTeamChart"></canvas>
+                </div>
+            </div>
+        </div>
+        
+        <div class="mt-8 bg-white rounded-lg shadow-md p-6">
+            <button id="createCharts" class="bg-blue-600 text-white px-4 py-2 rounded hover:bg-blue-700">
+                Créer les graphiques
+            </button>
+            <button id="destroyCharts" class="ml-4 bg-red-600 text-white px-4 py-2 rounded hover:bg-red-700">
+                Détruire les graphiques
+            </button>
+            <div id="status" class="mt-4 text-sm text-gray-600"></div>
+        </div>
+    </div>
+
+    <script>
+        console.log('Page de test chargée');
+        console.log('Chart.js disponible:', typeof Chart !== 'undefined');
+        
+        let testCostChart = null;
+        let testTeamChart = null;
+        
+        function setStatus(message) {
+            document.getElementById('status').textContent = message;
+            console.log('[STATUS]', message);
+        }
+        
+        function createCharts() {
+            try {
+                setStatus('Création des graphiques...');
+                
+                // Détruire les graphiques existants
+                if (testCostChart && typeof testCostChart.destroy === 'function') {
+                    testCostChart.destroy();
+                    testCostChart = null;
+                }
+                
+                if (testTeamChart && typeof testTeamChart.destroy === 'function') {
+                    testTeamChart.destroy();
+                    testTeamChart = null;
+                }
+                
+                // Créer le graphique des coûts
+                const costCtx = document.getElementById('testCostChart');
+                if (costCtx) {
+                    testCostChart = new Chart(costCtx, {
+                        type: 'doughnut',
+                        data: {
+                            labels: ['Office 365', 'Adobe Creative Suite', 'Slack', 'GitHub'],
+                            datasets: [{
+                                data: [300, 150, 50, 100],
+                                backgroundColor: ['#3B82F6', '#10B981', '#F59E0B', '#EF4444']
+                            }]
+                        },
+                        options: {
+                            responsive: true,
+                            maintainAspectRatio: false,
+                            plugins: {
+                                legend: { position: 'bottom' }
+                            }
+                        }
+                    });
+                    console.log('Graphique coûts créé:', testCostChart);
+                }
+                
+                // Créer le graphique des équipes
+                const teamCtx = document.getElementById('testTeamChart');
+                if (teamCtx) {
+                    testTeamChart = new Chart(teamCtx, {
+                        type: 'bar',
+                        data: {
+                            labels: ['Développement', 'Marketing', 'Support', 'RH'],
+                            datasets: [{
+                                label: 'Coût mensuel (€)',
+                                data: [450, 200, 150, 100],
+                                backgroundColor: '#3B82F6'
+                            }]
+                        },
+                        options: {
+                            responsive: true,
+                            maintainAspectRatio: false,
+                            scales: {
+                                y: { beginAtZero: true }
+                            }
+                        }
+                    });
+                    console.log('Graphique équipes créé:', testTeamChart);
+                }
+                
+                setStatus('Graphiques créés avec succès !');
+                
+            } catch (error) {
+                console.error('Erreur lors de la création des graphiques:', error);
+                setStatus('Erreur: ' + error.message);
+            }
+        }
+        
+        function destroyCharts() {
+            try {
+                if (testCostChart && typeof testCostChart.destroy === 'function') {
+                    testCostChart.destroy();
+                    testCostChart = null;
+                    console.log('Graphique coûts détruit');
+                }
+                
+                if (testTeamChart && typeof testTeamChart.destroy === 'function') {
+                    testTeamChart.destroy();
+                    testTeamChart = null;
+                    console.log('Graphique équipes détruit');
+                }
+                
+                setStatus('Graphiques détruits');
+            } catch (error) {
+                console.error('Erreur lors de la destruction:', error);
+                setStatus('Erreur: ' + error.message);
+            }
+        }
+        
+        // Event listeners
+        document.getElementById('createCharts').addEventListener('click', createCharts);
+        document.getElementById('destroyCharts').addEventListener('click', destroyCharts);
+        
+        // Créer automatiquement au chargement
+        document.addEventListener('DOMContentLoaded', function() {
+            setTimeout(createCharts, 500);
+        });
+    </script>
+</body>
+</html>
