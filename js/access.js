@@ -37,12 +37,13 @@ class AccessManager {
 
     async loadAccess() {
         try {
-            const [accessResult, usersResult, softwareResult, costsResult] = await Promise.all([
-                fetch('tables/acces').then(r => r.json()),
-                fetch('tables/utilisateurs').then(r => r.json()),
-                fetch('tables/logiciels').then(r => r.json()),
-                fetch('tables/couts_licences').then(r => r.json())
-            ]);
+        const [accessResult, usersResult, softwareResult, costsResult] = await Promise.all([
+            window.D1API.get('acces'),
+            window.D1API.get('utilisateurs'),
+            window.D1API.get('logiciels'),
+            window.D1API.get('couts_licences')
+        ]);
+
 
             this.access = accessResult.data || [];
             this.users = usersResult.data || [];
