@@ -341,11 +341,10 @@ class AccessManager {
                 window.app?.showAlert('Accès modifié avec succès', 'success');
             } else {
                 // Création
-                await window.D1API.get('acces', {
-                    method: 'POST',
-                    headers: { 'Content-Type': 'application/json' },
-                    body: JSON.stringify(accessData)
-                });
+                const result = await window.D1API.create('acces', accessData);
+                if (!result.success) {
+                    throw new Error(result.error);
+                }
                 window.app?.showAlert('Accès ajouté avec succès', 'success');
             }
 
@@ -354,6 +353,11 @@ class AccessManager {
         } catch (error) {
             console.error('Erreur lors de la sauvegarde:', error);
             window.app?.showAlert('Erreur lors de la sauvegarde', 'error');
+            // Fermer le modal même en cas d'erreur
+            const modal = document.querySelector('.fixed');
+            if (modal) {
+                modal.remove();
+            }
         }
     }
 
