@@ -40,12 +40,13 @@ class ReportsManager {
 
     async loadReports() {
         try {
-            const [usersResult, softwareResult, accessResult, costsResult] = await Promise.all([
-                fetch('tables/utilisateurs').then(r => r.json()),
-                fetch('tables/logiciels').then(r => r.json()),
-                fetch('tables/acces').then(r => r.json()),
-                fetch('tables/couts_licences').then(r => r.json())
-            ]);
+        const [usersResult, softwareResult, accessResult, costsResult] = await Promise.all([
+            window.D1API.get('utilisateurs'),
+            window.D1API.get('logiciels'),
+            window.D1API.get('acces'),
+            window.D1API.get('couts_licences')
+        ]);
+
 
             this.users = usersResult.data || [];
             this.software = softwareResult.data || [];
