@@ -169,18 +169,19 @@ class LogsManager {
     async loadResolveData() {
         try {
             // Charger toutes les données en parallèle
-            const [usersResponse, softwareResponse, teamsResponse, rightsResponse] = await Promise.all([
-                fetch('tables/utilisateurs?limit=1000'),
-                fetch('tables/logiciels?limit=1000'),
-                fetch('tables/equipes?limit=1000'),
-                fetch('tables/droits?limit=1000')
-            ]);
+        const [usersResponse, softwareResponse, teamsResponse, rightsResponse] = await Promise.all([
+            window.D1API.get('utilisateurs', null, {limit: 1000}),
+            window.D1API.get('logiciels', null, {limit: 1000}),
+            window.D1API.get('equipes', null, {limit: 1000}),
+            window.D1API.get('droits', null, {limit: 1000})
+        ]);
 
-            // Traiter les utilisateurs
-            if (usersResponse.ok) {
-                const usersData = await usersResponse.json();
-                usersData.data?.forEach(user => {
-                    this.resolveCache.users.set(user.id, `${user.prenom} ${user.nom}`.trim());
+
+        // Traiter les utilisateurs
+        if (usersResponse.success) {
+            usersResponse.data?.forEach(user => {
+                this.resolveCache.users.set(user.id, `${user.prenom} ${user.nom}`.trim());
+            });
                 });
                 this.resolveCache.loaded.users = true;
             }
