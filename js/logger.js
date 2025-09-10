@@ -6,6 +6,8 @@ class Logger {
     constructor() {
         this.tableName = 'logs';
         this.maxRetries = 3;
+        this.supportedColumns = null; // Cache pour les colonnes supportées
+        this.fallbackMode = false; // Mode dégradé
     }
     
     /**
@@ -15,12 +17,15 @@ class Logger {
      * @param {string} recordId - ID de l'enregistrement
      * @param {Object} oldValues - Anciennes valeurs
      * @param {Object} newValues - Nouvelles valeurs
-     * @param {string} details - Détails supplémentaires
+     * @param {string} details - Détails supplémentaires (optionnel)
      */
     async log(action, tableName = '', recordId = '', oldValues = null, newValues = null, details = '') {
         try {
             // Extraire les informations sur l'utilisateur et le logiciel depuis les données
             const contextInfo = this.extractContextInfo(tableName, oldValues, newValues);
+            
+            // Créer un message simple et clair
+            const simpleMessage = this.createSimpleMessage(action, tableName, contextInfo, oldValues, newValues, details);
             
             // Construire l'entrée de log de base
             const logEntry = {
@@ -29,7 +34,7 @@ class Logger {
                 record_id: recordId,
                 user_info: this.getUserInfo(),
                 timestamp: new Date().toISOString(),
-                details: this.enrichDetails(details, contextInfo)
+                details: this.enrichDetails(simpleMessage, contextInfo)
             };
             
             // Ajouter old_values et new_values seulement si les colonnes existent
@@ -42,12 +47,12 @@ class Logger {
                     logEntry.new_values = JSON.stringify(newValues);
                 }
             } catch (e) {
-                // Si erreur de sérialisation, inclure dans details
-                logEntry.details += ` | Valeurs: ${oldValues ? 'old_values présentes' : 'pas d\'old_values'}, ${newValues ? 'new_values présentes' : 'pas de new_values'}`;
+                // Si erreur de sérialisation, l'ignorer silencieusement
+                console.warn('⚠️ Erreur de sérialisation des valeurs pour le log');
             }
             
             await this.saveLog(logEntry);
-            console.log(`📝 Log enregistré: ${action} sur ${tableName}${recordId ? ` (${recordId})` : ''}`);
+            console.log(`📝 ${simpleMessage}`);
             
         } catch (error) {
             console.error('❌ Erreur lors de l\'enregistrement du log:', error);
@@ -59,48 +64,83 @@ class Logger {
      */
     async saveLog(logEntry, retryCount = 0) {
         try {
+            // Tentative de sauvegarde normale
             const result = await window.D1API.create(this.tableName, logEntry);
             
             if (!result.success) {
-                throw new Error(`Erreur: ${result.error}`);
+                throw new Error(`Erreur API: ${result.error}`);
             }
             
+            console.log('✅ Log sauvegardé avec succès (mode complet)');
             return result.data;
             
         } catch (error) {
+            console.warn(`⚠️ Erreur lors de la sauvegarde du log:`, error.message);
+            
             // Gestion spécifique pour l'erreur PGRST204 (colonne non trouvée)
-            if (error.message && error.message.includes('PGRST204')) {
-                console.warn('⚠️ Colonnes old_values/new_values non trouvées, tentative sans ces champs...');
+            if (error.message && (error.message.includes('PGRST204') || error.message.includes('column') || error.message.includes('schema cache'))) {
+                console.warn('🔧 Passage en mode dégradé progressif...');
                 
-                // Recréer logEntry sans old_values et new_values
-                const simplifiedLogEntry = {
-                    action: logEntry.action,
-                    table_name: logEntry.table_name,
-                    record_id: logEntry.record_id,
-                    user_info: logEntry.user_info,
-                    timestamp: logEntry.timestamp,
-                    details: logEntry.details + (logEntry.old_values || logEntry.new_values ? ' | Données dans details par manque de colonnes' : '')
-                };
-                
+                // Étape 1: Mode réduit (sans old_values et new_values)
                 try {
-                    const result = await window.D1API.create(this.tableName, simplifiedLogEntry);
-                    if (!result.success) {
-                        throw new Error(`Erreur simplifiée: ${result.error}`);
+                    const reducedLogEntry = {
+                        action: logEntry.action || 'UNKNOWN',
+                        table_name: logEntry.table_name,
+                        record_id: logEntry.record_id,
+                        details: this.createCompactDetails(logEntry),
+                        timestamp: logEntry.timestamp
+                    };
+                    
+                    const result = await window.D1API.create(this.tableName, reducedLogEntry);
+                    if (result.success) {
+                        console.log('✅ Log sauvegardé en mode réduit (sans old/new values)');
+                        return result.data;
                     }
-                    console.log('✅ Log sauvegardé en mode simplifié (sans old_values/new_values)');
-                    return result.data;
-                } catch (simplifiedError) {
-                    console.error('❌ Échec même en mode simplifié:', simplifiedError);
-                    throw simplifiedError;
+                } catch (reducedError) {
+                    console.warn('⚠️ Mode réduit échoué, tentative ultra-minimal...');
                 }
+                
+                // Étape 2: Mode ultra-minimal (seulement action et details)
+                try {
+                    const minimalLogEntry = {
+                        action: logEntry.action || 'UNKNOWN',
+                        details: this.createCompactDetails(logEntry)
+                    };
+                    
+                    const result = await window.D1API.create(this.tableName, minimalLogEntry);
+                    if (result.success) {
+                        console.log('✅ Log sauvegardé en mode ultra-minimal');
+                        return result.data;
+                    }
+                } catch (minimalError) {
+                    console.warn('⚠️ Mode ultra-minimal échoué, basculement vers console uniquement');
+                }
+                
+                // Étape 3: Fallback console uniquement
+                console.log(`📝 LOG CONSOLE FALLBACK: ${logEntry.action} | ${this.createCompactDetails(logEntry)}`);
+                return { 
+                    id: 'console-fallback-' + Date.now(), 
+                    mode: 'console-fallback',
+                    timestamp: new Date().toISOString()
+                };
             }
             
+            // Gestion des autres erreurs avec retry
             if (retryCount < this.maxRetries) {
-                console.warn(`⚠️ Tentative ${retryCount + 1}/${this.maxRetries} échouée, nouvelle tentative...`);
+                console.warn(`⚠️ Tentative ${retryCount + 1}/${this.maxRetries} échouée, nouvelle tentative dans ${(retryCount + 1)} secondes...`);
                 await this.delay(1000 * (retryCount + 1)); // Délai progressif
                 return this.saveLog(logEntry, retryCount + 1);
             }
-            throw error;
+            
+            // Après tous les retries, fallback console
+            console.error('❌ Échec définitif de la sauvegarde, fallback console:', error);
+            console.log(`📝 LOG CONSOLE ERROR: ${logEntry.action} | ${this.createCompactDetails(logEntry)} | ERROR: ${error.message}`);
+            return { 
+                id: 'console-error-' + Date.now(), 
+                mode: 'console-error',
+                error: error.message,
+                timestamp: new Date().toISOString()
+            };
         }
     }
     
@@ -227,6 +267,36 @@ class Logger {
     }
     
     /**
+     * Créer des détails compacts pour le mode dégradé
+     */
+    createCompactDetails(logEntry) {
+        const parts = [];
+        
+        if (logEntry.details) parts.push(logEntry.details);
+        if (logEntry.table_name) parts.push(`Table: ${logEntry.table_name}`);
+        if (logEntry.record_id) parts.push(`ID: ${logEntry.record_id}`);
+        if (logEntry.timestamp) parts.push(`Time: ${logEntry.timestamp}`);
+        
+        // Ajouter info utilisateur de manière compacte
+        if (logEntry.user_info) {
+            try {
+                const userInfo = typeof logEntry.user_info === 'string' ? JSON.parse(logEntry.user_info) : logEntry.user_info;
+                if (userInfo.identifiedUser) {
+                    parts.push(`User: ${userInfo.identifiedUser}`);
+                }
+            } catch (e) {
+                parts.push('User: parsing error');
+            }
+        }
+        
+        // Ajouter les valeurs si présentes
+        if (logEntry.old_values) parts.push('Has old_values');
+        if (logEntry.new_values) parts.push('Has new_values');
+        
+        return parts.join(' | ');
+    }
+    
+    /**
      * Nettoyer les anciens logs (garder seulement les N derniers jours)
      */
     async cleanOldLogs(daysToKeep = 30) {
@@ -259,31 +329,114 @@ class Logger {
      */
     
     // Connexion/Déconnexion
-    async logLogin() {
-        const currentUser = window.auth?.getCurrentUser() || 'Utilisateur non identifié';
-        await this.log('LOGIN', '', '', null, null, `Connexion utilisateur: ${currentUser}`);
+    async logLogin(customMessage = '') {
+        const currentUser = window.auth?.getCurrentUser() || 'Un utilisateur';
+        const message = customMessage || `${currentUser} s'est connecté à l'application`;
+        await this.log('LOGIN', 'système', '', null, null, message);
     }
     
-    async logLogout() {
-        const currentUser = window.auth?.getCurrentUser() || 'Utilisateur non identifié';
-        await this.log('LOGOUT', '', '', null, null, `Déconnexion utilisateur: ${currentUser}`);
+    async logLogout(customMessage = '') {
+        const currentUser = window.auth?.getCurrentUser() || 'Un utilisateur';
+        const message = customMessage || `${currentUser} s'est déconnecté de l'application`;
+        await this.log('LOGOUT', 'système', '', null, null, message);
     }
     
-    // Opérations CRUD
-    async logCreate(tableName, recordId, newValues, details = '') {
-        await this.log('CREATE', tableName, recordId, null, newValues, details);
+    // Actions système courantes
+    async logSystemAction(action, message) {
+        await this.log(action, 'système', '', null, null, message);
     }
     
-    async logUpdate(tableName, recordId, oldValues, newValues, details = '') {
-        await this.log('UPDATE', tableName, recordId, oldValues, newValues, details);
+    async logLoginAttempt(username, success = false) {
+        const status = success ? 'réussie' : 'échouée';
+        const message = `Tentative de connexion ${status} pour ${username}`;
+        await this.log('LOGIN_ATTEMPT', 'système', '', null, null, message);
     }
     
-    async logDelete(tableName, recordId, oldValues, details = '') {
-        await this.log('DELETE', tableName, recordId, oldValues, null, details);
+    async logPasswordReset(username) {
+        const message = `Demande de réinitialisation de mot de passe pour ${username}`;
+        await this.log('PASSWORD_RESET', 'système', '', null, null, message);
     }
     
-    async logArchive(tableName, recordId, oldValues, details = '') {
-        await this.log('ARCHIVE', tableName, recordId, oldValues, null, details);
+    async logSessionExpired(username) {
+        const message = `Session expirée pour ${username}`;
+        await this.log('SESSION_EXPIRED', 'système', '', null, null, message);
+    }
+    
+    async logDataExport(exportType, userName) {
+        const currentUser = userName || window.auth?.getCurrentUser() || 'Un utilisateur';
+        const message = `${currentUser} a exporté des données (${exportType})`;
+        await this.log('EXPORT', 'système', '', null, null, message);
+    }
+    
+    async logDataImport(importType, recordCount, userName) {
+        const currentUser = userName || window.auth?.getCurrentUser() || 'Un utilisateur';
+        const message = `${currentUser} a importé ${recordCount} enregistrements (${importType})`;
+        await this.log('IMPORT', 'système', '', null, null, message);
+    }
+    
+    async logBackup(backupType, userName) {
+        const currentUser = userName || window.auth?.getCurrentUser() || 'Système';
+        const message = `${currentUser} a lancé une sauvegarde (${backupType})`;
+        await this.log('BACKUP', 'système', '', null, null, message);
+    }
+    
+    async logConfigChange(configName, oldValue, newValue, userName) {
+        const currentUser = userName || window.auth?.getCurrentUser() || 'Un administrateur';
+        const message = `${currentUser} a modifié la configuration "${configName}" de "${oldValue}" à "${newValue}"`;
+        await this.log('CONFIG_CHANGE', 'système', '', null, null, message);
+    }
+    
+    // Opérations CRUD avec messages personnalisés optionnels
+    async logCreate(tableName, recordId, newValues, customMessage = '') {
+        await this.log('CREATE', tableName, recordId, null, newValues, customMessage);
+    }
+    
+    async logUpdate(tableName, recordId, oldValues, newValues, customMessage = '') {
+        await this.log('UPDATE', tableName, recordId, oldValues, newValues, customMessage);
+    }
+    
+    async logDelete(tableName, recordId, oldValues, customMessage = '') {
+        await this.log('DELETE', tableName, recordId, oldValues, null, customMessage);
+    }
+    
+    async logArchive(tableName, recordId, oldValues, customMessage = '') {
+        await this.log('ARCHIVE', tableName, recordId, oldValues, null, customMessage);
+    }
+    
+    // Méthodes spécialisées pour les accès avec messages clairs
+    async logCreateAccess(userId, userNameDisplay, softwareId, softwareNameDisplay, role, customMessage = '') {
+        const roleDisplay = this.getRoleName(role);
+        const message = customMessage || `Accès créé pour ${userNameDisplay} sur "${softwareNameDisplay}" en tant que ${roleDisplay}`;
+        
+        const accessData = {
+            utilisateur_id: userId,
+            logiciel_id: softwareId,
+            role: role
+        };
+        
+        await this.log('CREATE', 'acces', '', null, accessData, message);
+    }
+    
+    async logUpdateAccess(userId, userNameDisplay, softwareId, softwareNameDisplay, oldRole, newRole, customMessage = '') {
+        const oldRoleDisplay = this.getRoleName(oldRole);
+        const newRoleDisplay = this.getRoleName(newRole);
+        const message = customMessage || `Accès de ${userNameDisplay} pour "${softwareNameDisplay}" modifié de ${oldRoleDisplay} à ${newRoleDisplay}`;
+        
+        const oldData = { role: oldRole };
+        const newData = { role: newRole };
+        
+        await this.log('UPDATE', 'acces', '', oldData, newData, message);
+    }
+    
+    async logDeleteAccess(userId, userNameDisplay, softwareId, softwareNameDisplay, customMessage = '') {
+        const message = customMessage || `Accès de ${userNameDisplay} supprimé pour "${softwareNameDisplay}"`;
+        
+        const accessData = {
+            utilisateur_id: userId,
+            logiciel_id: softwareId
+        };
+        
+        await this.log('DELETE', 'acces', '', accessData, null, message);
     }
     
     /**
@@ -331,32 +484,288 @@ class Logger {
      * Enrichir les détails avec les informations contextuelles
      */
     enrichDetails(originalDetails, contextInfo) {
-        let enrichedDetails = originalDetails;
+        // Si des détails personnalisés sont déjà fournis, les utiliser
+        if (originalDetails && !originalDetails.includes('Action effectuée par')) {
+            return originalDetails;
+        }
         
-        // Ajouter l'utilisateur authentifié qui effectue l'action
+        // Sinon, créer un message automatique clair
         const currentUser = window.auth?.getCurrentUser();
-        if (currentUser && currentUser !== 'Utilisateur non identifié') {
-            enrichedDetails += ` | Action effectuée par: ${currentUser}`;
-        }
+        const actor = currentUser && currentUser !== 'Utilisateur non identifié' ? currentUser : 'Système';
         
-        if (contextInfo.userName) {
-            enrichedDetails += ` | Utilisateur concerné: ${contextInfo.userName}`;
-        }
-        
-        if (contextInfo.softwareName) {
-            enrichedDetails += ` | Logiciel: ${contextInfo.softwareName}`;
-        }
-        
-        // Ajouter les IDs pour le filtrage
+        // Ajouter les IDs pour le filtrage (invisibles à l'utilisateur)
         const contextIds = [];
         if (contextInfo.userId) contextIds.push(`user_id:${contextInfo.userId}`);
         if (contextInfo.softwareId) contextIds.push(`software_id:${contextInfo.softwareId}`);
         
-        if (contextIds.length > 0) {
-            enrichedDetails += ` | Context: ${contextIds.join(', ')}`;
+        const hiddenContext = contextIds.length > 0 ? ` [${contextIds.join(', ')}]` : '';
+        
+        return originalDetails + hiddenContext;
+    }
+    
+    /**
+     * Créer un message de log simple et clair en français
+     */
+    createSimpleMessage(action, tableName, contextInfo, oldValues, newValues, customDetails = '') {
+        const currentUser = window.auth?.getCurrentUser();
+        const actor = currentUser && currentUser !== 'Utilisateur non identifié' ? currentUser : 'Système';
+        
+        // Si un message personnalisé est fourni, l'utiliser
+        if (customDetails && !customDetails.includes('Action effectuée par')) {
+            return customDetails;
         }
         
-        return enrichedDetails;
+        // Messages par défaut selon le type d'action et la table
+        switch (tableName) {
+            case 'utilisateurs':
+                return this.createUserMessage(action, actor, contextInfo, oldValues, newValues);
+            case 'logiciels':
+                return this.createSoftwareMessage(action, actor, contextInfo, oldValues, newValues);
+            case 'acces':
+                return this.createAccessMessage(action, actor, contextInfo, oldValues, newValues);
+            default:
+                return this.createGenericMessage(action, actor, tableName, contextInfo);
+        }
+    }
+    
+    /**
+     * Messages pour les actions sur les utilisateurs
+     */
+    createUserMessage(action, actor, contextInfo, oldValues, newValues) {
+        const userName = contextInfo.userName || this.extractUserName(newValues || oldValues);
+        
+        switch (action) {
+            case 'CREATE':
+                return `${actor} a créé l'utilisateur ${userName}`;
+            case 'UPDATE':
+                const changes = this.detectUserChanges(oldValues, newValues);
+                return `${actor} a modifié l'utilisateur ${userName}${changes}`;
+            case 'DELETE':
+                return `${actor} a supprimé l'utilisateur ${userName}`;
+            case 'ARCHIVE':
+                return `${actor} a archivé l'utilisateur ${userName}`;
+            default:
+                return `${actor} - action ${action} sur l'utilisateur ${userName}`;
+        }
+    }
+    
+    /**
+     * Messages pour les actions sur les logiciels
+     */
+    createSoftwareMessage(action, actor, contextInfo, oldValues, newValues) {
+        const softwareName = contextInfo.softwareName || this.extractSoftwareName(newValues || oldValues);
+        
+        switch (action) {
+            case 'CREATE':
+                return `${actor} a créé le logiciel "${softwareName}"`;
+            case 'UPDATE':
+                const changes = this.detectSoftwareChanges(oldValues, newValues);
+                return `${actor} a modifié le logiciel "${softwareName}"${changes}`;
+            case 'DELETE':
+                return `${actor} a supprimé le logiciel "${softwareName}"`;
+            case 'ARCHIVE':
+                return `${actor} a archivé le logiciel "${softwareName}"`;
+            default:
+                return `${actor} - action ${action} sur le logiciel "${softwareName}"`;
+        }
+    }
+    
+    /**
+     * Messages pour les actions sur les accès
+     */
+    createAccessMessage(action, actor, contextInfo, oldValues, newValues) {
+        const data = newValues || oldValues;
+        const userName = this.getRelatedUserName(data?.utilisateur_id);
+        const softwareName = this.getRelatedSoftwareName(data?.logiciel_id);
+        
+        switch (action) {
+            case 'CREATE':
+                const newRole = this.getRoleName(newValues?.role);
+                return `${actor} a créé un accès à ${userName} pour le logiciel "${softwareName}" en tant que ${newRole}`;
+            case 'UPDATE':
+                const oldRole = this.getRoleName(oldValues?.role);
+                const updatedRole = this.getRoleName(newValues?.role);
+                if (oldRole !== updatedRole) {
+                    return `${actor} a modifié l'accès de ${userName} pour le logiciel "${softwareName}", de ${oldRole} à ${updatedRole}`;
+                } else {
+                    return `${actor} a modifié l'accès de ${userName} pour le logiciel "${softwareName}"`;
+                }
+            case 'DELETE':
+                return `${actor} a supprimé l'accès de ${userName} pour le logiciel "${softwareName}"`;
+            case 'ARCHIVE':
+                return `${actor} a archivé l'accès de ${userName} pour le logiciel "${softwareName}"`;
+            default:
+                return `${actor} - action ${action} sur l'accès de ${userName} pour "${softwareName}"`;
+        }
+    }
+    
+    /**
+     * Messages génériques
+     */
+    createGenericMessage(action, actor, tableName, contextInfo) {
+        // Messages spéciaux pour les actions système
+        if (tableName === 'système' || tableName === '') {
+            return this.createSystemMessage(action, actor);
+        }
+        
+        const actionName = this.getActionName(action);
+        const tableNameFr = this.getTableNameInFrench(tableName);
+        
+        switch (action) {
+            case 'CREATE':
+                return `${actor} a créé un élément dans ${tableNameFr}`;
+            case 'UPDATE':
+                return `${actor} a modifié un élément dans ${tableNameFr}`;
+            case 'DELETE':
+                return `${actor} a supprimé un élément de ${tableNameFr}`;
+            case 'ARCHIVE':
+                return `${actor} a archivé un élément de ${tableNameFr}`;
+            default:
+                return `${actor} a effectué une ${actionName} dans ${tableNameFr}`;
+        }
+    }
+    
+    /**
+     * Messages pour les actions système
+     */
+    createSystemMessage(action, actor) {
+        switch (action) {
+            case 'LOGIN':
+                return `${actor} s'est connecté à l'application`;
+            case 'LOGOUT':
+                return `${actor} s'est déconnecté de l'application`;
+            case 'LOGIN_ATTEMPT':
+                return `Tentative de connexion de ${actor}`;
+            case 'PASSWORD_RESET':
+                return `${actor} a demandé une réinitialisation de mot de passe`;
+            case 'SESSION_EXPIRED':
+                return `Session expirée pour ${actor}`;
+            case 'EXPORT':
+                return `${actor} a exporté des données`;
+            case 'IMPORT':
+                return `${actor} a importé des données`;
+            case 'BACKUP':
+                return `${actor} a lancé une sauvegarde`;
+            case 'CONFIG_CHANGE':
+                return `${actor} a modifié une configuration`;
+            case 'ERROR':
+                return `Erreur système rencontrée par ${actor}`;
+            case 'WARNING':
+                return `Avertissement système pour ${actor}`;
+            default:
+                return `${actor} a effectué une action système (${action})`;
+        }
+    }
+    
+    /**
+     * Traduire les noms de tables en français
+     */
+    getTableNameInFrench(tableName) {
+        const translations = {
+            'utilisateurs': 'les utilisateurs',
+            'logiciels': 'les logiciels',
+            'acces': 'les accès',
+            'logs': 'les journaux',
+            'teams': 'les équipes',
+            'reports': 'les rapports',
+            'schedules': 'les planifications',
+            'rights': 'les droits',
+            'système': 'le système',
+            'system': 'le système'
+        };
+        return translations[tableName] || `la table ${tableName}`;
+    }
+    
+    /**
+     * Utilitaires pour extraire les informations
+     */
+    extractUserName(userData) {
+        if (!userData) return 'Utilisateur inconnu';
+        const prenom = userData.prenom || '';
+        const nom = userData.nom || '';
+        return `${prenom} ${nom}`.trim() || userData.email || `ID: ${userData.id}` || 'Utilisateur inconnu';
+    }
+    
+    extractSoftwareName(softwareData) {
+        return softwareData?.nom || softwareData?.name || `ID: ${softwareData?.id}` || 'Logiciel inconnu';
+    }
+    
+    getRelatedUserName(userId) {
+        // Dans un vrai contexte, on pourrait faire un appel API pour récupérer le nom
+        // Pour l'instant, on utilise l'ID ou essaie de le trouver dans le cache
+        return `Utilisateur ${userId}`;
+    }
+    
+    getRelatedSoftwareName(softwareId) {
+        // Dans un vrai contexte, on pourrait faire un appel API pour récupérer le nom
+        // Pour l'instant, on utilise l'ID ou essaie de le trouver dans le cache
+        return `Logiciel ${softwareId}`;
+    }
+    
+    getRoleName(role) {
+        const roles = {
+            'admin': 'administrateur',
+            'user': 'utilisateur',
+            'reader': 'lecteur',
+            'editor': 'éditeur',
+            'viewer': 'observateur'
+        };
+        return roles[role] || role || 'rôle non défini';
+    }
+    
+    detectUserChanges(oldValues, newValues) {
+        if (!oldValues || !newValues) return '';
+        
+        const changes = [];
+        if (oldValues.prenom !== newValues.prenom || oldValues.nom !== newValues.nom) {
+            changes.push('nom');
+        }
+        if (oldValues.email !== newValues.email) {
+            changes.push('email');
+        }
+        if (oldValues.statut !== newValues.statut) {
+            changes.push('statut');
+        }
+        
+        return changes.length > 0 ? ` (${changes.join(', ')})` : '';
+    }
+    
+    detectSoftwareChanges(oldValues, newValues) {
+        if (!oldValues || !newValues) return '';
+        
+        const changes = [];
+        if (oldValues.nom !== newValues.nom) {
+            changes.push('nom');
+        }
+        if (oldValues.version !== newValues.version) {
+            changes.push('version');
+        }
+        if (oldValues.statut !== newValues.statut) {
+            changes.push('statut');
+        }
+        
+        return changes.length > 0 ? ` (${changes.join(', ')})` : '';
+    }
+    
+    getActionName(action) {
+        const actions = {
+            'CREATE': 'création',
+            'UPDATE': 'modification', 
+            'DELETE': 'suppression',
+            'ARCHIVE': 'archivage',
+            'LOGIN': 'connexion',
+            'LOGOUT': 'déconnexion',
+            'LOGIN_ATTEMPT': 'tentative de connexion',
+            'PASSWORD_RESET': 'réinitialisation de mot de passe',
+            'SESSION_EXPIRED': 'expiration de session',
+            'EXPORT': 'export de données',
+            'IMPORT': 'import de données',
+            'BACKUP': 'sauvegarde',
+            'CONFIG_CHANGE': 'modification de configuration',
+            'ERROR': 'erreur',
+            'WARNING': 'avertissement'
+        };
+        return actions[action] || action.toLowerCase();
     }
 
     /**
@@ -397,7 +806,16 @@ class Logger {
             'DELETE': '🗑️ Suppression',
             'ARCHIVE': '📦 Archivage',
             'LOGIN': '🔑 Connexion',
-            'LOGOUT': '👋 Déconnexion'
+            'LOGOUT': '👋 Déconnexion',
+            'LOGIN_ATTEMPT': '🔐 Tentative connexion',
+            'PASSWORD_RESET': '🔄 Réinit. mot de passe',
+            'SESSION_EXPIRED': '⏰ Session expirée',
+            'EXPORT': '📤 Export',
+            'IMPORT': '📥 Import',
+            'BACKUP': '💾 Sauvegarde',
+            'CONFIG_CHANGE': '⚙️ Configuration',
+            'ERROR': '❌ Erreur',
+            'WARNING': '⚠️ Avertissement'
         };
         return labels[action] || action;
     }
@@ -412,7 +830,16 @@ class Logger {
             'DELETE': 'text-red-600 bg-red-50',
             'ARCHIVE': 'text-orange-600 bg-orange-50',
             'LOGIN': 'text-purple-600 bg-purple-50',
-            'LOGOUT': 'text-gray-600 bg-gray-50'
+            'LOGOUT': 'text-gray-600 bg-gray-50',
+            'LOGIN_ATTEMPT': 'text-indigo-600 bg-indigo-50',
+            'PASSWORD_RESET': 'text-yellow-600 bg-yellow-50',
+            'SESSION_EXPIRED': 'text-orange-600 bg-orange-50',
+            'EXPORT': 'text-cyan-600 bg-cyan-50',
+            'IMPORT': 'text-teal-600 bg-teal-50',
+            'BACKUP': 'text-violet-600 bg-violet-50',
+            'CONFIG_CHANGE': 'text-emerald-600 bg-emerald-50',
+            'ERROR': 'text-red-700 bg-red-100',
+            'WARNING': 'text-amber-600 bg-amber-50'
         };
         return colors[action] || 'text-gray-600 bg-gray-50';
     }
