@@ -226,10 +226,11 @@ class AccessManagementApp {
         try {
             // Charger les statistiques
             const [usersResult, softwareResult, accessResult] = await Promise.all([
-                fetch('tables/utilisateurs').then(r => r.json()),
-                fetch('tables/logiciels').then(r => r.json()),
-                fetch('tables/acces').then(r => r.json())
+                window.D1API.get('utilisateurs'),
+                window.D1API.get('logiciels'),
+                window.D1API.get('acces')
             ]);
+
 
             const activeUsers = (usersResult.data || []).filter(u => !u.archived);
             const activeSoftware = (softwareResult.data || []).filter(s => !s.archived);
