@@ -25,27 +25,29 @@ class MenuManager {
                 this.toggleSubmenu();
             });
 
-            // Améliorer l'expérience hover
-            this.settingsButton.addEventListener('mouseenter', () => {
-                if (!this.isSubmenuOpen) {
-                    this.openSubmenu();
-                }
-            });
-
-            // Gérer la sortie de la souris du bouton
-            this.settingsButton.addEventListener('mouseleave', (e) => {
-                // Délai avant fermeture pour permettre de passer au sous-menu
-                setTimeout(() => {
-                    if (!this.settingsButton.matches(':hover') && 
-                        !this.settingsSubmenu.matches(':hover')) {
-                        this.closeSubmenu();
+            // Améliorer l'expérience hover SEULEMENT sur desktop (pas mobile)
+            if (!this.isMobile()) {
+                this.settingsButton.addEventListener('mouseenter', () => {
+                    if (!this.isSubmenuOpen) {
+                        this.openSubmenu();
                     }
-                }, 200);
-            });
+                });
+
+                // Gérer la sortie de la souris du bouton
+                this.settingsButton.addEventListener('mouseleave', (e) => {
+                    // Délai avant fermeture pour permettre de passer au sous-menu
+                    setTimeout(() => {
+                        if (!this.settingsButton.matches(':hover') && 
+                            !this.settingsSubmenu.matches(':hover')) {
+                            this.closeSubmenu();
+                        }
+                    }, 200);
+                });
+            }
         }
 
-        // Gestion hover du sous-menu pour éviter qu'il se ferme
-        if (this.settingsSubmenu) {
+        // Gestion hover du sous-menu pour éviter qu'il se ferme (DESKTOP seulement)
+        if (this.settingsSubmenu && !this.isMobile()) {
             this.settingsSubmenu.addEventListener('mouseenter', (e) => {
                 e.stopPropagation();
                 // Maintenir le menu ouvert quand on survole
@@ -73,6 +75,18 @@ class MenuManager {
             });
         });
         
+        // Gestion des boutons mobiles du sous-menu Réglages
+        const mobileNavButtons = document.querySelectorAll('.mobile-nav-btn');
+        mobileNavButtons.forEach(button => {
+            if (['mobile-nav-teams', 'mobile-nav-rights', 'mobile-nav-logs', 'mobile-nav-tutorials'].includes(button.id)) {
+                button.addEventListener('click', (e) => {
+                    e.stopPropagation();
+                    console.log('🔥 Clic mobile détecté:', button.id);
+                    this.handleSubmenuClick(button.id);
+                });
+            }
+        });
+        
         // Gestion de la déconnexion dans le menu mobile
         const mobileLogoutBtn = document.getElementById('mobile-nav-logout');
         if (mobileLogoutBtn) {
@@ -92,22 +106,20 @@ class MenuManager {
     
     setupClickOutside() {
         // Fermer le sous-menu si on clique ailleurs
-        document.addEventListener('click', (e) => {
+        const handleOutsideClick = (e) => {
             if (this.isSubmenuOpen && 
-                !this.settingsButton.contains(e.target) && 
-                !this.settingsSubmenu.contains(e.target)) {
+                !this.settingsButton?.contains(e.target) && 
+                !this.settingsSubmenu?.contains(e.target)) {
                 this.closeSubmenu();
             }
-        });
+        };
 
-        // Gestion améliorée pour mobile et desktop
-        document.addEventListener('touchstart', (e) => {
-            if (this.isSubmenuOpen && 
-                !this.settingsButton.contains(e.target) && 
-                !this.settingsSubmenu.contains(e.target)) {
-                this.closeSubmenu();
-            }
-        });
+        document.addEventListener('click', handleOutsideClick);
+        
+        // Gestion spéciale pour mobile tactile
+        if (this.isMobile()) {
+            document.addEventListener('touchstart', handleOutsideClick, { passive: true });
+        }
     }
     
     toggleSubmenu() {
@@ -255,6 +267,12 @@ class MenuManager {
         });
     }
     
+    isMobile() {
+        // Détecter si on est sur mobile ou tablet
+        return window.innerWidth <= 768 || 
+               /Android|webOS|iPhone|iPad|iPod|BlackBerry|IEMobile|Opera Mini/i.test(navigator.userAgent);
+    }
+
     handleLogout() {
         // Utiliser le système d'authentification existant
         if (window.auth && typeof window.auth.handleLogout === 'function') {
