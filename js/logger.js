@@ -954,6 +954,6 @@ class LoggerHooks {
 
 // Initialiser les hooks au chargement
 document.addEventListener('DOMContentLoaded', () => {
-    LoggerHooks.init();
-    console.log('📝 Système de logging initialisé');
+    // LoggerHooks.init(); // Désactivé car nous utilisons maintenant D1API directement
+    console.log('📝 Système de logging initialisé (hooks fetch désactivés)');
 });

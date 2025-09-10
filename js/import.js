@@ -444,14 +444,16 @@ class ImportManager {
             throw new Error('Nom manquant');
         }
 
-        const response = await fetch('tables/utilisateurs', {
-            method: 'POST',
-            headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify(userData)
-        });
+        // Utiliser l'API Supabase au lieu de l'ancienne API
+        const result = await window.D1API.create('utilisateurs', userData);
 
-        if (!response.ok) {
-            throw new Error('Erreur lors de la création de l\'utilisateur');
+        if (!result.success) {
+            throw new Error(`Erreur lors de la création de l'utilisateur: ${result.error}`);
+        }
+
+        // Log de la création
+        if (window.logger) {
+            await window.logger.logCreate('utilisateurs', result.data.id, userData, `Utilisateur importé depuis Excel: ${userData.nom} ${userData.prenom}`);
         }
     }
 
@@ -466,14 +468,16 @@ class ImportManager {
             throw new Error('Nom du logiciel manquant');
         }
 
-        const response = await fetch('tables/logiciels', {
-            method: 'POST',
-            headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify(softwareData)
-        });
+        // Utiliser l'API Supabase
+        const result = await window.D1API.create('logiciels', softwareData);
 
-        if (!response.ok) {
-            throw new Error('Erreur lors de la création du logiciel');
+        if (!result.success) {
+            throw new Error(`Erreur lors de la création du logiciel: ${result.error}`);
+        }
+
+        // Log de la création
+        if (window.logger) {
+            await window.logger.logCreate('logiciels', result.data.id, softwareData, `Logiciel importé depuis Excel: ${softwareData.nom}`);
         }
     }
 
@@ -487,8 +491,7 @@ class ImportManager {
         }
 
         // Trouver l'utilisateur
-        const usersResponse = await fetch('tables/utilisateurs');
-        const usersResult = await usersResponse.json();
+        const usersResult = await window.D1API.get('utilisateurs');
         const user = (usersResult.data || []).find(u => 
             u.nom.toLowerCase().includes(utilisateurStr.toLowerCase()) ||
             (u.email && u.email.toLowerCase() === utilisateurStr.toLowerCase())
@@ -499,8 +502,7 @@ class ImportManager {
         }
 
         // Trouver le logiciel
-        const softwareResponse = await fetch('tables/logiciels');
-        const softwareResult = await softwareResponse.json();
+        const softwareResult = await window.D1API.get('logiciels');
         const software = (softwareResult.data || []).find(s => 
             s.nom.toLowerCase().includes(logicielStr.toLowerCase())
         );
@@ -510,8 +512,7 @@ class ImportManager {
         }
 
         // Trouver le droit
-        const rightsResponse = await fetch('tables/droits');
-        const rightsResult = await rightsResponse.json();
+        const rightsResult = await window.D1API.get('droits');
         const droit = (rightsResult.data || []).find(d => 
             d.nom.toLowerCase() === droitStr.toLowerCase()
         );
@@ -527,14 +528,11 @@ class ImportManager {
             droit_id: droit.id
         };
 
-        const response = await fetch('tables/acces', {
-            method: 'POST',
-            headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify(accessData)
-        });
+        // Utiliser l'API Supabase
+        const result = await window.D1API.create('acces', accessData);
 
-        if (!response.ok) {
-            throw new Error('Erreur lors de la création de l\'accès');
+        if (!result.success) {
+            throw new Error(`Erreur lors de la création de l'accès: ${result.error}`);
         }
     }
 
