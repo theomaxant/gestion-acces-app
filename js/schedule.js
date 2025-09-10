@@ -83,7 +83,7 @@ class ScheduleManager {
         const payments = [];
 
         this.software.forEach(software => {
-            if (!software.date_souscription || !software.cout_mensuel) return;
+            if (!software.date_souscription || !software.cout_mensuel || software.cout_mensuel <= 0) return;
 
             // Calculer tous les paiements pour ce logiciel dans le mois donné
             const paymentsInMonth = this.getPaymentsInMonth(software, month, year);
@@ -287,9 +287,12 @@ class ScheduleManager {
         const payments = [];
         
         this.software.forEach(software => {
+            // Ne traiter que les logiciels avec des coûts > 0
+            if (!software.cout_mensuel || software.cout_mensuel <= 0) return;
+            
             const dayPayments = this.getPaymentsInMonth(software, date.getMonth(), date.getFullYear());
             dayPayments.forEach(payment => {
-                if (payment.date.getDate() === date.getDate()) {
+                if (payment.date.getDate() === date.getDate() && payment.amount > 0) {
                     payments.push(payment);
                 }
             });
