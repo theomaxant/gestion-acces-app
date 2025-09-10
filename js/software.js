@@ -230,8 +230,7 @@ class SoftwareManager {
 
         // Charger les équipes
         const teamsResponse = await window.D1API.get('equipes');
-        const teamsResult = await teamsResponse.json();
-        const teams = (teamsResult.data || []).filter(t => !t.archived);
+        const teams = (teamsResponse.data || []).filter(t => !t.archived);
         const teamsOptions = teams.map(team => 
             `<option value="${team.id}">${team.nom}</option>`
         ).join('');

@@ -297,11 +297,20 @@ class UsersManager {
                 window.app?.showAlert('Utilisateur ajouté avec succès', 'success');
             }
 
-            document.querySelector('.fixed')?.remove();
+            // Fermer le modal et recharger les données
+            const modal = document.querySelector('.fixed');
+            if (modal) {
+                modal.remove();
+            }
             await this.loadUsers();
         } catch (error) {
             console.error('Erreur lors de la sauvegarde:', error);
             window.app?.showAlert('Erreur lors de la sauvegarde', 'error');
+            // Fermer le modal même en cas d'erreur
+            const modal = document.querySelector('.fixed');
+            if (modal) {
+                modal.remove();
+            }
         }
     }
 
