@@ -44,13 +44,14 @@ class SoftwareManager {
 
     async loadSoftware() {
         try {
-            const [softwareResult, costsResult, usersResult, accessResult, teamsResult] = await Promise.all([
-                fetch('tables/logiciels').then(r => r.json()),
-                fetch('tables/couts_licences').then(r => r.json()),
-                fetch('tables/utilisateurs').then(r => r.json()),
-                fetch('tables/acces').then(r => r.json()),
-                fetch('tables/equipes').then(r => r.json())
-            ]);
+        const [softwareResult, costsResult, usersResult, accessResult, teamsResult] = await Promise.all([
+            window.D1API.get('logiciels'),
+            window.D1API.get('couts_licences'),
+            window.D1API.get('utilisateurs'),
+            window.D1API.get('acces'),
+            window.D1API.get('equipes')
+        ]);
+
 
             this.software = softwareResult.data || [];
             this.costs = costsResult.data || [];
