@@ -44,14 +44,13 @@ class SoftwareManager {
 
     async loadSoftware() {
         try {
-        const [softwareResult, costsResult, usersResult, accessResult, teamsResult] = await Promise.all([
-            window.D1API.get('logiciels'),
-            window.D1API.get('couts_licences'),
-            window.D1API.get('utilisateurs'),
-            window.D1API.get('acces'),
-            window.D1API.get('equipes')
-        ]);
-
+            const [softwareResult, costsResult, usersResult, accessResult, teamsResult] = await Promise.all([
+                window.D1API.get('logiciels),
+                window.D1API.get('couts_licences),
+                window.D1API.get('utilisateurs),
+                window.D1API.get('acces),
+                window.D1API.get('equipes)
+            ]);
 
             this.software = softwareResult.data || [];
             this.costs = costsResult.data || [];
@@ -230,7 +229,7 @@ class SoftwareManager {
         ).join('');
 
         // Charger les équipes
-        const teamsResponse = await fetch('tables/equipes');
+        const teamsResponse = await window.D1API.get('equipes');
         const teamsResult = await teamsResponse.json();
         const teams = (teamsResult.data || []).filter(t => !t.archived);
         const teamsOptions = teams.map(team => 
@@ -362,7 +361,7 @@ class SoftwareManager {
                 window.app?.showAlert('Logiciel modifié avec succès', 'success');
             } else {
                 // Création
-                await fetch('tables/logiciels', {
+                await window.D1API.get('logiciels', {
                     method: 'POST',
                     headers: { 'Content-Type': 'application/json' },
                     body: JSON.stringify(softwareData)
@@ -533,7 +532,7 @@ class SoftwareManager {
             for (const droit of this.droits) {
                 const costValue = document.getElementById(`cost-${droit.id}`)?.value;
                 if (costValue && parseFloat(costValue) > 0) {
-                    await fetch('tables/couts_licences', {
+                    await window.D1API.get('couts_licences', {
                         method: 'POST',
                         headers: { 'Content-Type': 'application/json' },
                         body: JSON.stringify({
@@ -560,8 +559,8 @@ class SoftwareManager {
 
         try {
             const [usersResult, accessResult] = await Promise.all([
-                fetch('tables/utilisateurs').then(r => r.json()),
-                fetch('tables/acces').then(r => r.json())
+                window.D1API.get('utilisateurs),
+                window.D1API.get('acces)
             ]);
 
             const users = (usersResult.data || []).filter(u => !u.archived);
@@ -626,7 +625,7 @@ class SoftwareManager {
         }
 
         try {
-            await fetch('tables/acces', {
+            await window.D1API.get('acces', {
                 method: 'POST',
                 headers: { 'Content-Type': 'application/json' },
                 body: JSON.stringify({
