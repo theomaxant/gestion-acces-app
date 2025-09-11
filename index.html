@@ -5,8 +5,8 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Gestion des Accès - Application</title>
     <link rel="icon" type="image/x-icon" href="favicon.ico">
-    <!-- Tailwind CSS - Version Production via jsDelivr -->
-    <link href="https://cdn.jsdelivr.net/npm/tailwindcss@3.4.0/dist/tailwind.min.css" rel="stylesheet">
+    <!-- Tailwind CSS - Version stable et éprouvée -->
+    <link href="https://cdn.jsdelivr.net/npm/tailwindcss@3.3.0/dist/tailwind.min.css" rel="stylesheet">
     <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/@fortawesome/fontawesome-free@6.4.0/css/all.min.css">
     <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
     <script src="https://cdn.jsdelivr.net/npm/chartjs-plugin-datalabels@2"></script>
@@ -179,8 +179,11 @@
                                     <button id="nav-logs" class="submenu-btn w-full text-left px-4 py-3 hover:bg-gray-100 transition-colors text-gray-700 border-b border-gray-100">
                                         <i class="fas fa-history mr-3 w-5 text-blue-600"></i>Logs
                                     </button>
+                                    <button id="nav-process" class="submenu-btn w-full text-left px-4 py-3 hover:bg-gray-100 transition-colors text-gray-700 border-b border-gray-100">
+                                        <i class="fas fa-book mr-3 w-5 text-blue-600"></i>Process
+                                    </button>
                                     <button id="nav-tutorials" class="submenu-btn w-full text-left px-4 py-3 hover:bg-gray-100 transition-colors text-gray-700 border-b border-gray-100">
-                                        <i class="fas fa-cogs mr-3 w-5 text-blue-600"></i>Process
+                                        <i class="fas fa-graduation-cap mr-3 w-5 text-blue-600"></i>Tutoriels
                                     </button>
                                     <button id="nav-logout" class="submenu-btn w-full text-left px-4 py-3 hover:bg-red-100 transition-colors text-red-600">
                                         <i class="fas fa-sign-out-alt mr-3 w-5 text-red-600"></i>Déconnexion
@@ -232,8 +235,11 @@
                             <button id="mobile-nav-logs" class="mobile-nav-btn w-full text-left px-6 py-3 rounded-lg hover:bg-blue-500 transition-colors text-sm min-h-[48px] active:bg-blue-600">
                                 <i class="fas fa-history mr-3 w-5"></i>Logs
                             </button>
+                            <button id="mobile-nav-process" class="mobile-nav-btn w-full text-left px-6 py-3 rounded-lg hover:bg-blue-500 transition-colors text-sm min-h-[48px] active:bg-blue-600">
+                                <i class="fas fa-book mr-3 w-5"></i>Process
+                            </button>
                             <button id="mobile-nav-tutorials" class="mobile-nav-btn w-full text-left px-6 py-3 rounded-lg hover:bg-blue-500 transition-colors text-sm min-h-[48px] active:bg-blue-600">
-                                <i class="fas fa-cogs mr-3 w-5"></i>Process
+                                <i class="fas fa-graduation-cap mr-3 w-5"></i>Tutoriels
                             </button>
                             <button id="mobile-nav-logout" class="mobile-nav-btn w-full text-left px-6 py-2 rounded-lg hover:bg-red-500 transition-colors text-sm text-red-200">
                                 <i class="fas fa-sign-out-alt mr-3 w-5"></i>Déconnexion
@@ -692,53 +698,29 @@
                 </div>
             </div>
 
-            <!-- Tutorials View -->
+            <!-- Process View -->
+            <div id="process-view" class="view hidden">
+                <!-- Le contenu sera généré dynamiquement par ProcessManager -->
+            </div>
+
+            <!-- Tutorials View (pour les tutoriels interactifs F1) -->
             <div id="tutorials-view" class="view hidden">
-                <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-6 sm:py-8">
-                    <!-- Header with navigation -->
-                    <div class="bg-white rounded-lg shadow-md p-6 mb-6">
-                        <div class="flex flex-col sm:flex-row sm:items-center sm:justify-between">
-                            <div>
-                                <h1 class="text-2xl font-bold text-gray-900 mb-2">
-                                    <i class="fas fa-cogs text-blue-600 mr-2"></i>
-                                    Processus
-                                </h1>
-                                <p class="text-gray-600">Guides pratiques étape par étape pour utiliser l'application</p>
-                            </div>
-                            <div class="mt-4 sm:mt-0">
-                                <div class="flex flex-wrap gap-2">
-                                    <button id="btn-all-processes" class="process-nav-btn active px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors text-sm">
-                                        <i class="fas fa-list mr-1"></i>Tous
-                                    </button>
-                                    <button id="btn-process-connection" class="process-nav-btn px-4 py-2 bg-gray-200 text-gray-700 rounded-lg hover:bg-gray-300 transition-colors text-sm">
-                                        Connexion
-                                    </button>
-                                    <button id="btn-process-creation" class="process-nav-btn px-4 py-2 bg-gray-200 text-gray-700 rounded-lg hover:bg-gray-300 transition-colors text-sm">
-                                        Création
-                                    </button>
-                                    <button id="btn-process-modification" class="process-nav-btn px-4 py-2 bg-gray-200 text-gray-700 rounded-lg hover:bg-gray-300 transition-colors text-sm">
-                                        Modification
-                                    </button>
-                                    <button id="btn-process-archiving" class="process-nav-btn px-4 py-2 bg-gray-200 text-gray-700 rounded-lg hover:bg-gray-300 transition-colors text-sm">
-                                        Archivage
-                                    </button>
-                                    <button id="btn-process-access" class="process-nav-btn px-4 py-2 bg-gray-200 text-gray-700 rounded-lg hover:bg-gray-300 transition-colors text-sm">
-                                        Accès
-                                    </button>
-                                    
-                                    <!-- Séparateur et bouton export -->
-                                    <div class="hidden sm:block w-px h-8 bg-gray-300 mx-2"></div>
-                                    <button id="btn-export-markdown" class="px-4 py-2 bg-green-600 text-white rounded-lg hover:bg-green-700 transition-colors text-sm">
-                                        <i class="fas fa-download mr-1"></i>Export MD
-                                    </button>
-                                </div>
+                <div class="max-w-4xl mx-auto px-4 py-8">
+                    <div class="text-center">
+                        <h1 class="text-3xl font-bold text-gray-900 mb-4">🎓 Tutoriels Interactifs</h1>
+                        <p class="text-gray-600 mb-8">
+                            Les tutoriels sont intégrés dans chaque page de l'application.<br>
+                            Utilisez la touche <kbd class="bg-gray-200 px-2 py-1 rounded font-mono">F1</kbd> sur n'importe quelle page pour démarrer le tutoriel correspondant.
+                        </p>
+                        <div class="bg-blue-50 border border-blue-200 rounded-lg p-6">
+                            <h3 class="font-semibold text-blue-900 mb-3">Comment utiliser les tutoriels :</h3>
+                            <div class="text-left text-blue-800 space-y-2">
+                                <div>• <strong>F1</strong> : Ouvrir le menu des tutoriels</div>
+                                <div>• <strong>Navigation guidée</strong> : Suivez les étapes pas-à-pas</div>
+                                <div>• <strong>Tooltips interactifs</strong> : Cliquez sur "Suivant" pour continuer</div>
+                                <div>• <strong>Escape</strong> : Quitter à tout moment</div>
                             </div>
                         </div>
-                    </div>
-
-                    <!-- Content area -->
-                    <div id="process-content" class="bg-white rounded-lg shadow-md">
-                        <!-- Process content will be loaded here -->
                     </div>
                 </div>
             </div>
