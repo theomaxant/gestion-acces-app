@@ -113,11 +113,11 @@ class SoftwareManager {
                         </th>
                         <th class="hidden sm:table-cell px-3 sm:px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Équipe</th>
                         <th class="hidden lg:table-cell px-3 sm:px-6 py-3 text-center text-xs font-medium text-gray-500 uppercase tracking-wider">🛒 Shopify</th>
-                        <th class="hidden sm:table-cell px-3 sm:px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Accès</th>
                         <th class="hidden sm:table-cell px-3 sm:px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Qui paye</th>
                         <th class="hidden lg:table-cell px-3 sm:px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Paiement</th>
                         <th class="hidden lg:table-cell px-3 sm:px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Date souscription</th>
                         <th class="hidden lg:table-cell px-3 sm:px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Prochain paiement</th>
+                        <th class="hidden sm:table-cell px-3 sm:px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Accès</th>
                         <th class="hidden lg:table-cell px-3 sm:px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Coût Annuel</th>
                         <th class="hidden sm:table-cell px-3 sm:px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Statut</th>
                         <th class="px-3 sm:px-6 py-3 text-right text-xs font-medium text-gray-500 uppercase tracking-wider">Actions</th>
@@ -173,13 +173,6 @@ class SoftwareManager {
                     </div>
                 </td>
                 <td class="hidden sm:table-cell px-3 sm:px-6 py-3 sm:py-4">
-                    <div class="text-sm text-center">
-                        <span class="inline-flex items-center justify-center w-8 h-8 rounded-full ${this.countActiveAccessForSoftware(software.id) > 0 ? 'bg-green-100 text-green-800' : 'bg-gray-100 text-gray-500'} text-sm font-medium">
-                            ${this.countActiveAccessForSoftware(software.id)}
-                        </span>
-                    </div>
-                </td>
-                <td class="hidden sm:table-cell px-3 sm:px-6 py-3 sm:py-4">
                     <div class="text-sm text-gray-900">${payerUser ? `${payerUser.nom} ${payerUser.prenom}` : '-'}</div>
                 </td>
                 <td class="hidden lg:table-cell px-3 sm:px-6 py-3 sm:py-4">
@@ -190,6 +183,13 @@ class SoftwareManager {
                 </td>
                 <td class="hidden lg:table-cell px-3 sm:px-6 py-3 sm:py-4">
                     ${nextPayment ? `<div class="text-sm ${nextPayment.color}">${nextPayment.date}</div>` : '<div class="text-sm text-gray-400">-</div>'}
+                </td>
+                <td class="hidden sm:table-cell px-3 sm:px-6 py-3 sm:py-4">
+                    <div class="text-sm text-center">
+                        <span class="inline-flex items-center justify-center w-8 h-8 rounded-full ${this.countActiveAccessForSoftware(software.id) > 0 ? 'bg-green-100 text-green-800' : 'bg-gray-100 text-gray-500'} text-sm font-medium">
+                            ${this.countActiveAccessForSoftware(software.id)}
+                        </span>
+                    </div>
                 </td>
                 <td class="hidden lg:table-cell px-3 sm:px-6 py-3 sm:py-4">
                     <div class="text-sm font-medium text-purple-600">${annualCost.toFixed(2)}€</div>

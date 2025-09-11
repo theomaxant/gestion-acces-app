@@ -86,27 +86,27 @@ class ReportsManager {
             
             // Charger les données
             console.log('📊 [REPORTS] Chargement utilisateurs...');
-            const usersResult = await window.D1API.get('utilisateurs');
+            const usersResult = await window.supabaseAPI.get('utilisateurs');
             this.users = usersResult?.data || [];
             
             console.log('📊 [REPORTS] Chargement logiciels...');
-            const softwareResult = await window.D1API.get('logiciels');
+            const softwareResult = await window.supabaseAPI.get('logiciels');
             this.software = softwareResult?.data || [];
             
             console.log('📊 [REPORTS] Chargement accès...');
-            const accessResult = await window.D1API.get('acces');
+            const accessResult = await window.supabaseAPI.get('acces');
             this.access = accessResult?.data || [];
             
             console.log('📊 [REPORTS] Chargement coûts...');
-            const costsResult = await window.D1API.get('couts_licences');
+            const costsResult = await window.supabaseAPI.get('couts_licences');
             this.costs = costsResult?.data || [];
             
             console.log('📊 [REPORTS] Chargement droits...');
-            const droitsResult = await window.D1API.get('droits');
+            const droitsResult = await window.supabaseAPI.get('droits');
             this.droits = droitsResult?.data || [];
             
             console.log('📊 [REPORTS] Chargement équipes...');
-            const teamsResult = await window.D1API.get('equipes');
+            const teamsResult = await window.supabaseAPI.get('equipes');
             this.teams = teamsResult?.data || [];
             
             console.log('✅ [REPORTS] Données chargées avec succès:', {
@@ -242,9 +242,8 @@ class ReportsManager {
             
             console.log('📊 [REPORTS] Utilisateurs pour', soft.nom, ':', softwareUsers.length);
             
-            // Calculer les coûts
-            const softwareCosts = this.costs.filter(c => c.logiciel_id === soft.id);
-            const totalCost = softwareCosts.reduce((sum, c) => sum + (parseFloat(c.cout_mensuel) || 0), 0);
+            // Calculer les coûts avec la même logique que software.js
+            const totalCost = this.calculateSoftwareCost(soft.id);
             console.log('📊 [REPORTS] Coût total pour', soft.nom, ':', totalCost);
             
             return {
@@ -258,7 +257,7 @@ class ReportsManager {
                 totalUsers: softwareUsers.length,
                 totalCost: totalCost,
                 totalCostAnnual: totalCost * 12, // Coût annuel
-                costs: softwareCosts
+                costs: this.costs.filter(c => c.logiciel_id === soft.id)
             };
         });
     }
@@ -1008,6 +1007,48 @@ class ReportsManager {
         } else {
             console.error('❌ [REPORTS] API Supabase non trouvée après', maxAttempts, 'tentatives');
         }
+    }
+
+    calculateSoftwareCost(softwareId) {
+        if (!this.access || !this.costs || !this.users || !this.droits) return 0;
+        
+        const software = this.software.find(s => s.id === softwareId);
+        if (!software) return 0;
+        
+        const softwareAccess = this.access.filter(a => a.logiciel_id === softwareId);
+        const activeUsers = this.users.filter(u => !u.archived);
+        
+        // Les coûts dans couts_licences sont mensuels
+        // Périodicité utilisée seulement pour l'échéancier, pas pour les calculs de coûts
+        
+        let totalCost = 0;
+        const processedShared = new Set();
+
+        for (const acc of softwareAccess) {
+            // Vérifier que l'utilisateur est toujours actif
+            const user = activeUsers.find(u => u.id === acc.utilisateur_id);
+            if (!user) continue;
+
+            const cost = this.costs.find(c => c.logiciel_id === acc.logiciel_id && c.droit_id === acc.droit_id);
+            const droit = this.droits.find(d => d.id === acc.droit_id);
+            
+            if (cost && droit) {
+                // Le coût de base est mensuel
+                const monthlyCost = cost.cout_mensuel || 0;
+                
+                if (droit.nom === 'Accès communs') {
+                    const sharedKey = `${acc.logiciel_id}_${acc.droit_id}`;
+                    if (!processedShared.has(sharedKey)) {
+                        totalCost += monthlyCost;
+                        processedShared.add(sharedKey);
+                    }
+                } else {
+                    totalCost += monthlyCost;
+                }
+            }
+        }
+
+        return totalCost;
     }
 
     // FONCTIONS DE DONNÉES DE TEST (pour debugging)
