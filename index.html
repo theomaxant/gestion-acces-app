@@ -23,11 +23,79 @@
     
     <!-- ⚡ SUPABASE API - Solution finale tout-en-un -->
     <script src="js/supabase-api.js"></script>
+    
+    <!-- 🔐 SYSTÈME D'AUTHENTIFICATION SÉCURISÉ -->
+    <script src="js/auth-security.js"></script>
 
 </head>
 <body class="bg-gray-100">
-    <!-- Le nouveau système d'authentification créera son propre écran de connexion -->
+    <!-- Écran de connexion avec mot de passe et captcha -->
+    <div id="login-screen" class="min-h-screen flex items-center justify-center bg-gradient-to-br from-blue-500 to-purple-600">
+        <div class="bg-white rounded-xl shadow-2xl p-8 w-full max-w-md mx-4">
+            <div class="text-center mb-8">
+                <div class="bg-blue-100 rounded-full w-20 h-20 mx-auto mb-4 flex items-center justify-center">
+                    <i class="fas fa-key text-blue-600 text-3xl"></i>
+                </div>
+                <h1 class="text-2xl font-bold text-gray-800 mb-2">Gestion des Accès</h1>
+                <p class="text-gray-600">Authentification sécurisée</p>
+            </div>
 
+            <form id="login-form" class="space-y-6">
+                <!-- Mot de passe -->
+                <div>
+                    <label for="password" class="block text-sm font-medium text-gray-700 mb-2">
+                        <i class="fas fa-lock mr-2"></i>Mot de passe
+                    </label>
+                    <input type="password" 
+                           id="password" 
+                           required
+                           class="w-full px-4 py-3 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-colors"
+                           placeholder="Entrez votre mot de passe">
+                </div>
+
+                <!-- Captcha -->
+                <div>
+                    <label class="block text-sm font-medium text-gray-700 mb-2">
+                        <i class="fas fa-shield-alt mr-2"></i>Vérification de sécurité
+                    </label>
+                    <div class="bg-gray-50 border border-gray-300 rounded-lg p-4 mb-3">
+                        <div class="flex items-center justify-between">
+                            <span class="text-lg font-mono font-bold text-gray-800" id="captcha-text">LOADING...</span>
+                            <button type="button" 
+                                    id="refresh-captcha" 
+                                    class="text-blue-600 hover:text-blue-800 transition-colors"
+                                    title="Actualiser le captcha">
+                                <i class="fas fa-refresh"></i>
+                            </button>
+                        </div>
+                    </div>
+                    <input type="number" 
+                           id="captcha-input" 
+                           required
+                           class="w-full px-4 py-3 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-colors"
+                           placeholder="Entrez le résultat du calcul"
+                           autocomplete="off">
+                </div>
+
+                <!-- Message d'erreur -->
+                <div id="login-error" class="hidden bg-red-100 border border-red-400 text-red-700 px-4 py-3 rounded-lg">
+                    <i class="fas fa-exclamation-triangle mr-2"></i>
+                    <span id="login-error-message">Erreur de connexion</span>
+                </div>
+
+                <!-- Bouton de connexion -->
+                <button type="submit" 
+                        class="w-full bg-blue-600 text-white py-3 px-4 rounded-lg hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2 transition-colors font-medium">
+                    <i class="fas fa-sign-in-alt mr-2"></i>Se connecter
+                </button>
+            </form>
+
+            <!-- Informations de connexion -->
+            <div class="mt-6 text-center text-sm text-gray-500">
+                <p><i class="fas fa-info-circle mr-1"></i>Accès sécurisé par mot de passe et captcha</p>
+            </div>
+        </div>
+    </div>
 
     <!-- Application principale -->
     <div id="app" class="min-h-screen" style="display: none;">
