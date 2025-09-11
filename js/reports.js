@@ -272,27 +272,51 @@ class ReportsManager {
         }
         
         return this.users.map(user => {
-            // Trouver tous les droits de cet utilisateur
-            const userDroits = this.droits.filter(d => d.utilisateur_id === user.id);
+            // Trouver tous les accès de cet utilisateur
+            const userAccess = this.access.filter(a => a.utilisateur_id === user.id);
             
             // Trouver tous les logiciels auxquels il a accès
-            const userSoftware = userDroits.map(droit => {
-                const soft = this.software.find(s => s.id === droit.logiciel_id);
-                const cost = this.costs.find(c => c.logiciel_id === droit.logiciel_id);
+            const userSoftware = userAccess.map(access => {
+                const soft = this.software.find(s => s.id === access.logiciel_id);
+                const droit = this.droits.find(d => d.id === access.droit_id);
+                const cost = this.costs.find(c => c.logiciel_id === access.logiciel_id && c.droit_id === access.droit_id);
                 
                 return {
                     id: soft?.id || 0,
                     nom: soft?.nom || 'Inconnu',
                     editeur: soft?.editeur || 'N/A',
                     version: soft?.version || 'N/A',
-                    niveau: droit.niveau || 'Utilisateur',
-                    date_attribution: droit.date_attribution || 'N/A',
+                    niveau: droit?.nom || 'Utilisateur',
+                    date_attribution: access.date_attribution || 'N/A',
                     cout_mensuel: parseFloat(cost?.cout_mensuel) || 0,
                     statut: soft?.statut || 'Inconnu'
                 };
             });
             
-            const totalCost = userSoftware.reduce((sum, s) => sum + s.cout_mensuel, 0);
+            // Calculer le coût total pour cet utilisateur
+            let totalCost = 0;
+            const processedShared = new Set();
+            
+            for (const access of userAccess) {
+                const cost = this.costs.find(c => c.logiciel_id === access.logiciel_id && c.droit_id === access.droit_id);
+                const droit = this.droits.find(d => d.id === access.droit_id);
+                
+                if (cost && droit) {
+                    const monthlyCost = cost.cout_mensuel || 0;
+                    
+                    if (droit.nom === 'Accès communs') {
+                        // Pour les accès partagés, ne compter qu'une fois par logiciel
+                        const sharedKey = `${access.logiciel_id}_${access.droit_id}`;
+                        if (!processedShared.has(sharedKey)) {
+                            totalCost += monthlyCost;
+                            processedShared.add(sharedKey);
+                        }
+                    } else {
+                        // Pour les accès individuels, compter normalement
+                        totalCost += monthlyCost;
+                    }
+                }
+            }
             
             return {
                 id: user.id,
@@ -321,26 +345,48 @@ class ReportsManager {
         return this.teams.map(team => {
             // Trouver tous les utilisateurs de cette équipe
             const teamUsers = this.users.filter(u => u.equipe_id === team.id);
-            
-            // Trouver tous les logiciels utilisés par l'équipe
             const teamUserIds = teamUsers.map(u => u.id);
-            const teamDroits = this.droits.filter(d => teamUserIds.includes(d.utilisateur_id));
             
-            // Logiciels uniques utilisés par l'équipe
-            const uniqueSoftwareIds = [...new Set(teamDroits.map(d => d.logiciel_id))];
+            // Trouver tous les accès de cette équipe
+            const teamAccess = this.access.filter(a => teamUserIds.includes(a.utilisateur_id));
+            
+            // Calculer le coût total pour chaque logiciel utilisé par l'équipe
+            const uniqueSoftwareIds = [...new Set(teamAccess.map(a => a.logiciel_id))];
             const teamSoftware = uniqueSoftwareIds.map(softId => {
                 const soft = this.software.find(s => s.id === softId);
-                const softUsers = teamDroits.filter(d => d.logiciel_id === softId);
-                const cost = this.costs.find(c => c.logiciel_id === softId);
+                const softwareAccess = teamAccess.filter(a => a.logiciel_id === softId);
+                
+                // Calculer le coût pour ce logiciel spécifique pour cette équipe
+                let softwareCost = 0;
+                const processedShared = new Set();
+                
+                for (const access of softwareAccess) {
+                    const cost = this.costs.find(c => c.logiciel_id === access.logiciel_id && c.droit_id === access.droit_id);
+                    const droit = this.droits.find(d => d.id === access.droit_id);
+                    
+                    if (cost && droit) {
+                        const monthlyCost = cost.cout_mensuel || 0;
+                        
+                        if (droit.nom === 'Accès communs') {
+                            const sharedKey = `${access.logiciel_id}_${access.droit_id}`;
+                            if (!processedShared.has(sharedKey)) {
+                                softwareCost += monthlyCost;
+                                processedShared.add(sharedKey);
+                            }
+                        } else {
+                            softwareCost += monthlyCost;
+                        }
+                    }
+                }
                 
                 return {
                     id: soft?.id || 0,
                     nom: soft?.nom || 'Inconnu',
                     editeur: soft?.editeur || 'N/A',
                     version: soft?.version || 'N/A',
-                    utilisateurs_count: softUsers.length,
-                    cout_mensuel: parseFloat(cost?.cout_mensuel) || 0,
-                    cout_total: (parseFloat(cost?.cout_mensuel) || 0) * softUsers.length,
+                    utilisateurs_count: softwareAccess.length,
+                    cout_mensuel: softwareCost,
+                    cout_total: softwareCost,
                     statut: soft?.statut || 'Inconnu'
                 };
             });
