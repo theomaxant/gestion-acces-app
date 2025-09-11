@@ -79,29 +79,29 @@ class ReportsManager {
             // Attendre que l'API Supabase soit disponible
             await this.waitForSupabaseAPI();
             
-            if (!window.supabaseAPI) {
+            if (!window.D1API) {
                 console.error('❌ [REPORTS] API Supabase toujours non disponible après attente');
                 return;
             }
             
             // Charger les données
             console.log('📊 [REPORTS] Chargement utilisateurs...');
-            this.users = await window.supabaseAPI.getRecords('utilisateurs') || [];
+            this.users = await window.D1API.getRecords('utilisateurs') || [];
             
             console.log('📊 [REPORTS] Chargement logiciels...');
-            this.software = await window.supabaseAPI.getRecords('logiciels') || [];
+            this.software = await window.D1API.getRecords('logiciels') || [];
             
             console.log('📊 [REPORTS] Chargement accès...');
-            this.access = await window.supabaseAPI.getRecords('acces') || [];
+            this.access = await window.D1API.getRecords('acces') || [];
             
             console.log('📊 [REPORTS] Chargement coûts...');
-            this.costs = await window.supabaseAPI.getRecords('couts_licences') || [];
+            this.costs = await window.D1API.getRecords('couts_licences') || [];
             
             console.log('📊 [REPORTS] Chargement droits...');
-            this.droits = await window.supabaseAPI.getRecords('droits') || [];
+            this.droits = await window.D1API.getRecords('droits') || [];
             
             console.log('📊 [REPORTS] Chargement équipes...');
-            this.teams = await window.supabaseAPI.getRecords('equipes') || [];
+            this.teams = await window.D1API.getRecords('equipes') || [];
             
             console.log('✅ [REPORTS] Données chargées avec succès:', {
                 users: this.users.length,
@@ -983,13 +983,13 @@ class ReportsManager {
         let attempts = 0;
         const maxAttempts = 20; // 10 secondes max
         
-        while (!window.supabaseAPI && attempts < maxAttempts) {
+        while (!window.D1API && attempts < maxAttempts) {
             console.log('📊 [REPORTS] Tentative', attempts + 1, '/ API Supabase non disponible, attente...');
             await new Promise(resolve => setTimeout(resolve, 500)); // Attendre 500ms
             attempts++;
         }
         
-        if (window.supabaseAPI) {
+        if (window.D1API) {
             console.log('✅ [REPORTS] API Supabase trouvée après', attempts, 'tentatives');
         } else {
             console.error('❌ [REPORTS] API Supabase non trouvée après', maxAttempts, 'tentatives');
