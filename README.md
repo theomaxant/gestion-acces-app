@@ -17,6 +17,7 @@
 - **Classification intelligente** : Logiciels de base, applications Shopify
 - **Métadonnées complètes** : Éditeur, version, URL officiel, description
 - **Gestion financière** : Qui paye, moyen de paiement, périodicité
+- **📋 Gestion d'engagement** : Contrats avec dates d'expiration et limites d'annulation
 - **Échéancier automatique** : Calcul prochains paiements, alertes
 
 ### 🎫 **Accès & Permissions**
@@ -30,6 +31,13 @@
 - **Vision annuelle** : Coûts mensuels ×12 partout dans l'interface
 - **Budgets équipes** : Suivi en temps réel, alertes dépassement
 - **ROI et optimisation** : Identification logiciels sous-utilisés
+
+### 📋 **Gestion d'Engagement** ⭐ NOUVEAU
+- **Contrats avec engagement** : Checkbox "Engagement ?" pour logiciels sous contrat
+- **Dates contractuelles** : Date de fin de contrat et date limite d'annulation
+- **Validation intelligente** : Vérification cohérence des dates (annulation < fin contrat)
+- **Alertes visuelles** : Affichage des engagements dans le tableau avec badge rouge
+- **Conformité légale** : Respect des délais de résiliation des contrats
 
 ### 📊 **Rapports & Analytics**
 - **3 vues détaillées** : Par logiciel, par utilisateur, par équipe
@@ -200,6 +208,35 @@
 - ✅ Nouveau système simple et efficace activé
 - ✅ 10 utilisateurs chargés et fonctionnels
 - ✅ Logs automatiquement enrichis avec identité utilisateur
+
+### 🆕 **NOUVEAU : Gestion des Engagements Contractuels** 📋
+
+**Fonctionnalité complète** de gestion des contrats d'engagement pour logiciels avec obligations légales et délais de résiliation.
+
+**🎯 Fonctionnalités de la Gestion d'Engagement :**
+- 📋 **Checkbox "Engagement ?"** - Interface simple pour marquer les logiciels sous contrat
+- 📅 **Dates contractuelles** - Date de fin de contrat et date limite d'annulation obligatoires
+- ✅ **Validation intelligente** - Vérification que la date d'annulation est antérieure à la fin de contrat
+- 🚨 **Alertes visuelles** - Badge rouge "📋 Engagement" dans le tableau principal
+- 📱 **Interface responsive** - Affichage mobile avec détails contractuels
+- 🔒 **Champs conditionnels** - Affichage automatique des dates quand engagement coché
+
+**Fichiers modifiés/créés :**
+- **`js/software.js`** - Ajout fonctions `toggleEngagementFields()` et `validateEngagementDates()`
+- **`sql/add_engagement_fields_to_logiciels.sql`** - Script SQL pour ajouter les colonnes engagement
+- **Interface ajoutée** : Nouvelle colonne "📋 Engagement" dans tableau logiciels
+- **Validation** : Contrôles de dates avec messages d'erreur explicites
+
+**Requête SQL pour Supabase :**
+```sql
+-- Ajouter les colonnes d'engagement
+ALTER TABLE logiciels ADD COLUMN engagement BOOLEAN DEFAULT FALSE;
+ALTER TABLE logiciels ADD COLUMN date_fin_contrat DATE;
+ALTER TABLE logiciels ADD COLUMN date_limite_annulation DATE;
+
+-- Améliorer les performances
+CREATE INDEX idx_logiciels_engagement ON logiciels(engagement) WHERE engagement = TRUE;
+```
 
 ### 🆕 **NOUVEAU : Documentation Statique des Processus**
 
