@@ -10,14 +10,19 @@ class SupabaseAPI {
         this.supabaseKey = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImVoaWFnbnRwbW1pZXRucG5idHJrIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NTc0NjU5NTAsImV4cCI6MjA3MzA0MTk1MH0.E5O5fbxMkkiFTKwtZsyLEcjGvQyLAjXWafIiBdff0JQ';
         
         this.baseUrl = `${this.supabaseUrl}/rest/v1`;
-        this.debug = true;
+        // Debug seulement en développement
+        this.debug = window.location.hostname === 'localhost' || 
+                    window.location.hostname === '127.0.0.1' ||
+                    (window.AppLogger && window.AppLogger.config.isDevelopment);
         
         this.log('⚡ API Supabase initialisée - Prête à utiliser !');
         this.log('📝 N\'oubliez pas de configurer supabaseUrl et supabaseKey');
     }
 
     log(message, data = null) {
-        if (this.debug) {
+        if (window.log) {
+            window.log.debug('supabase', message, data);
+        } else if (this.debug) {
             console.log(`⚡ [SUPABASE] ${message}`, data);
         }
     }
@@ -93,12 +98,14 @@ class SupabaseAPI {
         try {
             const url = `${this.baseUrl}/${tableName}`;
 
-            // Ajouter les timestamps automatiquement
-            const recordData = {
-                ...data,
-                created_at: new Date().toISOString(),
-                updated_at: new Date().toISOString()
-            };
+            // Ajouter les timestamps automatiquement (sauf pour la table logs qui a sa propre gestion)
+            const recordData = tableName === 'logs' ? 
+                { ...data } : 
+                {
+                    ...data,
+                    created_at: new Date().toISOString(),
+                    updated_at: new Date().toISOString()
+                };
 
             this.log(`POST ${url}`, recordData);
 

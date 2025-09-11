@@ -1037,13 +1037,17 @@ class ReportsManager {
 
     // FONCTION D'ATTENTE API SUPABASE
     async waitForSupabaseAPI() {
-        console.log('📊 [REPORTS] Attente de l\'API Supabase...');
+        if (window.log) {
+            window.log.debug('reports', 'Attente de l\'API Supabase...');
+        }
         
         let attempts = 0;
         const maxAttempts = 20; // 10 secondes max
         
         while (!window.D1API && attempts < maxAttempts) {
-            console.log('📊 [REPORTS] Tentative', attempts + 1, '/ API Supabase non disponible, attente...');
+            if (window.log) {
+                window.log.debug('reports', `Tentative ${attempts + 1} - API Supabase non disponible, attente...`);
+            }
             await new Promise(resolve => setTimeout(resolve, 500)); // Attendre 500ms
             attempts++;
         }
