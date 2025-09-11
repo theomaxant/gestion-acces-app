@@ -12,6 +12,9 @@
 - **Équipes avec budgets** : Budget mensuel, responsable, suivi dépassements
 - **Hiérarchie claire** : Responsables d'équipe, validation budgétaire
 - **Archivage automatique** : Conservation audit, suppression accès
+- **🎯 SÉLECTION MULTIPLE** : Cochez plusieurs utilisateurs pour actions en masse
+- **⚡ AJOUT EN MASSE** : Attribuez des applications à plusieurs utilisateurs simultanément
+- **🗑️ SUPPRESSION EN MASSE** : Retirez des accès communs à plusieurs utilisateurs
 
 ### 💻 **Catalogue Logiciels Avancé**
 - **Classification intelligente** : Logiciels de base, applications Shopify
@@ -25,6 +28,8 @@
 - **Gestion temporelle** : Dates d'expiration, accès temporaires
 - **Statuts avancés** : Actif, Suspendu, Expiré avec transitions automatiques
 - **Commentaires d'audit** : Justification des attributions
+- **🔥 NOUVEAU : Actions en masse** : Ajout/suppression groupée d'accès
+- **🎯 Interface intuitive** : Sélection multiple avec feedback visuel en temps réel
 
 ### 💰 **Optimisation Financière**
 - **Coûts précis** : Tarification par type d'accès et utilisateur
@@ -139,6 +144,56 @@
 - Sessions navigateur
 - Logs d'accès complets
 - ⚠️ **Note :** Pour production, implémenter Supabase Auth
+
+## 🎯 **NOUVELLES FONCTIONNALITÉS 2025** ⭐
+
+### **Sélection Multiple et Actions en Masse**
+
+**📋 Vue d'ensemble :**
+Révolutionne la gestion des utilisateurs avec la possibilité de sélectionner plusieurs utilisateurs et d'effectuer des actions groupées.
+
+**🚀 Fonctionnalités clés :**
+- ✅ **Sélection multiple** : Cases à cocher pour chaque utilisateur
+- 📊 **Sélection globale** : Case "tout sélectionner" en en-tête
+- 🎯 **Barre d'actions dynamique** : Apparition automatique lors des sélections
+- ⚡ **Ajout en masse d'applications** : Assignation groupée d'accès
+- 🗑️ **Suppression en masse** : Retrait d'accès communs
+- 📱 **Interface responsive** : Optimisée mobile et desktop
+
+**💻 Interface utilisateur :**
+```
+┌─────────────────────────────────────────────────┐
+│ ☑️  Nom          Email         Équipe           │
+│ ☑️  Alice Martin alice@...     Développement    │
+│ ☑️  Bob Dupont   bob@...       Marketing        │
+│ ☐  Carol Lee    carol@...     Support          │
+└─────────────────────────────────────────────────┘
+
+🔷 2 utilisateurs sélectionnés
+[➕ Ajouter Applications] [➖ Retirer Accès] [✖ Annuler]
+```
+
+**🎮 Guide d'utilisation :**
+1. **Cochez** les utilisateurs souhaités
+2. **Cliquez** sur l'action en masse désirée
+3. **Sélectionnez** l'application et le niveau d'accès
+4. **Confirmez** l'opération
+5. **Visualisez** le rapport de résultats
+
+**📈 Cas d'usage pratiques :**
+- 👥 **Nouveaux employés** : Attribution des accès de base
+- 🔄 **Changement d'équipe** : Migration des permissions
+- 🆕 **Nouveau logiciel** : Déploiement par service
+- 🧹 **Audit et nettoyage** : Suppression d'accès obsolètes
+
+**🔧 Fonctionnalités techniques :**
+- 🚫 **Protection doublons** : Évite les accès en double
+- 📝 **Logs détaillés** : Audit complet des actions
+- ⚡ **Performance optimisée** : Traitement par lot
+- 🔄 **Gestion d'erreurs** : Feedback individuel sur les échecs
+
+**📖 Documentation complète :**
+Consultez `GUIDE-SELECTION-MULTIPLE-UTILISATEURS.md` pour le guide détaillé.
 
 ## 📊 Utilisation
 

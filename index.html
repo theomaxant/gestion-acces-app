@@ -10,6 +10,8 @@
     <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/@fortawesome/fontawesome-free@6.4.0/css/all.min.css">
     <!-- CSS de fallback pour assurer un styling de base -->
     <link rel="stylesheet" href="css/fallback.css">
+    <!-- CSS pour la sélection multiple -->
+    <link rel="stylesheet" href="css/bulk-selection.css">
     <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
     <script src="https://cdn.jsdelivr.net/npm/chartjs-plugin-datalabels@2"></script>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
@@ -321,12 +323,12 @@
             <!-- Users View -->
             <div id="users-view" class="view hidden">
                 <div class="mb-4 sm:mb-6">
-                    <div class="flex flex-col sm:flex-row justify-between items-start sm:items-center mb-4 gap-4">
+                    <div class="flex flex-col lg:flex-row justify-between items-start lg:items-center mb-4 gap-4">
                         <div>
                             <h2 class="text-2xl sm:text-3xl font-bold text-gray-800 mb-2">Gestion des Utilisateurs</h2>
-                            <p class="text-gray-600 text-sm sm:text-base">Gérer les utilisateurs et leurs accès</p>
+                            <p class="text-gray-600 text-sm sm:text-base">Gérer les utilisateurs et leurs accès • Sélectionnez plusieurs utilisateurs pour des actions en masse</p>
                         </div>
-                        <div class="flex space-x-2 sm:space-x-3">
+                        <div class="flex flex-wrap gap-2 sm:gap-3 items-center">
                             <button id="add-user-btn" class="bg-blue-600 text-white px-3 sm:px-4 py-2 rounded-lg hover:bg-blue-700 transition-colors text-sm sm:text-base">
                                 <i class="fas fa-plus mr-1 sm:mr-2"></i>
                                 <span class="hidden sm:inline">Nouvel Utilisateur</span>
@@ -337,11 +339,11 @@
                                 <span class="hidden sm:inline">Importer Excel</span>
                                 <span class="sm:hidden">Import</span>
                             </button>
+                            <label class="flex items-center cursor-pointer text-sm sm:text-base whitespace-nowrap">
+                                <input type="checkbox" id="show-archived-users" class="mr-2">
+                                <span class="text-gray-700">Afficher archivés</span>
+                            </label>
                         </div>
-                        <label class="flex items-center cursor-pointer text-sm sm:text-base">
-                            <input type="checkbox" id="show-archived-users" class="mr-2">
-                            <span class="text-gray-700">Afficher archivés</span>
-                        </label>
                     </div>
                     
                     <!-- Search Bar -->
