@@ -150,16 +150,21 @@ class Logger {
     getUserInfo() {
         const sessionInfo = window.auth?.getSessionInfo();
         
-        // Priorité au sélecteur d'utilisateur si disponible
+        // Utiliser le nouveau système d'authentification
         let currentUser = 'Utilisateur non identifié';
         let userDetails = null;
         
-        if (window.userSelector) {
+        if (window.auth && window.auth.getCurrentUserData) {
+            // Nouveau système d'authentification
+            const authUserData = window.auth.getCurrentUserData();
+            currentUser = window.auth.getCurrentUser();
+            userDetails = authUserData;
+        } else if (window.userSelector) {
+            // Fallback vers le sélecteur d'utilisateur
             currentUser = window.userSelector.getCurrentUser();
             userDetails = window.userSelector.getCurrentUserData();
-        } else if (window.auth) {
-            currentUser = window.auth.getCurrentUser();
         } else {
+            // Fallback vers localStorage
             currentUser = localStorage.getItem('current_user') || 'Utilisateur Direct';
         }
         
@@ -168,20 +173,22 @@ class Logger {
         
         return JSON.stringify({
             sessionActive: sessionInfo?.connected || false,
-            loginTime: sessionInfo?.loginTime || 'Inconnue',
+            loginTime: sessionInfo?.loginTime || localStorage.getItem('login_time') || 'Inconnue',
             identifiedUser: currentUser,
             userDetails: userDetails ? {
-                nom: userDetails.nom,
-                prenom: userDetails.prenom,
-                poste: userDetails.poste,
-                equipe: userDetails.equipe,
-                userId: userDetails.id
+                nom: userDetails.nom || '',
+                prenom: userDetails.prenom || '',
+                poste: userDetails.poste || 'Non défini',
+                equipe: userDetails.equipe || 'Non définie',
+                userId: userDetails.id || 'unknown',
+                email: userDetails.email || ''
             } : null,
             userAgent: userAgent,
             timestamp: timestamp,
             ip: 'Client-side', // Pas accessible côté client
             language: navigator.language,
-            source: window.userSelector ? 'user-selector' : 'auth-system'
+            source: window.auth && window.auth.getCurrentUserData ? 'new-auth-system' : (window.userSelector ? 'user-selector' : 'fallback'),
+            authMethod: 'simple_user_selection'
         });
     }
     
@@ -929,10 +936,10 @@ class Logger {
     
     // Obtenir le nom de l'utilisateur actuel de manière simplifiée
     getCurrentUserName() {
-        if (window.userSelector) {
-            return window.userSelector.getCurrentUser();
-        } else if (window.auth) {
+        if (window.auth && window.auth.getCurrentUser) {
             return window.auth.getCurrentUser();
+        } else if (window.userSelector) {
+            return window.userSelector.getCurrentUser();
         } else {
             return localStorage.getItem('current_user') || 'Utilisateur Direct';
         }
