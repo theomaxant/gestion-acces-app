@@ -78,7 +78,7 @@ class MenuManager {
         // Gestion des boutons mobiles du sous-menu Réglages
         const mobileNavButtons = document.querySelectorAll('.mobile-nav-btn');
         mobileNavButtons.forEach(button => {
-            if (['mobile-nav-teams', 'mobile-nav-rights', 'mobile-nav-logs', 'mobile-nav-process', 'mobile-nav-tutorials'].includes(button.id)) {
+            if (['mobile-nav-teams', 'mobile-nav-rights', 'mobile-nav-logs', 'mobile-nav-process'].includes(button.id)) {
                 button.addEventListener('click', (e) => {
                     e.stopPropagation();
                     console.log('🔥 Clic mobile détecté:', button.id);
@@ -176,10 +176,7 @@ class MenuManager {
             case 'mobile-nav-process':
                 this.navigateToSection('process');
                 break;
-            case 'nav-tutorials':
-            case 'mobile-nav-tutorials':
-                this.navigateToSection('tutorials');
-                break;
+
             case 'nav-logout':
             case 'mobile-nav-logout':
                 this.handleLogout();
@@ -211,7 +208,7 @@ class MenuManager {
         });
         
         // Ajouter l'état actif au bouton Réglages si on est dans une sous-section
-        if (['teams', 'rights', 'logs', 'tutorials'].includes(section)) {
+        if (['teams', 'rights', 'logs', 'process'].includes(section)) {
             this.settingsButton?.classList.add('active', 'bg-blue-500');
             this.settingsButton?.classList.remove('hover:bg-blue-500');
             

@@ -45,7 +45,7 @@ class AccessManagementApp {
                 const viewId = e.target.id.replace('mobile-nav-', '');
                 
                 // Ignorer les boutons qui ne correspondent pas à des vues
-                if (['logout', 'teams', 'rights', 'logs', 'tutorials'].includes(viewId)) {
+                if (['logout', 'teams', 'rights', 'logs', 'process'].includes(viewId)) {
                     // Ces boutons sont gérés par le MenuManager
                     return;
                 }
@@ -104,6 +104,36 @@ class AccessManagementApp {
         document.getElementById('import-users-btn')?.addEventListener('click', () => {
             window.importManager?.showImportModal('users');
         });
+        
+        // Documentation process handlers - Fonction globale pour les clics sur les blocs
+        window.openProcessDocumentation = (processId) => {
+            console.log('Ouverture documentation pour:', processId);
+            
+            // Essayer avec la classe si disponible
+            if (window.ProcessDocumentation) {
+                try {
+                    const doc = new window.ProcessDocumentation();
+                    doc.showProcess(processId);
+                    return;
+                } catch (error) {
+                    console.error('Erreur ProcessDocumentation:', error);
+                }
+            }
+            
+            // Sinon utiliser l'instance si disponible
+            if (window.processDocumentation && typeof window.processDocumentation.showProcess === 'function') {
+                try {
+                    window.processDocumentation.showProcess(processId);
+                    return;
+                } catch (error) {
+                    console.error('Erreur instance processDocumentation:', error);
+                }
+            }
+            
+            // Fallback : affichage simple
+            console.warn('Système de documentation non disponible pour:', processId);
+            alert(`Documentation "${processId}" - Système en cours de chargement`);
+        };
     }
 
     switchView(viewName) {
@@ -130,7 +160,7 @@ class AccessManagementApp {
         }
 
         // Reset submenu states if we're not in a settings subsection
-        if (!['teams', 'rights', 'logs', 'process', 'tutorials'].includes(viewName)) {
+        if (!['teams', 'rights', 'logs', 'process'].includes(viewName)) {
             // Forcer la réinitialisation complète du sous-menu
             setTimeout(() => {
                 document.querySelectorAll('.submenu-btn').forEach(btn => {
