@@ -130,7 +130,7 @@ class AccessManagementApp {
         }
 
         // Reset submenu states if we're not in a settings subsection
-        if (!['teams', 'rights', 'logs', 'tutorials'].includes(viewName)) {
+        if (!['teams', 'rights', 'logs', 'process', 'tutorials'].includes(viewName)) {
             // Forcer la réinitialisation complète du sous-menu
             setTimeout(() => {
                 document.querySelectorAll('.submenu-btn').forEach(btn => {

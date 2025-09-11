@@ -38,9 +38,9 @@ class ProcessManager {
 
     async showAllProcesses() {
         try {
-            const container = document.getElementById('main-content');
+            const container = document.getElementById('process-view');
             if (!container) {
-                console.error('[ProcessManager] Container main-content non trouvé');
+                console.error('[ProcessManager] Container process-view non trouvé');
                 return;
             }
 
@@ -885,7 +885,7 @@ Veuillez sélectionner un document valide dans la navigation.`;
     }
 
     showError(message) {
-        const container = document.getElementById('main-content');
+        const container = document.getElementById('process-view');
         if (container) {
             container.innerHTML = `
                 <div class="bg-white p-8 rounded-lg border border-red-200">

@@ -78,7 +78,7 @@ class MenuManager {
         // Gestion des boutons mobiles du sous-menu Réglages
         const mobileNavButtons = document.querySelectorAll('.mobile-nav-btn');
         mobileNavButtons.forEach(button => {
-            if (['mobile-nav-teams', 'mobile-nav-rights', 'mobile-nav-logs', 'mobile-nav-tutorials'].includes(button.id)) {
+            if (['mobile-nav-teams', 'mobile-nav-rights', 'mobile-nav-logs', 'mobile-nav-process', 'mobile-nav-tutorials'].includes(button.id)) {
                 button.addEventListener('click', (e) => {
                     e.stopPropagation();
                     console.log('🔥 Clic mobile détecté:', button.id);
@@ -171,6 +171,10 @@ class MenuManager {
             case 'nav-logs':
             case 'mobile-nav-logs':
                 this.navigateToSection('logs');
+                break;
+            case 'nav-process':
+            case 'mobile-nav-process':
+                this.navigateToSection('process');
                 break;
             case 'nav-tutorials':
             case 'mobile-nav-tutorials':
