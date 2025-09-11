@@ -1,4 +1,8 @@
-// Gestionnaire des rapports et analyses
+/**
+ * GESTIONNAIRE DES RAPPORTS DÉTAILLÉS
+ * Avec export Excel et vues détaillées par entité
+ */
+
 class ReportsManager {
     constructor() {
         this.users = [];
@@ -6,791 +10,941 @@ class ReportsManager {
         this.access = [];
         this.costs = [];
         this.droits = [];
+        this.teams = [];
         this.currentView = null;
-        this.init();
+        
+        console.log('📊 ReportsManager initialisé');
     }
 
     async init() {
-        await this.loadDroits();
+        console.log('📊 Initialisation ReportsManager...');
         this.setupEventListeners();
     }
 
-    async loadDroits() {
-        try {
-            const result = await window.D1API.get('droits');
-            this.droits = result.data || [];
-        } catch (error) {
-            console.error('Erreur lors du chargement des droits:', error);
-        }
+    setupEventListeners() {
+        console.log('📊 Configuration event listeners...');
+        
+        setTimeout(() => {
+            this.bindEvents();
+        }, 100);
     }
 
-    setupEventListeners() {
-        console.log('📊 Setup event listeners pour les rapports');
+    bindEvents() {
+        console.log('📊 Liaison des événements...');
         
-        const softwareBtn = document.getElementById('view-by-software-btn');
-        if (softwareBtn) {
-            softwareBtn.addEventListener('click', () => {
-                console.log('🔄 Clic sur vue par logiciel');
-                this.showSoftwareView();
+        // Bouton Vue par Logiciel
+        const btnSoftware = document.getElementById('view-by-software-btn');
+        if (btnSoftware) {
+            btnSoftware.addEventListener('click', (e) => {
+                console.log('🖱️ Clic Vue par Logiciel détecté');
+                e.preventDefault();
+                this.showSoftwareReport();
             });
-            console.log('✅ Event listener ajouté pour view-by-software-btn');
+            console.log('✅ Bouton Logiciel configuré');
         } else {
-            console.warn('⚠️ Élément view-by-software-btn non trouvé');
+            console.warn('⚠️ Bouton view-by-software-btn non trouvé');
         }
 
-        const userBtn = document.getElementById('view-by-user-btn');
-        if (userBtn) {
-            userBtn.addEventListener('click', () => {
-                console.log('🔄 Clic sur vue par utilisateur');
-                this.showUserView();
+        // Bouton Vue par Utilisateur  
+        const btnUser = document.getElementById('view-by-user-btn');
+        if (btnUser) {
+            btnUser.addEventListener('click', (e) => {
+                console.log('🖱️ Clic Vue par Utilisateur détecté');
+                e.preventDefault();
+                this.showUserReport();
             });
-            console.log('✅ Event listener ajouté pour view-by-user-btn');
+            console.log('✅ Bouton Utilisateur configuré');
         } else {
-            console.warn('⚠️ Élément view-by-user-btn non trouvé');
+            console.warn('⚠️ Bouton view-by-user-btn non trouvé');
         }
 
-        const teamBtn = document.getElementById('view-by-team-btn');
-        if (teamBtn) {
-            teamBtn.addEventListener('click', () => {
-                console.log('🔄 Clic sur vue par équipe');
-                this.showTeamView();
+        // Bouton Vue par Équipe
+        const btnTeam = document.getElementById('view-by-team-btn');
+        if (btnTeam) {
+            btnTeam.addEventListener('click', (e) => {
+                console.log('🖱️ Clic Vue par Équipe détecté');
+                e.preventDefault();
+                this.showTeamReport();
             });
-            console.log('✅ Event listener ajouté pour view-by-team-btn');
+            console.log('✅ Bouton Équipe configuré');
         } else {
-            console.warn('⚠️ Élément view-by-team-btn non trouvé');
+            console.warn('⚠️ Bouton view-by-team-btn non trouvé');
         }
     }
 
     async loadReports() {
+        console.log('📊 Chargement des données...');
+        
         try {
-            const [usersResult, softwareResult, accessResult, costsResult] = await Promise.all([
-                window.D1API.get('utilisateurs'),
-                window.D1API.get('logiciels'),
-                window.D1API.get('acces'),
-                window.D1API.get('couts_licences')
-            ]);
-
-            this.users = usersResult.data || [];
-            this.software = softwareResult.data || [];
-            this.access = accessResult.data || [];
-            this.costs = costsResult.data || [];
+            // Charger les données
+            this.users = await window.supabaseAPI.getRecords('utilisateurs') || [];
+            this.software = await window.supabaseAPI.getRecords('logiciels') || [];
+            this.access = await window.supabaseAPI.getRecords('acces') || [];
+            this.costs = await window.supabaseAPI.getRecords('couts_licences') || [];
+            this.droits = await window.supabaseAPI.getRecords('droits') || [];
+            this.teams = await window.supabaseAPI.getRecords('equipes') || [];
+            
+            console.log('✅ Données chargées:', {
+                users: this.users.length,
+                software: this.software.length,
+                access: this.access.length,
+                costs: this.costs.length,
+                droits: this.droits.length,
+                teams: this.teams.length
+            });
+            
         } catch (error) {
-            console.error('Erreur lors du chargement des données de rapport:', error);
-            window.app?.showAlert('Erreur lors du chargement des données', 'error');
+            console.error('❌ Erreur chargement:', error);
         }
     }
 
-    async showSoftwareView() {
-        console.log('📊 Affichage de la vue par logiciel');
-        await this.loadReports();
-        this.currentView = 'software';
+    async showSoftwareReport() {
+        console.log('📊 Affichage rapport logiciels détaillé');
+        
+        // Charger les données si nécessaire
+        if (this.software.length === 0) {
+            await this.loadReports();
+        }
         
         const container = document.getElementById('detailed-reports-container');
-        if (!container) return;
-
-        const activeSoftware = this.software.filter(s => !s.archived);
+        if (!container) {
+            console.error('❌ Container detailed-reports-container non trouvé');
+            return;
+        }
         
-        const html = `
-            <div class="space-y-6">
-                <div class="flex justify-between items-center">
-                    <h3 class="text-xl font-semibold text-gray-900">Vue par Logiciel</h3>
-                    <button onclick="window.reportsManager.exportSoftwareReport()" 
-                            class="px-4 py-2 bg-green-600 text-white rounded-lg hover:bg-green-700">
-                        <i class="fas fa-download mr-2"></i>Exporter
-                    </button>
-                </div>
-                
-                <div class="grid gap-6">
-                    ${activeSoftware.map(software => this.renderSoftwareReportCard(software)).join('')}
-                </div>
-            </div>
-        `;
-
-        container.innerHTML = html;
+        // Afficher le container
         container.classList.remove('hidden');
+        this.updateActiveButton('view-by-software-btn');
+        
+        // Générer les données détaillées
+        const reportData = this.generateDetailedSoftwareReport();
+        container.innerHTML = this.renderDetailedSoftwareReport(reportData);
+        
+        console.log('✅ Rapport logiciels détaillé affiché');
     }
 
-    renderSoftwareReportCard(software) {
-        const softwareAccess = this.access.filter(a => a.logiciel_id === software.id);
-        const activeUsers = this.users.filter(u => !u.archived);
+    async showUserReport() {
+        console.log('📊 Affichage rapport utilisateurs détaillé');
         
-        // Calculer les coûts
-        let totalCost = 0;
-        const processedShared = new Set();
-        const costsByRight = {};
+        // Charger les données si nécessaire
+        if (this.users.length === 0) {
+            await this.loadReports();
+        }
+        
+        const container = document.getElementById('detailed-reports-container');
+        if (!container) {
+            console.error('❌ Container detailed-reports-container non trouvé');
+            return;
+        }
+        
+        // Afficher le container
+        container.classList.remove('hidden');
+        this.updateActiveButton('view-by-user-btn');
+        
+        // Générer les données détaillées
+        const reportData = this.generateDetailedUserReport();
+        container.innerHTML = this.renderDetailedUserReport(reportData);
+        
+        console.log('✅ Rapport utilisateurs détaillé affiché');
+    }
 
-        for (const acc of softwareAccess) {
-            const user = activeUsers.find(u => u.id === acc.utilisateur_id);
-            if (!user) continue; // Ignorer les utilisateurs archivés
+    async showTeamReport() {
+        console.log('📊 Affichage rapport équipes détaillé');
+        
+        // Charger les données si nécessaire
+        if (this.teams.length === 0) {
+            await this.loadReports();
+        }
+        
+        const container = document.getElementById('detailed-reports-container');
+        if (!container) {
+            console.error('❌ Container detailed-reports-container non trouvé');
+            return;
+        }
+        
+        // Afficher le container
+        container.classList.remove('hidden');
+        this.updateActiveButton('view-by-team-btn');
+        
+        // Générer les données détaillées
+        const reportData = this.generateDetailedTeamReport();
+        container.innerHTML = this.renderDetailedTeamReport(reportData);
+        
+        console.log('✅ Rapport équipes détaillé affiché');
+    }
 
-            const cost = this.costs.find(c => c.logiciel_id === acc.logiciel_id && c.droit_id === acc.droit_id);
-            const droit = this.droits.find(d => d.id === acc.droit_id);
+    generateDetailedSoftwareReport() {
+        console.log('📊 Génération rapport détaillé par logiciel');
+        
+        return this.software.map(soft => {
+            // Trouver tous les droits pour ce logiciel
+            const softwareDroits = this.droits.filter(d => d.logiciel_id === soft.id);
             
-            if (cost && droit) {
-                if (!costsByRight[droit.nom]) {
-                    costsByRight[droit.nom] = { count: 0, unitCost: cost.cout_mensuel, totalCost: 0 };
-                }
+            // Trouver tous les utilisateurs ayant accès
+            const softwareUsers = softwareDroits.map(droit => {
+                const user = this.users.find(u => u.id === droit.utilisateur_id);
+                return {
+                    id: user?.id || 0,
+                    nom: user?.nom || 'Inconnu',
+                    prenom: user?.prenom || '',
+                    email: user?.email || 'N/A',
+                    equipe: user?.equipe || 'N/A',
+                    niveau: droit.niveau || 'Utilisateur',
+                    date_attribution: droit.date_attribution || 'N/A',
+                    statut: user?.statut || 'Inconnu'
+                };
+            });
+            
+            // Calculer les coûts
+            const softwareCosts = this.costs.filter(c => c.logiciel_id === soft.id);
+            const totalCost = softwareCosts.reduce((sum, c) => sum + (parseFloat(c.cout_mensuel) || 0), 0);
+            
+            return {
+                id: soft.id,
+                nom: soft.nom || 'Sans nom',
+                editeur: soft.editeur || 'N/A',
+                version: soft.version || 'N/A',
+                statut: soft.statut || 'Actif',
+                description: soft.description || 'N/A',
+                users: softwareUsers,
+                totalUsers: softwareUsers.length,
+                totalCost: totalCost,
+                costs: softwareCosts
+            };
+        });
+    }
 
-                if (droit.nom === 'Accès communs') {
-                    const sharedKey = `${acc.logiciel_id}_${acc.droit_id}`;
-                    if (!processedShared.has(sharedKey)) {
-                        totalCost += cost.cout_mensuel;
-                        costsByRight[droit.nom].totalCost = cost.cout_mensuel;
-                        processedShared.add(sharedKey);
-                    }
-                    costsByRight[droit.nom].count = softwareAccess.filter(a => a.droit_id === acc.droit_id).length;
-                } else {
-                    totalCost += cost.cout_mensuel;
-                    costsByRight[droit.nom].count++;
-                    costsByRight[droit.nom].totalCost += cost.cout_mensuel;
-                }
-            }
-        }
+    generateDetailedUserReport() {
+        console.log('📊 Génération rapport détaillé par utilisateur');
+        
+        return this.users.map(user => {
+            // Trouver tous les droits de cet utilisateur
+            const userDroits = this.droits.filter(d => d.utilisateur_id === user.id);
+            
+            // Trouver tous les logiciels auxquels il a accès
+            const userSoftware = userDroits.map(droit => {
+                const soft = this.software.find(s => s.id === droit.logiciel_id);
+                const cost = this.costs.find(c => c.logiciel_id === droit.logiciel_id);
+                
+                return {
+                    id: soft?.id || 0,
+                    nom: soft?.nom || 'Inconnu',
+                    editeur: soft?.editeur || 'N/A',
+                    version: soft?.version || 'N/A',
+                    niveau: droit.niveau || 'Utilisateur',
+                    date_attribution: droit.date_attribution || 'N/A',
+                    cout_mensuel: parseFloat(cost?.cout_mensuel) || 0,
+                    statut: soft?.statut || 'Inconnu'
+                };
+            });
+            
+            const totalCost = userSoftware.reduce((sum, s) => sum + s.cout_mensuel, 0);
+            
+            return {
+                id: user.id,
+                nom: user.nom || 'Sans nom',
+                prenom: user.prenom || '',
+                email: user.email || 'N/A',
+                equipe: user.equipe || 'N/A',
+                statut: user.statut || 'Actif',
+                telephone: user.telephone || 'N/A',
+                software: userSoftware,
+                totalSoftware: userSoftware.length,
+                totalCost: totalCost
+            };
+        });
+    }
 
-        // Grouper les utilisateurs par droit
-        const usersByRight = {};
-        for (const acc of softwareAccess) {
-            const user = activeUsers.find(u => u.id === acc.utilisateur_id);
-            if (!user) continue;
+    generateDetailedTeamReport() {
+        console.log('📊 Génération rapport détaillé par équipe');
+        
+        return this.teams.map(team => {
+            // Trouver tous les utilisateurs de cette équipe
+            const teamUsers = this.users.filter(u => u.equipe_id === team.id);
+            
+            // Trouver tous les logiciels utilisés par l'équipe
+            const teamUserIds = teamUsers.map(u => u.id);
+            const teamDroits = this.droits.filter(d => teamUserIds.includes(d.utilisateur_id));
+            
+            // Logiciels uniques utilisés par l'équipe
+            const uniqueSoftwareIds = [...new Set(teamDroits.map(d => d.logiciel_id))];
+            const teamSoftware = uniqueSoftwareIds.map(softId => {
+                const soft = this.software.find(s => s.id === softId);
+                const softUsers = teamDroits.filter(d => d.logiciel_id === softId);
+                const cost = this.costs.find(c => c.logiciel_id === softId);
+                
+                return {
+                    id: soft?.id || 0,
+                    nom: soft?.nom || 'Inconnu',
+                    editeur: soft?.editeur || 'N/A',
+                    version: soft?.version || 'N/A',
+                    utilisateurs_count: softUsers.length,
+                    cout_mensuel: parseFloat(cost?.cout_mensuel) || 0,
+                    cout_total: (parseFloat(cost?.cout_mensuel) || 0) * softUsers.length,
+                    statut: soft?.statut || 'Inconnu'
+                };
+            });
+            
+            const totalCost = teamSoftware.reduce((sum, s) => sum + s.cout_total, 0);
+            
+            return {
+                id: team.id,
+                nom: team.nom || 'Sans nom',
+                description: team.description || 'N/A',
+                users: teamUsers.map(u => ({
+                    id: u.id,
+                    nom: u.nom || 'Sans nom',
+                    prenom: u.prenom || '',
+                    email: u.email || 'N/A',
+                    statut: u.statut || 'Actif'
+                })),
+                software: teamSoftware,
+                totalUsers: teamUsers.length,
+                totalSoftware: uniqueSoftwareIds.length,
+                totalCost: totalCost
+            };
+        });
+    }
 
-            const droit = this.droits.find(d => d.id === acc.droit_id);
-            if (droit) {
-                if (!usersByRight[droit.nom]) {
-                    usersByRight[droit.nom] = [];
-                }
-                usersByRight[droit.nom].push(user);
-            }
-        }
-
+    renderDetailedSoftwareReport(data) {
+        const totalSoftware = data.length;
+        const totalUsers = data.reduce((sum, item) => sum + item.totalUsers, 0);
+        const totalCost = data.reduce((sum, item) => sum + item.totalCost, 0);
+        
         return `
-            <div class="bg-white rounded-lg shadow-md border border-gray-200">
-                <div class="px-6 py-4 border-b border-gray-200">
-                    <div class="flex justify-between items-start">
+            <div class="space-y-6">
+                <!-- En-tête avec statistiques et export -->
+                <div class="bg-gradient-to-r from-blue-500 to-blue-600 text-white p-6 rounded-lg">
+                    <div class="flex justify-between items-start mb-4">
                         <div>
-                            <h4 class="text-lg font-semibold text-gray-900">${software.nom}</h4>
-                            <p class="text-sm text-gray-600">${software.description || 'Aucune description'}</p>
+                            <h2 class="text-2xl font-bold mb-2">
+                                <i class="fas fa-desktop mr-3"></i>Rapport Détaillé par Logiciel
+                            </h2>
+                            <p class="text-blue-100">Vue complète des logiciels avec leurs utilisateurs</p>
                         </div>
-                        <div class="text-right">
-                            <div class="text-2xl font-bold text-blue-600">${totalCost.toFixed(2)}€</div>
-                            <div class="text-sm text-gray-500">Coût total/mois</div>
+                        <div class="flex gap-2">
+                            <button onclick="window.reportsManager.exportSoftwareReportExcel()" 
+                                    class="bg-green-500 hover:bg-green-600 px-4 py-2 rounded flex items-center">
+                                <i class="fas fa-file-excel mr-2"></i>Export Excel Général
+                            </button>
+                        </div>
+                    </div>
+                    <div class="grid grid-cols-1 md:grid-cols-3 gap-4">
+                        <div class="text-center">
+                            <div class="text-3xl font-bold">${totalSoftware}</div>
+                            <div class="text-blue-100">Logiciels</div>
+                        </div>
+                        <div class="text-center">
+                            <div class="text-3xl font-bold">${totalUsers}</div>
+                            <div class="text-blue-100">Total Utilisateurs</div>
+                        </div>
+                        <div class="text-center">
+                            <div class="text-3xl font-bold">${totalCost.toFixed(2)}€</div>
+                            <div class="text-blue-100">Coût Total</div>
                         </div>
                     </div>
                 </div>
                 
-                <div class="px-6 py-4">
-                    <div class="grid md:grid-cols-2 gap-6">
-                        <!-- Utilisateurs par droit -->
-                        <div>
-                            <h5 class="text-sm font-medium text-gray-900 mb-3">Utilisateurs par droit</h5>
-                            <div class="space-y-3">
-                                ${Object.keys(usersByRight).map(rightName => `
-                                    <div class="border rounded-lg p-3">
-                                        <div class="flex justify-between items-center mb-2">
-                                            <span class="font-medium text-sm">${rightName}</span>
-                                            <span class="text-xs bg-blue-100 text-blue-800 px-2 py-1 rounded">
-                                                ${usersByRight[rightName].length} utilisateur${usersByRight[rightName].length > 1 ? 's' : ''}
-                                            </span>
+                <!-- Liste détaillée des logiciels -->
+                <div class="space-y-4">
+                    ${data.map(software => `
+                        <div class="bg-white rounded-lg shadow-lg border">
+                            <div class="p-4 border-b bg-gray-50">
+                                <div class="flex justify-between items-center">
+                                    <div>
+                                        <h3 class="text-xl font-bold text-gray-800">${software.nom}</h3>
+                                        <div class="flex gap-4 text-sm text-gray-600 mt-1">
+                                            <span><i class="fas fa-building mr-1"></i>${software.editeur}</span>
+                                            <span><i class="fas fa-tag mr-1"></i>v${software.version}</span>
+                                            <span class="px-2 py-1 rounded ${software.statut === 'Actif' ? 'bg-green-100 text-green-800' : 'bg-red-100 text-red-800'}">${software.statut}</span>
                                         </div>
-                                        <div class="flex flex-wrap gap-1">
-                                            ${usersByRight[rightName].map(user => `
-                                                <span class="text-xs bg-gray-100 text-gray-700 px-2 py-1 rounded">
-                                                    ${user.nom} ${user.prenom || ''}
-                                                </span>
+                                    </div>
+                                    <div class="text-right">
+                                        <div class="text-2xl font-bold text-blue-600">${software.totalUsers}</div>
+                                        <div class="text-sm text-gray-500">utilisateurs</div>
+                                        <div class="text-lg font-semibold text-green-600">${software.totalCost.toFixed(2)}€/mois</div>
+                                        <button onclick="window.reportsManager.exportSingleSoftwareExcel(${software.id})" 
+                                                class="mt-1 bg-blue-500 hover:bg-blue-600 text-white px-3 py-1 rounded text-xs">
+                                            <i class="fas fa-download mr-1"></i>Export
+                                        </button>
+                                    </div>
+                                </div>
+                            </div>
+                            
+                            ${software.users.length > 0 ? `
+                                <div class="p-4">
+                                    <h4 class="font-semibold text-gray-700 mb-3">
+                                        <i class="fas fa-users mr-2"></i>Utilisateurs (${software.users.length})
+                                    </h4>
+                                    <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-3">
+                                        ${software.users.map(user => `
+                                            <div class="bg-gray-50 p-3 rounded border">
+                                                <div class="font-medium">${user.nom} ${user.prenom}</div>
+                                                <div class="text-sm text-gray-600">${user.email}</div>
+                                                <div class="text-xs text-gray-500 mt-1">
+                                                    <span class="bg-blue-100 text-blue-800 px-2 py-1 rounded">${user.niveau}</span>
+                                                    <span class="ml-2">${user.equipe}</span>
+                                                </div>
+                                            </div>
+                                        `).join('')}
+                                    </div>
+                                </div>
+                            ` : `
+                                <div class="p-4 text-center text-gray-500">
+                                    <i class="fas fa-user-slash text-2xl mb-2"></i>
+                                    <div>Aucun utilisateur assigné</div>
+                                </div>
+                            `}
+                        </div>
+                    `).join('')}
+                </div>
+            </div>
+        `;
+    }
+
+    renderDetailedUserReport(data) {
+        const totalUsers = data.length;
+        const totalSoftware = data.reduce((sum, item) => sum + item.totalSoftware, 0);
+        const totalCost = data.reduce((sum, item) => sum + item.totalCost, 0);
+        
+        return `
+            <div class="space-y-6">
+                <!-- En-tête avec statistiques et export -->
+                <div class="bg-gradient-to-r from-purple-500 to-purple-600 text-white p-6 rounded-lg">
+                    <div class="flex justify-between items-start mb-4">
+                        <div>
+                            <h2 class="text-2xl font-bold mb-2">
+                                <i class="fas fa-user mr-3"></i>Rapport Détaillé par Utilisateur
+                            </h2>
+                            <p class="text-purple-100">Vue complète des utilisateurs avec leurs logiciels</p>
+                        </div>
+                        <div class="flex gap-2">
+                            <button onclick="window.reportsManager.exportUserReportExcel()" 
+                                    class="bg-green-500 hover:bg-green-600 px-4 py-2 rounded flex items-center">
+                                <i class="fas fa-file-excel mr-2"></i>Export Excel Général
+                            </button>
+                        </div>
+                    </div>
+                    <div class="grid grid-cols-1 md:grid-cols-3 gap-4">
+                        <div class="text-center">
+                            <div class="text-3xl font-bold">${totalUsers}</div>
+                            <div class="text-purple-100">Utilisateurs</div>
+                        </div>
+                        <div class="text-center">
+                            <div class="text-3xl font-bold">${totalSoftware}</div>
+                            <div class="text-purple-100">Total Accès</div>
+                        </div>
+                        <div class="text-center">
+                            <div class="text-3xl font-bold">${totalCost.toFixed(2)}€</div>
+                            <div class="text-purple-100">Coût Total</div>
+                        </div>
+                    </div>
+                </div>
+                
+                <!-- Liste détaillée des utilisateurs -->
+                <div class="space-y-4">
+                    ${data.map(user => `
+                        <div class="bg-white rounded-lg shadow-lg border">
+                            <div class="p-4 border-b bg-gray-50">
+                                <div class="flex justify-between items-center">
+                                    <div>
+                                        <h3 class="text-xl font-bold text-gray-800">${user.nom} ${user.prenom}</h3>
+                                        <div class="flex gap-4 text-sm text-gray-600 mt-1">
+                                            <span><i class="fas fa-envelope mr-1"></i>${user.email}</span>
+                                            <span><i class="fas fa-users mr-1"></i>${user.equipe}</span>
+                                            <span class="px-2 py-1 rounded ${user.statut === 'Actif' ? 'bg-green-100 text-green-800' : 'bg-red-100 text-red-800'}">${user.statut}</span>
+                                        </div>
+                                    </div>
+                                    <div class="text-right">
+                                        <div class="text-2xl font-bold text-purple-600">${user.totalSoftware}</div>
+                                        <div class="text-sm text-gray-500">logiciels</div>
+                                        <div class="text-lg font-semibold text-green-600">${user.totalCost.toFixed(2)}€/mois</div>
+                                        <button onclick="window.reportsManager.exportSingleUserExcel(${user.id})" 
+                                                class="mt-1 bg-purple-500 hover:bg-purple-600 text-white px-3 py-1 rounded text-xs">
+                                            <i class="fas fa-download mr-1"></i>Export
+                                        </button>
+                                    </div>
+                                </div>
+                            </div>
+                            
+                            ${user.software.length > 0 ? `
+                                <div class="p-4">
+                                    <h4 class="font-semibold text-gray-700 mb-3">
+                                        <i class="fas fa-desktop mr-2"></i>Logiciels (${user.software.length})
+                                    </h4>
+                                    <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-3">
+                                        ${user.software.map(soft => `
+                                            <div class="bg-gray-50 p-3 rounded border">
+                                                <div class="font-medium">${soft.nom}</div>
+                                                <div class="text-sm text-gray-600">${soft.editeur} v${soft.version}</div>
+                                                <div class="text-xs text-gray-500 mt-1 flex justify-between">
+                                                    <span class="bg-purple-100 text-purple-800 px-2 py-1 rounded">${soft.niveau}</span>
+                                                    <span class="text-green-600 font-medium">${soft.cout_mensuel}€/mois</span>
+                                                </div>
+                                            </div>
+                                        `).join('')}
+                                    </div>
+                                </div>
+                            ` : `
+                                <div class="p-4 text-center text-gray-500">
+                                    <i class="fas fa-desktop text-2xl mb-2"></i>
+                                    <div>Aucun logiciel assigné</div>
+                                </div>
+                            `}
+                        </div>
+                    `).join('')}
+                </div>
+            </div>
+        `;
+    }
+
+    renderDetailedTeamReport(data) {
+        const totalTeams = data.length;
+        const totalUsers = data.reduce((sum, item) => sum + item.totalUsers, 0);
+        const totalCost = data.reduce((sum, item) => sum + item.totalCost, 0);
+        
+        return `
+            <div class="space-y-6">
+                <!-- En-tête avec statistiques et export -->
+                <div class="bg-gradient-to-r from-orange-500 to-orange-600 text-white p-6 rounded-lg">
+                    <div class="flex justify-between items-start mb-4">
+                        <div>
+                            <h2 class="text-2xl font-bold mb-2">
+                                <i class="fas fa-users mr-3"></i>Rapport Détaillé par Équipe
+                            </h2>
+                            <p class="text-orange-100">Vue complète des équipes avec utilisateurs et logiciels</p>
+                        </div>
+                        <div class="flex gap-2">
+                            <button onclick="window.reportsManager.exportTeamReportExcel()" 
+                                    class="bg-green-500 hover:bg-green-600 px-4 py-2 rounded flex items-center">
+                                <i class="fas fa-file-excel mr-2"></i>Export Excel Général
+                            </button>
+                        </div>
+                    </div>
+                    <div class="grid grid-cols-1 md:grid-cols-3 gap-4">
+                        <div class="text-center">
+                            <div class="text-3xl font-bold">${totalTeams}</div>
+                            <div class="text-orange-100">Équipes</div>
+                        </div>
+                        <div class="text-center">
+                            <div class="text-3xl font-bold">${totalUsers}</div>
+                            <div class="text-orange-100">Total Utilisateurs</div>
+                        </div>
+                        <div class="text-center">
+                            <div class="text-3xl font-bold">${totalCost.toFixed(2)}€</div>
+                            <div class="text-orange-100">Coût Total</div>
+                        </div>
+                    </div>
+                </div>
+                
+                <!-- Liste détaillée des équipes -->
+                <div class="space-y-4">
+                    ${data.map(team => `
+                        <div class="bg-white rounded-lg shadow-lg border">
+                            <div class="p-4 border-b bg-gray-50">
+                                <div class="flex justify-between items-center">
+                                    <div>
+                                        <h3 class="text-xl font-bold text-gray-800">${team.nom}</h3>
+                                        <div class="text-sm text-gray-600 mt-1">${team.description}</div>
+                                    </div>
+                                    <div class="text-right">
+                                        <div class="text-2xl font-bold text-orange-600">${team.totalUsers}</div>
+                                        <div class="text-sm text-gray-500">utilisateurs</div>
+                                        <div class="text-lg font-semibold text-green-600">${team.totalCost.toFixed(2)}€/mois</div>
+                                        <button onclick="window.reportsManager.exportSingleTeamExcel(${team.id})" 
+                                                class="mt-1 bg-orange-500 hover:bg-orange-600 text-white px-3 py-1 rounded text-xs">
+                                            <i class="fas fa-download mr-1"></i>Export
+                                        </button>
+                                    </div>
+                                </div>
+                            </div>
+                            
+                            <div class="p-4">
+                                <!-- Utilisateurs -->
+                                ${team.users.length > 0 ? `
+                                    <div class="mb-6">
+                                        <h4 class="font-semibold text-gray-700 mb-3">
+                                            <i class="fas fa-users mr-2"></i>Utilisateurs (${team.users.length})
+                                        </h4>
+                                        <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-3">
+                                            ${team.users.map(user => `
+                                                <div class="bg-blue-50 p-3 rounded border">
+                                                    <div class="font-medium">${user.nom} ${user.prenom}</div>
+                                                    <div class="text-sm text-gray-600">${user.email}</div>
+                                                    <div class="text-xs mt-1">
+                                                        <span class="px-2 py-1 rounded ${user.statut === 'Actif' ? 'bg-green-100 text-green-800' : 'bg-red-100 text-red-800'}">${user.statut}</span>
+                                                    </div>
+                                                </div>
                                             `).join('')}
                                         </div>
                                     </div>
-                                `).join('')}
-                            </div>
-                        </div>
-                        
-                        <!-- Détail des coûts -->
-                        <div>
-                            <h5 class="text-sm font-medium text-gray-900 mb-3">Détail des coûts</h5>
-                            <div class="space-y-2">
-                                ${Object.keys(costsByRight).map(rightName => {
-                                    const rightData = costsByRight[rightName];
-                                    return `
-                                        <div class="flex justify-between items-center p-2 bg-gray-50 rounded">
-                                            <div>
-                                                <div class="text-sm font-medium">${rightName}</div>
-                                                <div class="text-xs text-gray-500">
-                                                    ${rightData.count} utilisateur${rightData.count > 1 ? 's' : ''} × ${rightData.unitCost}€
-                                                    ${rightName === 'Accès communs' ? ' (partagé)' : ''}
+                                ` : ''}
+                                
+                                <!-- Logiciels -->
+                                ${team.software.length > 0 ? `
+                                    <div>
+                                        <h4 class="font-semibold text-gray-700 mb-3">
+                                            <i class="fas fa-desktop mr-2"></i>Logiciels (${team.software.length})
+                                        </h4>
+                                        <div class="grid grid-cols-1 md:grid-cols-2 gap-3">
+                                            ${team.software.map(soft => `
+                                                <div class="bg-green-50 p-3 rounded border">
+                                                    <div class="flex justify-between items-start">
+                                                        <div>
+                                                            <div class="font-medium">${soft.nom}</div>
+                                                            <div class="text-sm text-gray-600">${soft.editeur} v${soft.version}</div>
+                                                            <div class="text-xs text-gray-500 mt-1">${soft.utilisateurs_count} utilisateurs</div>
+                                                        </div>
+                                                        <div class="text-right">
+                                                            <div class="text-sm text-green-600 font-medium">${soft.cout_mensuel}€/mois/user</div>
+                                                            <div class="text-lg font-bold text-green-700">${soft.cout_total.toFixed(2)}€/mois</div>
+                                                        </div>
+                                                    </div>
                                                 </div>
-                                            </div>
-                                            <div class="text-sm font-medium text-gray-900">
-                                                ${rightData.totalCost.toFixed(2)}€
-                                            </div>
+                                            `).join('')}
                                         </div>
-                                    `;
-                                }).join('')}
-                            </div>
-                        </div>
-                    </div>
-                </div>
-                
-                <div class="px-6 py-3 bg-gray-50 rounded-b-lg">
-                    <div class="flex justify-between items-center text-sm">
-                        <span class="text-gray-600">
-                            Total: ${softwareAccess.filter(a => activeUsers.find(u => u.id === a.utilisateur_id)).length} accès accordés
-                        </span>
-                        <button onclick="window.reportsManager.exportSoftwareDetails('${software.id}')" 
-                                class="text-blue-600 hover:text-blue-800">
-                            <i class="fas fa-download mr-1"></i>Exporter ce logiciel
-                        </button>
-                    </div>
-                </div>
-            </div>
-        `;
-    }
-
-    async showUserView() {
-        console.log('👤 Affichage de la vue par utilisateur');
-        await this.loadReports();
-        this.currentView = 'user';
-        
-        const container = document.getElementById('detailed-reports-container');
-        if (!container) return;
-
-        const activeUsers = this.users.filter(u => !u.archived);
-        
-        const html = `
-            <div class="space-y-6">
-                <div class="flex justify-between items-center">
-                    <h3 class="text-xl font-semibold text-gray-900">Vue par Utilisateur</h3>
-                    <button onclick="window.reportsManager.exportUserReport()" 
-                            class="px-4 py-2 bg-green-600 text-white rounded-lg hover:bg-green-700">
-                        <i class="fas fa-download mr-2"></i>Exporter
-                    </button>
-                </div>
-                
-                <div class="grid gap-6">
-                    ${activeUsers.map(user => this.renderUserReportCard(user)).join('')}
-                </div>
-            </div>
-        `;
-
-        container.innerHTML = html;
-        container.classList.remove('hidden');
-    }
-
-    renderUserReportCard(user) {
-        const userAccess = this.access.filter(a => a.utilisateur_id === user.id);
-        const activeSoftware = this.software.filter(s => !s.archived);
-        
-        // Calculer les coûts
-        let totalCost = 0;
-        const processedShared = new Set();
-        const softwareDetails = [];
-
-        for (const acc of userAccess) {
-            const software = activeSoftware.find(s => s.id === acc.logiciel_id);
-            if (!software) continue; // Ignorer les logiciels archivés
-
-            const cost = this.costs.find(c => c.logiciel_id === acc.logiciel_id && c.droit_id === acc.droit_id);
-            const droit = this.droits.find(d => d.id === acc.droit_id);
-            
-            let costForThisAccess = 0;
-            if (cost && droit) {
-                if (droit.nom === 'Accès communs') {
-                    const sharedKey = `${acc.logiciel_id}_${acc.droit_id}`;
-                    if (!processedShared.has(sharedKey)) {
-                        costForThisAccess = cost.cout_mensuel;
-                        totalCost += cost.cout_mensuel;
-                        processedShared.add(sharedKey);
-                    }
-                } else {
-                    costForThisAccess = cost.cout_mensuel;
-                    totalCost += cost.cout_mensuel;
-                }
-            }
-
-            softwareDetails.push({
-                software: software,
-                droit: droit,
-                cost: costForThisAccess,
-                isShared: droit && droit.nom === 'Accès communs'
-            });
-        }
-
-        return `
-            <div class="bg-white rounded-lg shadow-md border border-gray-200">
-                <div class="px-6 py-4 border-b border-gray-200">
-                    <div class="flex justify-between items-start">
-                        <div>
-                            <h4 class="text-lg font-semibold text-gray-900">${user.nom} ${user.prenom || ''}</h4>
-                            <div class="space-y-1 text-sm text-gray-600">
-                                ${user.email ? `<div><i class="fas fa-envelope mr-1"></i>${user.email}</div>` : ''}
-                                ${user.poste ? `<div><i class="fas fa-briefcase mr-1"></i>${user.poste}</div>` : ''}
-                            </div>
-                        </div>
-                        <div class="text-right">
-                            <div class="text-2xl font-bold text-blue-600">${totalCost.toFixed(2)}€</div>
-                            <div class="text-sm text-gray-500">Coût total/mois</div>
-                        </div>
-                    </div>
-                </div>
-                
-                <div class="px-6 py-4">
-                    <h5 class="text-sm font-medium text-gray-900 mb-3">Logiciels et droits</h5>
-                    <div class="space-y-2">
-                        ${softwareDetails.map(detail => `
-                            <div class="flex justify-between items-center p-3 border rounded-lg">
-                                <div class="flex-1">
-                                    <div class="text-sm font-medium text-gray-900">${detail.software.nom}</div>
-                                    <div class="text-xs text-gray-500 flex items-center mt-1">
-                                        <span class="px-2 py-1 rounded ${this.getRightColor(detail.droit?.nom)}">
-                                            ${detail.droit?.nom || 'N/A'}
-                                        </span>
-                                        ${detail.isShared ? '<span class="ml-2 text-orange-600">(Partagé)</span>' : ''}
                                     </div>
-                                </div>
-                                <div class="text-sm font-medium text-gray-900">
-                                    ${detail.cost.toFixed(2)}€
-                                </div>
+                                ` : `
+                                    <div class="text-center text-gray-500 py-4">
+                                        <i class="fas fa-desktop text-2xl mb-2"></i>
+                                        <div>Aucun logiciel utilisé</div>
+                                    </div>
+                                `}
                             </div>
-                        `).join('')}
-                    </div>
-                </div>
-                
-                <div class="px-6 py-3 bg-gray-50 rounded-b-lg">
-                    <div class="flex justify-between items-center text-sm">
-                        <span class="text-gray-600">
-                            Total: ${userAccess.filter(a => activeSoftware.find(s => s.id === a.logiciel_id)).length} accès
-                        </span>
-                        <button onclick="window.reportsManager.exportUserDetails('${user.id}')" 
-                                class="text-blue-600 hover:text-blue-800">
-                            <i class="fas fa-download mr-1"></i>Exporter cet utilisateur
-                        </button>
-                    </div>
+                        </div>
+                    `).join('')}
                 </div>
             </div>
         `;
     }
 
-    getRightColor(rightName) {
-        const colors = {
-            'Admin': 'bg-red-100 text-red-800',
-            'User': 'bg-blue-100 text-blue-800',
-            'Lecteur': 'bg-green-100 text-green-800',
-            'Accès communs': 'bg-purple-100 text-purple-800'
-        };
-        return colors[rightName] || 'bg-gray-100 text-gray-800';
-    }
+    // FONCTIONS D'EXPORT EXCEL
 
-    exportSoftwareReport() {
-        if (!this.software.length) return;
-
-        const activeSoftware = this.software.filter(s => !s.archived);
-        const activeUsers = this.users.filter(u => !u.archived);
+    async exportSoftwareReportExcel() {
+        console.log('📊 Export Excel - Rapport Logiciels');
         
-        const data = activeSoftware.map(software => {
-            const softwareAccess = this.access.filter(a => 
-                a.logiciel_id === software.id && 
-                activeUsers.find(u => u.id === a.utilisateur_id)
-            );
-            
-            let totalCost = 0;
-            const processedShared = new Set();
-            
-            for (const acc of softwareAccess) {
-                const cost = this.costs.find(c => c.logiciel_id === acc.logiciel_id && c.droit_id === acc.droit_id);
-                const droit = this.droits.find(d => d.id === acc.droit_id);
-                
-                if (cost) {
-                    if (droit && droit.nom === 'Accès communs') {
-                        const sharedKey = `${acc.logiciel_id}_${acc.droit_id}`;
-                        if (!processedShared.has(sharedKey)) {
-                            totalCost += cost.cout_mensuel;
-                            processedShared.add(sharedKey);
-                        }
-                    } else {
-                        totalCost += cost.cout_mensuel;
-                    }
-                }
-            }
-
-            return {
-                'Logiciel': software.nom,
-                'Description': software.description || '',
-                'Nombre d\'utilisateurs': softwareAccess.length,
-                'Coût total/mois (€)': totalCost.toFixed(2)
-            };
-        });
-
-        this.downloadCSV(data, 'rapport_logiciels.csv');
-        window.app?.showAlert('Rapport exporté avec succès', 'success');
-    }
-
-    exportUserReport() {
-        if (!this.users.length) return;
-
-        const activeUsers = this.users.filter(u => !u.archived);
-        const activeSoftware = this.software.filter(s => !s.archived);
-        
-        const data = activeUsers.map(user => {
-            const userAccess = this.access.filter(a => 
-                a.utilisateur_id === user.id && 
-                activeSoftware.find(s => s.id === a.logiciel_id)
-            );
-            
-            let totalCost = 0;
-            const processedShared = new Set();
-            
-            for (const acc of userAccess) {
-                const cost = this.costs.find(c => c.logiciel_id === acc.logiciel_id && c.droit_id === acc.droit_id);
-                const droit = this.droits.find(d => d.id === acc.droit_id);
-                
-                if (cost) {
-                    if (droit && droit.nom === 'Accès communs') {
-                        const sharedKey = `${acc.logiciel_id}_${acc.droit_id}`;
-                        if (!processedShared.has(sharedKey)) {
-                            totalCost += cost.cout_mensuel;
-                            processedShared.add(sharedKey);
-                        }
-                    } else {
-                        totalCost += cost.cout_mensuel;
-                    }
-                }
-            }
-
-            return {
-                'Nom': user.nom,
-                'Prénom': user.prenom || '',
-                'Email': user.email || '',
-                'Poste': user.poste || '',
-                'Nombre de logiciels': userAccess.length,
-                'Coût total/mois (€)': totalCost.toFixed(2)
-            };
-        });
-
-        this.downloadCSV(data, 'rapport_utilisateurs.csv');
-        window.app?.showAlert('Rapport exporté avec succès', 'success');
-    }
-
-    exportSoftwareDetails(softwareId) {
-        const software = this.software.find(s => s.id === softwareId);
-        if (!software) return;
-
-        const softwareAccess = this.access.filter(a => a.logiciel_id === softwareId);
-        const activeUsers = this.users.filter(u => !u.archived);
-        
-        const data = softwareAccess
-            .filter(acc => activeUsers.find(u => u.id === acc.utilisateur_id))
-            .map(acc => {
-                const user = activeUsers.find(u => u.id === acc.utilisateur_id);
-                const droit = this.droits.find(d => d.id === acc.droit_id);
-                const cost = this.costs.find(c => c.logiciel_id === acc.logiciel_id && c.droit_id === acc.droit_id);
-                
-                return {
-                    'Utilisateur': `${user?.nom || ''} ${user?.prenom || ''}`.trim(),
-                    'Email': user?.email || '',
-                    'Poste': user?.poste || '',
-                    'Droit': droit?.nom || '',
-                    'Coût/mois (€)': cost ? cost.cout_mensuel.toFixed(2) : '0.00'
-                };
-            });
-
-        this.downloadCSV(data, `${software.nom.replace(/[^a-zA-Z0-9]/g, '_')}_details.csv`);
-        window.app?.showAlert('Détails exportés avec succès', 'success');
-    }
-
-    exportUserDetails(userId) {
-        const user = this.users.find(u => u.id === userId);
-        if (!user) return;
-
-        const userAccess = this.access.filter(a => a.utilisateur_id === userId);
-        const activeSoftware = this.software.filter(s => !s.archived);
-        
-        const data = userAccess
-            .filter(acc => activeSoftware.find(s => s.id === acc.logiciel_id))
-            .map(acc => {
-                const software = activeSoftware.find(s => s.id === acc.logiciel_id);
-                const droit = this.droits.find(d => d.id === acc.droit_id);
-                const cost = this.costs.find(c => c.logiciel_id === acc.logiciel_id && c.droit_id === acc.droit_id);
-                
-                return {
-                    'Logiciel': software?.nom || '',
-                    'Description': software?.description || '',
-                    'Droit': droit?.nom || '',
-                    'Coût/mois (€)': cost ? cost.cout_mensuel.toFixed(2) : '0.00',
-                    'Type': droit && droit.nom === 'Accès communs' ? 'Partagé' : 'Individuel'
-                };
-            });
-
-        const fileName = `${user.nom.replace(/[^a-zA-Z0-9]/g, '_')}_${user.prenom?.replace(/[^a-zA-Z0-9]/g, '_') || ''}_details.csv`;
-        this.downloadCSV(data, fileName);
-        window.app?.showAlert('Détails exportés avec succès', 'success');
-    }
-
-    downloadCSV(data, filename) {
-        if (!data.length) return;
-
-        const headers = Object.keys(data[0]);
-        const csvContent = [
-            headers.join(','),
-            ...data.map(row => headers.map(header => {
-                const value = row[header] || '';
-                // Échapper les guillemets et entourer de guillemets si nécessaire
-                return value.toString().includes(',') || value.toString().includes('"') ? 
-                    `"${value.toString().replace(/"/g, '""')}"` : value;
-            }).join(','))
-        ].join('\n');
-
-        const blob = new Blob(['\ufeff' + csvContent], { type: 'text/csv;charset=utf-8;' });
-        const link = document.createElement('a');
-        const url = URL.createObjectURL(blob);
-        
-        link.setAttribute('href', url);
-        link.setAttribute('download', filename);
-        link.style.visibility = 'hidden';
-        
-        document.body.appendChild(link);
-        link.click();
-        document.body.removeChild(link);
-    }
-
-    async showTeamView() {
-        console.log('👥 Affichage de la vue par équipe');
         try {
-            const [teamsResult, softwareResult, usersResult, accessResult, costsResult] = await Promise.all([
-                window.D1API.get('equipes'),
-                window.D1API.get('logiciels'),
-                window.D1API.get('utilisateurs'),
-                window.D1API.get('acces'),
-                window.D1API.get('couts_licences')
-            ]);
-
-            const teams = (teamsResult.data || []).filter(t => !t.archived);
-            const software = (softwareResult.data || []).filter(s => !s.archived);
-            const users = (usersResult.data || []).filter(u => !u.archived);
-            const access = accessResult.data || [];
-            const costs = costsResult.data || [];
-
-            let reportHtml = `
-                <div class="flex justify-between items-center mb-6">
-                    <h3 class="text-xl font-semibold">Rapport par Équipe</h3>
-                    <button onclick="window.reportsManager.exportTeamReport()" 
-                            class="bg-green-600 text-white px-4 py-2 rounded-lg hover:bg-green-700 transition-colors">
-                        <i class="fas fa-file-excel mr-2"></i>Exporter CSV
-                    </button>
-                </div>
-                <div class="space-y-6">
-            `;
-
-            for (const team of teams) {
-                const teamSoftware = software.filter(s => s.equipe_id === team.id);
-                const teamUsers = users.filter(u => u.equipe_id === team.id);
-                
-                let totalMonthlyCost = 0;
-                let totalAnnualCost = 0;
-
-                teamSoftware.forEach(s => {
-                    // Calculer le coût mensuel total basé sur ses accès actuels
-                    const softwareAccess = access.filter(a => a.logiciel_id === s.id);
-                    let softwareMonthlyCost = 0;
-                    const processedShared = new Set();
-                    
-                    softwareAccess.forEach(acc => {
-                        const cost = costs.find(c => c.logiciel_id === acc.logiciel_id && c.droit_id === acc.droit_id);
-                        const droit = this.droits.find(d => d.id === acc.droit_id);
-                        
-                        if (cost) {
-                            const monthlyCost = cost.cout_mensuel || 0;
-                            
-                            if (droit && droit.nom === 'Accès communs') {
-                                const sharedKey = `${acc.logiciel_id}_${acc.droit_id}`;
-                                if (!processedShared.has(sharedKey)) {
-                                    softwareMonthlyCost += monthlyCost;
-                                    processedShared.add(sharedKey);
-                                }
-                            } else {
-                                softwareMonthlyCost += monthlyCost;
-                            }
-                        }
+            // Générer les données
+            const reportData = this.generateDetailedSoftwareReport();
+            
+            // Créer le workbook
+            const wb = XLSX.utils.book_new();
+            
+            // Feuille principale - Résumé
+            const summaryData = reportData.map(soft => ({
+                'Logiciel': soft.nom,
+                'Éditeur': soft.editeur,
+                'Version': soft.version,
+                'Statut': soft.statut,
+                'Nb Utilisateurs': soft.totalUsers,
+                'Coût Mensuel €': soft.totalCost.toFixed(2)
+            }));
+            
+            const ws1 = XLSX.utils.json_to_sheet(summaryData);
+            XLSX.utils.book_append_sheet(wb, ws1, 'Résumé Logiciels');
+            
+            // Feuille détaillée - Tous les utilisateurs par logiciel
+            const detailedData = [];
+            reportData.forEach(soft => {
+                soft.users.forEach(user => {
+                    detailedData.push({
+                        'Logiciel': soft.nom,
+                        'Éditeur': soft.editeur,
+                        'Version': soft.version,
+                        'Utilisateur': `${user.nom} ${user.prenom}`,
+                        'Email': user.email,
+                        'Équipe': user.equipe,
+                        'Niveau d\'accès': user.niveau,
+                        'Date Attribution': user.date_attribution,
+                        'Statut Utilisateur': user.statut
                     });
-                    
-                    const annualCost = softwareMonthlyCost * 12;
-                    totalMonthlyCost += softwareMonthlyCost;
-                    totalAnnualCost += annualCost;
-                    
-                    // Ajouter le coût calculé au logiciel pour l'affichage
-                    s.cout_mensuel_calcule = softwareMonthlyCost;
                 });
-
-                reportHtml += `
-                    <div class="bg-white rounded-lg shadow-md p-6">
-                        <div class="flex justify-between items-start mb-4">
-                            <div>
-                                <h4 class="text-lg font-semibold text-gray-900">${team.nom}</h4>
-                                <p class="text-gray-600">${team.description || 'Aucune description'}</p>
-                                <div class="mt-2 flex space-x-4">
-                                    <span class="text-sm text-gray-600">
-                                        <i class="fas fa-users mr-1"></i>${teamUsers.length} utilisateur${teamUsers.length > 1 ? 's' : ''}
-                                    </span>
-                                    <span class="text-sm text-gray-600">
-                                        <i class="fas fa-desktop mr-1"></i>${teamSoftware.length} logiciel${teamSoftware.length > 1 ? 's' : ''}
-                                    </span>
-                                </div>
-                            </div>
-                            <div class="text-right">
-                                <div class="text-2xl font-bold text-green-600">${totalAnnualCost.toFixed(2)}€</div>
-                                <div class="text-sm text-gray-600">coût annuel</div>
-                                <div class="text-sm text-gray-500">${totalMonthlyCost.toFixed(2)}€/mois</div>
-                            </div>
-                        </div>
-
-                        ${teamSoftware.length > 0 ? `
-                            <div class="mt-4">
-                                <h5 class="font-medium text-gray-900 mb-3">Logiciels de l'équipe</h5>
-                                <div class="overflow-x-auto">
-                                    <table class="min-w-full">
-                                        <thead class="bg-gray-50">
-                                            <tr>
-                                                <th class="px-4 py-2 text-left text-xs font-medium text-gray-500 uppercase">Logiciel</th>
-                                                <th class="px-4 py-2 text-left text-xs font-medium text-gray-500 uppercase">Coût mensuel</th>
-                                                <th class="px-4 py-2 text-left text-xs font-medium text-gray-500 uppercase">Coût annuel</th>
-                                                <th class="px-4 py-2 text-left text-xs font-medium text-gray-500 uppercase">Périodicité</th>
-                                                <th class="px-4 py-2 text-left text-xs font-medium text-gray-500 uppercase">Moyen de paiement</th>
-                                            </tr>
-                                        </thead>
-                                        <tbody class="divide-y divide-gray-200">
-                                            ${teamSoftware.map(s => {
-                                                const annualCost = (s.cout_mensuel_calcule || 0) * 12;
-                                                const paymentLabels = {
-                                                    'carte': '💳 Carte',
-                                                    'prelevement': '🏦 Prélèvement', 
-                                                    'virement': '📤 Virement'
-                                                };
-                                                return `
-                                                    <tr>
-                                                        <td class="px-4 py-2 text-sm font-medium text-gray-900">${s.nom}</td>
-                                                        <td class="px-4 py-2 text-sm text-gray-600">${(s.cout_mensuel_calcule || 0).toFixed(2)}€</td>
-                                                        <td class="px-4 py-2 text-sm font-semibold text-green-600">${annualCost.toFixed(2)}€</td>
-                                                        <td class="px-4 py-2 text-sm text-gray-600">Mensuel</td>
-                                                        <td class="px-4 py-2 text-sm text-gray-600">${paymentLabels[s.moyen_paiement] || '-'}</td>
-                                                    </tr>
-                                                `;
-                                            }).join('')}
-                                        </tbody>
-                                    </table>
-                                </div>
-                            </div>
-                        ` : '<p class="text-gray-500 text-sm mt-4">Aucun logiciel assigné à cette équipe</p>'}
-                    </div>
-                `;
-            }
-
-            reportHtml += '</div>';
-
-            const container = document.getElementById('detailed-reports-container');
-            container.innerHTML = reportHtml;
-            container.classList.remove('hidden');
-
+            });
+            
+            const ws2 = XLSX.utils.json_to_sheet(detailedData);
+            XLSX.utils.book_append_sheet(wb, ws2, 'Détail Utilisateurs');
+            
+            // Télécharger
+            XLSX.writeFile(wb, `Rapport_Logiciels_${new Date().toISOString().split('T')[0]}.xlsx`);
+            
+            console.log('✅ Export Excel réussi - Rapport Logiciels');
         } catch (error) {
-            console.error('Erreur lors du chargement du rapport par équipe:', error);
+            console.error('❌ Erreur export Excel:', error);
+            alert('Erreur lors de l\'export Excel');
         }
     }
 
-    calculateAnnualCost(monthlyCost, periodicity) {
-        if (!monthlyCost) return 0;
+    async exportUserReportExcel() {
+        console.log('📊 Export Excel - Rapport Utilisateurs');
         
-        const multipliers = {
-            'mensuel': 12,
-            'trimestriel': 4,
-            'semestriel': 2,
-            'annuel': 1
-        };
-        
-        return monthlyCost * (multipliers[periodicity] || 12);
+        try {
+            const reportData = this.generateDetailedUserReport();
+            const wb = XLSX.utils.book_new();
+            
+            // Feuille résumé utilisateurs
+            const summaryData = reportData.map(user => ({
+                'Utilisateur': `${user.nom} ${user.prenom}`,
+                'Email': user.email,
+                'Équipe': user.equipe,
+                'Statut': user.statut,
+                'Nb Logiciels': user.totalSoftware,
+                'Coût Mensuel €': user.totalCost.toFixed(2)
+            }));
+            
+            const ws1 = XLSX.utils.json_to_sheet(summaryData);
+            XLSX.utils.book_append_sheet(wb, ws1, 'Résumé Utilisateurs');
+            
+            // Feuille détaillée - Tous les logiciels par utilisateur
+            const detailedData = [];
+            reportData.forEach(user => {
+                user.software.forEach(soft => {
+                    detailedData.push({
+                        'Utilisateur': `${user.nom} ${user.prenom}`,
+                        'Email': user.email,
+                        'Équipe': user.equipe,
+                        'Logiciel': soft.nom,
+                        'Éditeur': soft.editeur,
+                        'Version': soft.version,
+                        'Niveau d\'accès': soft.niveau,
+                        'Date Attribution': soft.date_attribution,
+                        'Coût Mensuel €': soft.cout_mensuel.toFixed(2)
+                    });
+                });
+            });
+            
+            const ws2 = XLSX.utils.json_to_sheet(detailedData);
+            XLSX.utils.book_append_sheet(wb, ws2, 'Détail Logiciels');
+            
+            XLSX.writeFile(wb, `Rapport_Utilisateurs_${new Date().toISOString().split('T')[0]}.xlsx`);
+            console.log('✅ Export Excel réussi - Rapport Utilisateurs');
+        } catch (error) {
+            console.error('❌ Erreur export Excel:', error);
+            alert('Erreur lors de l\'export Excel');
+        }
     }
 
-    async exportTeamReport() {
+    async exportTeamReportExcel() {
+        console.log('📊 Export Excel - Rapport Équipes');
+        
         try {
-            const [teamsResult, softwareResult, accessResult, costsResult, droitsResult] = await Promise.all([
-                window.D1API.get('equipes'),
-                window.D1API.get('logiciels'),
-                window.D1API.get('acces'),
-                window.D1API.get('couts_licences'),
-                window.D1API.get('droits)
-            ]);
-
-            const teams = (teamsResult.data || []).filter(t => !t.archived);
-            const software = (softwareResult.data || []).filter(s => !s.archived);
-            const access = accessResult.data || [];
-            const costs = costsResult.data || [];
-            const droits = droitsResult.data || [];
-
-            const csvData = [];
-            csvData.push(['Équipe', 'Description', 'Nb Logiciels', 'Coût Mensuel Total', 'Coût Annuel Total']);
-
-            teams.forEach(team => {
-                const teamSoftware = software.filter(s => s.equipe_id === team.id);
-                let totalMonthlyCost = 0;
-                let totalAnnualCost = 0;
-
-                teamSoftware.forEach(s => {
-                    // Calculer le coût total pour ce logiciel basé sur ses accès actuels
-                    const softwareAccess = access.filter(a => a.logiciel_id === s.id);
-                    let softwareMonthlyCost = 0;
-                    const processedShared = new Set();
-                    
-                    softwareAccess.forEach(acc => {
-                        const cost = costs.find(c => c.logiciel_id === acc.logiciel_id && c.droit_id === acc.droit_id);
-                        const droit = droits.find(d => d.id === acc.droit_id);
-                        
-                        if (cost) {
-                            const monthlyCost = cost.cout_mensuel || 0;
-                            
-                            if (droit && droit.nom === 'Accès communs') {
-                                const sharedKey = `${acc.logiciel_id}_${acc.droit_id}`;
-                                if (!processedShared.has(sharedKey)) {
-                                    softwareMonthlyCost += monthlyCost;
-                                    processedShared.add(sharedKey);
-                                }
-                            } else {
-                                softwareMonthlyCost += monthlyCost;
-                            }
-                        }
+            const reportData = this.generateDetailedTeamReport();
+            const wb = XLSX.utils.book_new();
+            
+            // Feuille résumé équipes
+            const summaryData = reportData.map(team => ({
+                'Équipe': team.nom,
+                'Description': team.description,
+                'Nb Utilisateurs': team.totalUsers,
+                'Nb Logiciels': team.totalSoftware,
+                'Coût Mensuel €': team.totalCost.toFixed(2)
+            }));
+            
+            const ws1 = XLSX.utils.json_to_sheet(summaryData);
+            XLSX.utils.book_append_sheet(wb, ws1, 'Résumé Équipes');
+            
+            // Feuille utilisateurs par équipe
+            const userData = [];
+            reportData.forEach(team => {
+                team.users.forEach(user => {
+                    userData.push({
+                        'Équipe': team.nom,
+                        'Utilisateur': `${user.nom} ${user.prenom}`,
+                        'Email': user.email,
+                        'Statut': user.statut
                     });
-                    
-                    const annualCost = softwareMonthlyCost * 12;
-                    totalMonthlyCost += softwareMonthlyCost;
-                    totalAnnualCost += annualCost;
                 });
-
-                csvData.push([
-                    team.nom,
-                    team.description || '',
-                    teamSoftware.length,
-                    totalMonthlyCost.toFixed(2),
-                    totalAnnualCost.toFixed(2)
-                ]);
             });
-
-            this.downloadCSV(csvData, 'rapport_equipes');
-
+            
+            const ws2 = XLSX.utils.json_to_sheet(userData);
+            XLSX.utils.book_append_sheet(wb, ws2, 'Utilisateurs par Équipe');
+            
+            // Feuille logiciels par équipe
+            const softwareData = [];
+            reportData.forEach(team => {
+                team.software.forEach(soft => {
+                    softwareData.push({
+                        'Équipe': team.nom,
+                        'Logiciel': soft.nom,
+                        'Éditeur': soft.editeur,
+                        'Version': soft.version,
+                        'Nb Utilisateurs': soft.utilisateurs_count,
+                        'Coût Unit. €': soft.cout_mensuel.toFixed(2),
+                        'Coût Total €': soft.cout_total.toFixed(2)
+                    });
+                });
+            });
+            
+            const ws3 = XLSX.utils.json_to_sheet(softwareData);
+            XLSX.utils.book_append_sheet(wb, ws3, 'Logiciels par Équipe');
+            
+            XLSX.writeFile(wb, `Rapport_Equipes_${new Date().toISOString().split('T')[0]}.xlsx`);
+            console.log('✅ Export Excel réussi - Rapport Équipes');
         } catch (error) {
-            console.error('Erreur lors de l\'export du rapport par équipe:', error);
+            console.error('❌ Erreur export Excel:', error);
+            alert('Erreur lors de l\'export Excel');
+        }
+    }
+
+    async exportSingleSoftwareExcel(softwareId) {
+        console.log('📊 Export Excel - Logiciel individuel:', softwareId);
+        
+        try {
+            const reportData = this.generateDetailedSoftwareReport();
+            const software = reportData.find(s => s.id === softwareId);
+            
+            if (!software) {
+                alert('Logiciel non trouvé');
+                return;
+            }
+            
+            const wb = XLSX.utils.book_new();
+            
+            // Données des utilisateurs
+            const userData = software.users.map(user => ({
+                'Nom': user.nom,
+                'Prénom': user.prenom,
+                'Email': user.email,
+                'Équipe': user.equipe,
+                'Niveau d\'accès': user.niveau,
+                'Date Attribution': user.date_attribution,
+                'Statut': user.statut
+            }));
+            
+            const ws = XLSX.utils.json_to_sheet(userData);
+            XLSX.utils.book_append_sheet(wb, ws, software.nom.substring(0, 31));
+            
+            XLSX.writeFile(wb, `${software.nom}_Utilisateurs_${new Date().toISOString().split('T')[0]}.xlsx`);
+            console.log('✅ Export Excel réussi - Logiciel individuel');
+        } catch (error) {
+            console.error('❌ Erreur export Excel:', error);
+            alert('Erreur lors de l\'export Excel');
+        }
+    }
+
+    async exportSingleUserExcel(userId) {
+        console.log('📊 Export Excel - Utilisateur individuel:', userId);
+        
+        try {
+            const reportData = this.generateDetailedUserReport();
+            const user = reportData.find(u => u.id === userId);
+            
+            if (!user) {
+                alert('Utilisateur non trouvé');
+                return;
+            }
+            
+            const wb = XLSX.utils.book_new();
+            
+            const softwareData = user.software.map(soft => ({
+                'Logiciel': soft.nom,
+                'Éditeur': soft.editeur,
+                'Version': soft.version,
+                'Niveau d\'accès': soft.niveau,
+                'Date Attribution': soft.date_attribution,
+                'Coût Mensuel €': soft.cout_mensuel.toFixed(2),
+                'Statut': soft.statut
+            }));
+            
+            const ws = XLSX.utils.json_to_sheet(softwareData);
+            XLSX.utils.book_append_sheet(wb, ws, `${user.nom}_${user.prenom}`.substring(0, 31));
+            
+            XLSX.writeFile(wb, `${user.nom}_${user.prenom}_Logiciels_${new Date().toISOString().split('T')[0]}.xlsx`);
+            console.log('✅ Export Excel réussi - Utilisateur individuel');
+        } catch (error) {
+            console.error('❌ Erreur export Excel:', error);
+            alert('Erreur lors de l\'export Excel');
+        }
+    }
+
+    async exportSingleTeamExcel(teamId) {
+        console.log('📊 Export Excel - Équipe individuelle:', teamId);
+        
+        try {
+            const reportData = this.generateDetailedTeamReport();
+            const team = reportData.find(t => t.id === teamId);
+            
+            if (!team) {
+                alert('Équipe non trouvée');
+                return;
+            }
+            
+            const wb = XLSX.utils.book_new();
+            
+            // Feuille utilisateurs
+            const userData = team.users.map(user => ({
+                'Nom': user.nom,
+                'Prénom': user.prenom,
+                'Email': user.email,
+                'Statut': user.statut
+            }));
+            
+            const ws1 = XLSX.utils.json_to_sheet(userData);
+            XLSX.utils.book_append_sheet(wb, ws1, 'Utilisateurs');
+            
+            // Feuille logiciels
+            const softwareData = team.software.map(soft => ({
+                'Logiciel': soft.nom,
+                'Éditeur': soft.editeur,
+                'Version': soft.version,
+                'Nb Utilisateurs': soft.utilisateurs_count,
+                'Coût Unit. €': soft.cout_mensuel.toFixed(2),
+                'Coût Total €': soft.cout_total.toFixed(2)
+            }));
+            
+            const ws2 = XLSX.utils.json_to_sheet(softwareData);
+            XLSX.utils.book_append_sheet(wb, ws2, 'Logiciels');
+            
+            XLSX.writeFile(wb, `Equipe_${team.nom}_${new Date().toISOString().split('T')[0]}.xlsx`);
+            console.log('✅ Export Excel réussi - Équipe individuelle');
+        } catch (error) {
+            console.error('❌ Erreur export Excel:', error);
+            alert('Erreur lors de l\'export Excel');
+        }
+    }
+
+    updateActiveButton(activeId) {
+        // Réinitialiser les boutons
+        const buttons = ['view-by-software-btn', 'view-by-user-btn', 'view-by-team-btn'];
+        
+        buttons.forEach(id => {
+            const btn = document.getElementById(id);
+            if (btn) {
+                btn.classList.remove('ring-4', 'ring-blue-300');
+                btn.classList.add('hover:shadow-lg');
+            }
+        });
+        
+        // Activer le bouton sélectionné
+        const activeBtn = document.getElementById(activeId);
+        if (activeBtn) {
+            activeBtn.classList.add('ring-4', 'ring-blue-300');
+            activeBtn.classList.remove('hover:shadow-lg');
         }
     }
 }
 
-// Initialiser le gestionnaire de rapports
+// Fonction d'initialisation globale
 function initReportsManager() {
+    console.log('📊 Initialisation ReportsManager globale');
+    
     if (!window.reportsManager) {
         window.reportsManager = new ReportsManager();
-        console.log('📊 ReportsManager initialisé');
+        window.reportsManager.init();
+        console.log('✅ ReportsManager créé');
     }
+    
     return window.reportsManager;
 }
 
-// Initialiser dès que possible
-if (document.readyState === 'loading') {
-    document.addEventListener('DOMContentLoaded', initReportsManager);
-} else {
-    initReportsManager();
+// Auto-initialisation
+if (typeof window !== 'undefined') {
+    window.initReportsManager = initReportsManager;
+    
+    if (document.readyState === 'loading') {
+        document.addEventListener('DOMContentLoaded', initReportsManager);
+    } else {
+        initReportsManager();
+    }
 }
 
-// S'assurer que le manager est disponible globalement
-window.initReportsManager = initReportsManager;
+console.log('📊 Fichier reports.js détaillé chargé');
