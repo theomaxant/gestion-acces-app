@@ -919,10 +919,10 @@ const processCSS = `
     }
 `;
 
-// Ajouter le CSS
-const style = document.createElement('style');
-style.textContent = processCSS;
-document.head.appendChild(style);
+// Ajouter le CSS pour le processus
+const processStyleElement = document.createElement('style');
+processStyleElement.textContent = processCSS;
+document.head.appendChild(processStyleElement);
 
 // Initialiser le ProcessManager
 const processManager = new ProcessManager();

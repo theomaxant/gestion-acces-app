@@ -347,10 +347,10 @@ const tutorialCSS = `
     }
 `;
 
-// Ajouter le CSS
-const style = document.createElement('style');
-style.textContent = tutorialCSS;
-document.head.appendChild(style);
+// Ajouter le CSS pour les tutoriels
+const tutorialStyleElement = document.createElement('style');
+tutorialStyleElement.textContent = tutorialCSS;
+document.head.appendChild(tutorialStyleElement);
 
 // Initialiser le système de tutoriels
 const tutorialSystem = new TutorialSystem();
