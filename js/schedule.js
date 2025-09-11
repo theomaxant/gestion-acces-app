@@ -273,6 +273,19 @@ class ScheduleManager {
     }
 
     renderPaymentBlock(payment) {
+        if (payment.type === 'cancellation') {
+            return `
+                <div class="text-xs bg-red-100 text-red-800 p-1 rounded truncate border border-red-200" 
+                     title="⚠️ ${payment.software} - ${payment.message}">
+                    <div class="font-medium truncate flex items-center">
+                        <span class="text-red-500 mr-1">⚠️</span>
+                        ${payment.software}
+                    </div>
+                    <div class="text-xs opacity-75">${payment.message}</div>
+                </div>
+            `;
+        }
+        
         const colors = this.getPeriodicityColor(payment.periodicity);
         return `
             <div class="text-xs ${colors.bg} ${colors.text} p-1 rounded truncate border ${colors.border}" 
@@ -281,6 +294,29 @@ class ScheduleManager {
                 <div class="text-xs opacity-75">${payment.amount.toFixed(2)}€</div>
             </div>
         `;
+    }
+
+    getCancellationAlertsForDate(date) {
+        const alerts = [];
+        
+        this.software.forEach(software => {
+            if (!software.engagement || !software.date_limite_annulation) return;
+            
+            const cancellationDate = new Date(software.date_limite_annulation);
+            if (cancellationDate.getDate() === date.getDate() && 
+                cancellationDate.getMonth() === date.getMonth() && 
+                cancellationDate.getFullYear() === date.getFullYear()) {
+                
+                alerts.push({
+                    type: 'cancellation',
+                    software: software.nom,
+                    date: cancellationDate,
+                    message: 'Limite résiliation'
+                });
+            }
+        });
+        
+        return alerts;
     }
 
     getPaymentsForDate(date) {
@@ -297,6 +333,10 @@ class ScheduleManager {
                 }
             });
         });
+        
+        // Ajouter les alertes de résiliation
+        const cancellationAlerts = this.getCancellationAlertsForDate(date);
+        cancellationAlerts.forEach(alert => payments.push(alert));
         
         return payments;
     }

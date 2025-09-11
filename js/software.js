@@ -104,6 +104,47 @@ class SoftwareManager {
             filteredSoftware = filteredSoftware.filter(s => s.application_shopify === true);
         }
 
+        // Légende des couleurs
+        const legendHtml = `
+            <div class="mb-4 p-4 bg-gray-50 rounded-lg">
+                <h4 class="text-sm font-medium text-gray-700 mb-3">📊 Légende des couleurs :</h4>
+                <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-2 text-xs">
+                    <div class="flex items-center">
+                        <div class="w-3 h-3 bg-blue-600 rounded mr-2"></div>
+                        <span class="text-blue-600">Mensuel</span>
+                    </div>
+                    <div class="flex items-center">
+                        <div class="w-3 h-3 bg-orange-600 rounded mr-2"></div>
+                        <span class="text-orange-600">Trimestriel</span>
+                    </div>
+                    <div class="flex items-center">
+                        <div class="w-3 h-3 bg-purple-600 rounded mr-2"></div>
+                        <span class="text-purple-600">Semestriel</span>
+                    </div>
+                    <div class="flex items-center">
+                        <div class="w-3 h-3 bg-red-600 rounded mr-2"></div>
+                        <span class="text-red-600">Annuel</span>
+                    </div>
+                </div>
+                <div class="mt-2 pt-2 border-t border-gray-200">
+                    <div class="flex flex-wrap gap-4 text-xs">
+                        <div class="flex items-center">
+                            <span class="text-red-500 mr-1">⚠️</span>
+                            <span class="text-gray-600">Alerte engagement (≤30 jours)</span>
+                        </div>
+                        <div class="flex items-center">
+                            <div class="w-3 h-3 bg-orange-50 border border-orange-200 rounded mr-2"></div>
+                            <span class="text-gray-600">Logiciel archivé</span>
+                        </div>
+                        <div class="flex items-center">
+                            <div class="w-3 h-3 bg-red-50 border-l-2 border-red-500 rounded mr-2"></div>
+                            <span class="text-gray-600">Engagement en alerte</span>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        `;
+
         const tableHtml = `
             <table class="min-w-full table-auto">
                 <thead class="bg-gray-50">
@@ -111,16 +152,12 @@ class SoftwareManager {
                         <th class="px-3 sm:px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider cursor-pointer hover:bg-gray-100" onclick="window.softwareManager.sortTable('nom')">
                             Logiciel <i class="fas fa-sort ml-1"></i>
                         </th>
-                        <th class="hidden sm:table-cell px-3 sm:px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Équipe</th>
+                        <th class="hidden sm:table-cell px-3 sm:px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Équipe / Payeur / Paiement</th>
                         <th class="hidden lg:table-cell px-3 sm:px-6 py-3 text-center text-xs font-medium text-gray-500 uppercase tracking-wider">🛒 Shopify</th>
-                        <th class="hidden sm:table-cell px-3 sm:px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Qui paye</th>
-                        <th class="hidden lg:table-cell px-3 sm:px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Paiement</th>
-                        <th class="hidden lg:table-cell px-3 sm:px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Date souscription</th>
                         <th class="hidden lg:table-cell px-3 sm:px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Prochain paiement</th>
                         <th class="hidden xl:table-cell px-3 sm:px-6 py-3 text-center text-xs font-medium text-gray-500 uppercase tracking-wider">📋 Engagement</th>
                         <th class="hidden sm:table-cell px-3 sm:px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Accès</th>
                         <th class="hidden lg:table-cell px-3 sm:px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Coût Annuel</th>
-                        <th class="hidden sm:table-cell px-3 sm:px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Statut</th>
                         <th class="px-3 sm:px-6 py-3 text-right text-xs font-medium text-gray-500 uppercase tracking-wider">Actions</th>
                     </tr>
                 </thead>
@@ -131,19 +168,19 @@ class SoftwareManager {
             ${filteredSoftware.length === 0 ? '<div class="text-center py-8 text-gray-500 text-sm sm:text-base">Aucun logiciel trouvé</div>' : ''}
         `;
 
-        container.innerHTML = tableHtml;
+        container.innerHTML = legendHtml + tableHtml;
     }
 
     renderSoftwareRow(software) {
         const payerUser = this.users.find(u => u.id === software.payer_id);
         const team = this.teams.find(t => t.id === software.equipe_id);
-        const subscriptionDate = software.date_souscription ? 
-            new Date(software.date_souscription).toLocaleDateString('fr-FR') : '-';
         
         const paymentMethodLabels = {
-            'carte': '💳 Carte',
-            'prelevement': '🏦 Prélèvement',
-            'virement': '📤 Virement'
+            'carte': '💳',
+            'prelevement': '🏦',
+            'virement': '📤',
+            'cheque': '📝',
+            'especes': '💵'
         };
 
         // Calculer les coûts une seule fois pour optimiser les performances
@@ -152,18 +189,35 @@ class SoftwareManager {
         
         // Calculer le prochain paiement basé sur la périodicité
         const nextPayment = this.calculateNextPayment(software);
+        
+        // Calculer l'alerte d'engagement
+        const engagementAlert = this.calculateEngagementAlert(software);
+        
+        // Définir les classes CSS pour les alertes
+        const rowClasses = [];
+        if (software.archived) {
+            rowClasses.push('bg-orange-50', 'text-orange-900');
+        } else if (engagementAlert && engagementAlert.isAlert) {
+            rowClasses.push('bg-red-50', 'border-l-4', 'border-red-500');
+        }
+        
+        const rowClass = rowClasses.length > 0 ? ` class="${rowClasses.join(' ')}"` : '';
 
         return `
-            <tr class="${software.archived ? 'bg-gray-50 text-gray-500' : ''}">
+            <tr${rowClass}>
                 <td class="px-3 sm:px-6 py-3 sm:py-4">
                     <div class="flex items-center">
+                        ${engagementAlert && engagementAlert.isAlert ? '<span class="text-red-500 mr-2" title="' + engagementAlert.message + '">⚠️</span>' : ''}
                         <div class="text-sm font-medium text-gray-900">${software.nom}</div>
                         ${software.logiciel_de_base ? '<span class="ml-2 inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-blue-100 text-blue-800">Base</span>' : ''}
                     </div>
                     ${software.description ? `<div class="text-xs text-gray-500 mt-1">${software.description}</div>` : ''}
+                    ${engagementAlert && engagementAlert.isAlert ? `<div class="text-xs text-red-600 mt-1 font-medium">${engagementAlert.message}</div>` : ''}
                 </td>
                 <td class="hidden sm:table-cell px-3 sm:px-6 py-3 sm:py-4">
                     <div class="text-sm text-gray-900">${team ? team.nom : '-'}</div>
+                    <div class="text-xs text-gray-600">${payerUser ? `${payerUser.nom} ${payerUser.prenom}` : '-'}</div>
+                    <div class="text-xs text-gray-500">${paymentMethodLabels[software.moyen_paiement] || ''} ${software.moyen_paiement ? software.moyen_paiement.charAt(0).toUpperCase() + software.moyen_paiement.slice(1) : '-'}</div>
                 </td>
                 <td class="hidden lg:table-cell px-3 sm:px-6 py-3 sm:py-4">
                     <div class="text-center">
@@ -173,17 +227,11 @@ class SoftwareManager {
                         }
                     </div>
                 </td>
-                <td class="hidden sm:table-cell px-3 sm:px-6 py-3 sm:py-4">
-                    <div class="text-sm text-gray-900">${payerUser ? `${payerUser.nom} ${payerUser.prenom}` : '-'}</div>
-                </td>
                 <td class="hidden lg:table-cell px-3 sm:px-6 py-3 sm:py-4">
-                    <div class="text-sm text-gray-600">${paymentMethodLabels[software.moyen_paiement] || '-'}</div>
-                </td>
-                <td class="hidden lg:table-cell px-3 sm:px-6 py-3 sm:py-4">
-                    <div class="text-sm text-gray-600">${subscriptionDate}</div>
-                </td>
-                <td class="hidden lg:table-cell px-3 sm:px-6 py-3 sm:py-4">
-                    ${nextPayment ? `<div class="text-sm ${nextPayment.color}">${nextPayment.date}</div>` : '<div class="text-sm text-gray-400">-</div>'}
+                    <div class="text-sm ${nextPayment ? nextPayment.color : 'text-gray-400'}">
+                        ${nextPayment ? nextPayment.date : '-'}
+                        ${engagementAlert && engagementAlert.isAlert ? `<br><span class="text-red-600 text-xs">⚠️ Résiliation: ${engagementAlert.date}</span>` : ''}
+                    </div>
                 </td>
                 <td class="hidden xl:table-cell px-3 sm:px-6 py-3 sm:py-4">
                     <div class="text-center">
@@ -193,6 +241,10 @@ class SoftwareManager {
                         }
                         ${software.engagement && software.date_fin_contrat ? 
                             `<div class="text-xs text-gray-500 mt-1">Fin: ${new Date(software.date_fin_contrat).toLocaleDateString('fr-FR')}</div>` : 
+                            ''
+                        }
+                        ${engagementAlert && engagementAlert.isAlert ? 
+                            `<div class="text-xs text-red-600 mt-1 font-medium">⚠️ ${engagementAlert.daysRemaining >= 0 ? engagementAlert.daysRemaining + 'j' : 'Dépassé'}</div>` : 
                             ''
                         }
                     </div>
@@ -207,13 +259,6 @@ class SoftwareManager {
                 <td class="hidden lg:table-cell px-3 sm:px-6 py-3 sm:py-4">
                     <div class="text-sm font-medium text-purple-600">${annualCost.toFixed(2)}€</div>
                     <div class="text-xs text-gray-500">(${monthlyCost.toFixed(2)}€/mois)</div>
-                </td>
-                <td class="hidden sm:table-cell px-3 sm:px-6 py-3 sm:py-4">
-                    <span class="px-2 inline-flex text-xs leading-5 font-semibold rounded-full ${
-                        software.archived ? 'bg-red-100 text-red-800' : 'bg-green-100 text-green-800'
-                    }">
-                        ${software.archived ? 'Archivé' : 'Actif'}
-                    </span>
                 </td>
                 <td class="px-3 sm:px-6 py-3 sm:py-4 text-right">
                     <div class="flex justify-end space-x-1 sm:space-x-2">
@@ -241,13 +286,13 @@ class SoftwareManager {
                         }
                     </div>
                     <div class="sm:hidden mt-2 space-y-1">
-                        ${!software.archived ? 
-                            `<span class="px-2 py-1 text-xs font-semibold rounded-full bg-green-100 text-green-800">
-                                Actif
-                            </span>` :
-                            `<span class="px-2 py-1 text-xs font-semibold rounded-full bg-red-100 text-red-800">
+                        ${software.archived ? 
+                            `<span class="px-2 py-1 text-xs font-semibold rounded-full bg-orange-100 text-orange-800">
                                 Archivé
-                            </span>`
+                            </span>` : ''
+                        }
+                        ${engagementAlert && engagementAlert.isAlert ? 
+                            `<div class="text-xs text-red-600 font-medium mb-2">⚠️ ${engagementAlert.message}</div>` : ''
                         }
                         <div class="text-xs text-gray-600 mt-1">
                             <div><strong>Coût mensuel:</strong> ${monthlyCost.toFixed(2)}€</div>
@@ -255,8 +300,10 @@ class SoftwareManager {
                             <div><strong>Accès actifs:</strong> ${this.countActiveAccessForSoftware(software.id)}</div>
                             ${nextPayment ? `<div class="${nextPayment.color}"><strong>Prochain paiement:</strong> ${nextPayment.date}</div>` : ''}
                             ${software.engagement ? `<div class="text-red-600"><strong>📋 Engagement:</strong> Fin ${new Date(software.date_fin_contrat).toLocaleDateString('fr-FR')}</div>` : ''}
+                            ${engagementAlert && engagementAlert.isAlert ? `<div class="text-red-600"><strong>⚠️ Résiliation limite:</strong> ${engagementAlert.date}</div>` : ''}
                             ${team ? `<div><strong>Équipe:</strong> ${team.nom}</div>` : ''}
                             ${payerUser ? `<div><strong>Payé par:</strong> ${payerUser.nom} ${payerUser.prenom}</div>` : ''}
+                            <div><strong>Paiement:</strong> ${paymentMethodLabels[software.moyen_paiement] || ''} ${software.moyen_paiement ? software.moyen_paiement.charAt(0).toUpperCase() + software.moyen_paiement.slice(1) : '-'}</div>
                         </div>
                     </div>
                 </td>
@@ -934,6 +981,38 @@ class SoftwareManager {
         }
 
         return totalCost;
+    }
+
+    calculateEngagementAlert(software) {
+        if (!software.engagement || !software.date_limite_annulation) {
+            return null;
+        }
+
+        const today = new Date();
+        const cancellationDate = new Date(software.date_limite_annulation);
+        const timeDiff = cancellationDate.getTime() - today.getTime();
+        const daysDiff = Math.ceil(timeDiff / (1000 * 3600 * 24));
+
+        // Alerte si moins de 30 jours avant la date limite
+        if (daysDiff <= 30 && daysDiff >= 0) {
+            return {
+                isAlert: true,
+                daysRemaining: daysDiff,
+                date: cancellationDate.toLocaleDateString('fr-FR'),
+                message: `⚠️ ${daysDiff} jour${daysDiff > 1 ? 's' : ''} avant limite d'annulation`
+            };
+        } else if (daysDiff < 0) {
+            // Date dépassée
+            return {
+                isAlert: true,
+                isOverdue: true,
+                daysOverdue: Math.abs(daysDiff),
+                date: cancellationDate.toLocaleDateString('fr-FR'),
+                message: `⚠️ Date limite dépassée de ${Math.abs(daysDiff)} jour${Math.abs(daysDiff) > 1 ? 's' : ''}`
+            };
+        }
+
+        return null;
     }
 
     calculateNextPayment(software) {
