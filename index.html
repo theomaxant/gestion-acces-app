@@ -15,7 +15,8 @@
     <script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
     
     <!-- 🔧 LOGGER SYSTÈME - Configuration des logs -->
-    <script src="js/production-mode.js"></script>
+    <!-- Mode production temporairement désactivé pour tests -->
+    <!-- <script src="js/production-mode.js"></script> -->
     <script src="js/logger-config.js"></script>
     <script src="js/logger-migration.js"></script>
     <script src="js/console-control.js"></script>
@@ -75,7 +76,6 @@
                             name="captcha-input"
                             class="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-colors pl-12"
                             placeholder="Entrez le résultat"
-                            required
                             autocomplete="off"
                         />
                         <i class="fas fa-calculator absolute left-4 top-1/2 transform -translate-y-1/2 text-gray-400"></i>
@@ -96,7 +96,6 @@
                             id="user-select" 
                             name="user-select"
                             class="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-colors pl-12 appearance-none bg-white"
-                            required
                         >
                             <option value="">Chargement des utilisateurs...</option>
                         </select>
