@@ -215,13 +215,17 @@ class AccessManagementApp {
                     await window.logsManager.init();
                 }
                 break;
-            case 'tutorials':
+            case 'process':
                 if (window.processManager) {
                     // Attendre que la vue soit complètement chargée avant d'afficher le contenu
                     setTimeout(() => {
                         window.processManager.showAllProcesses();
                     }, 300);
                 }
+                break;
+            case 'tutorials':
+                // Page des tutoriels - le système de tutoriels est géré par tutorials.js
+                // Aucune action spécifique requise ici
                 break;
         }
     }
