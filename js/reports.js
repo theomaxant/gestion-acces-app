@@ -79,7 +79,7 @@ class ReportsManager {
             // Attendre que l'API Supabase soit disponible
             await this.waitForSupabaseAPI();
             
-            if (!window.D1API) {
+            if (!window.supabaseAPI) {
                 console.error('❌ [REPORTS] API Supabase toujours non disponible après attente');
                 return;
             }
