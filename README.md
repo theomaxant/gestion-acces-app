@@ -40,10 +40,11 @@
 ### 🔍 **Audit & Conformité**
 - **Traçabilité complète** : Qui, quoi, quand, où pour chaque action
 - **Logs intelligents** : Système filtrable, mode production silencieux
+- **Connexion moderne** : Système simple avec identification précise des utilisateurs
+- **Sessions sécurisées** : Durée 8h avec logs de connexion/déconnexion automatiques
 - **Historique financier** : Évolution coûts, validation changements
 - **Conformité RGPD** : Conservation données, droit à l'oubli
-- Logs de connexion et modifications
-- Système de traçabilité
+- Système de traçabilité détaillé par utilisateur connecté
 
 ## 🏗️ Architecture
 
@@ -154,8 +155,10 @@
 - **🏷️ Classification logiciels** : Essentiels vs optionnels, apps Shopify
 - **💰 Gestion budgétaire** : Budgets équipes, responsables, alertes dépassement  
 - **📅 Échéancier intelligent** : Calcul automatique prochains paiements
+- **🔐 Système de connexion moderne** : Interface simple avec sélection d'utilisateur
+- **📊 Traçabilité complète** : Tous les logs enrichis avec identité précise
 - **🔇 Logs optimisés** : Console silencieuse production, debug intelligent
-- **📊 Coûts annuels partout** : Vision long terme, négociations facilitées
+- **💯 Coûts annuels partout** : Vision long terme, négociations facilitées
 - **🎨 Interface harmonisée** : Couleurs cohérentes, UX optimisée
 
 ### 💡 **ROI & Optimisation**
@@ -166,7 +169,56 @@
 
 ## 📋 Dernières Mises à Jour (11/09/2025)
 
-### ✅ Réalisé Aujourd'hui
+### 🆕 **NOUVEAU : Système de Connexion Simple & Moderne**
+
+**Remplacement complet** de l'ancien système d'authentification par une solution moderne basée sur la sélection d'utilisateur.
+
+**🎯 Fonctionnalités du Nouveau Système :**
+- 🎨 **Interface moderne** - Écran de connexion compact avec menu déroulant élégant
+- 📋 **Connexion simplifiée** - Sélection par menu + détails automatiques + bouton activé
+- ⏰ **Sessions 8 heures** - Persistance automatique avec validation
+- 📊 **Logs enrichis** - Traçabilité complète de toutes les actions
+- 🔄 **Chargement automatique** - Utilisateurs depuis la base de données
+- 🚀 **Compatible** - Toutes les APIs existantes fonctionnent
+
+**Fichiers créés :**
+- **`js/new-auth.js`** - Nouveau système d'authentification complet
+- **Guides utilisateur** - Documentation simple et technique  
+- **Interface menu déroulant** - Écran de connexion compact et moderne
+
+**Migration réalisée :**
+- ❌ Ancien système complexe (mot de passe + captcha) supprimé
+- ✅ Nouveau système simple et efficace activé
+- ✅ 10 utilisateurs chargés et fonctionnels
+- ✅ Logs automatiquement enrichis avec identité utilisateur
+
+### ✅ Fonctionnalité Précédente : Sélecteur d'Utilisateur pour les Logs
+
+**Fonctionnalité ajoutée :** Interface de sélection d'utilisateur intégrée au système de logging
+
+**Composants ajoutés :**
+- **`js/user-selector.js`** - Sélecteur d'utilisateur dans le header
+- **`js/user-selector-demo.js`** - Interface de test et démonstration
+- **Modifications de `js/logger.js`** - Intégration avec le sélecteur
+- **Modifications de `js/auth.js`** - Compatibilité maintenue
+
+**Fonctionnalités :**
+- 👤 **Sélecteur dans le header** : Choix d'utilisateur via interface graphique
+- 📝 **Logs enrichis** : Traçabilité précise de qui effectue chaque action
+- 🧪 **Interface de test** : Panneau de démonstration avec boutons de test
+- 🔗 **Intégration complète** : Fonctionne avec l'authentification désactivée
+
+**Utilisation :**
+```javascript
+// Changer d'utilisateur
+setUser("Nom Prénom");
+
+// Logger avec utilisateur
+logCreation("table", "id", data, "détails");
+logUpdate("table", "id", oldData, newData, "détails");
+```
+
+### ✅ Réalisé Précédemment
 1. **Cohérence des couleurs** entre boutons de navigation et pages de rapports
    - Bleu (bg-blue-500) pour les rapports logiciels  
    - Vert (bg-green-500) pour les rapports utilisateurs

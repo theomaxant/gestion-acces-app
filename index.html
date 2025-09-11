@@ -17,47 +17,6 @@
     <!-- 🔧 LOGGER SYSTÈME - Configuration des logs -->
     <!-- Mode production temporairement désactivé pour tests -->
     <!-- <script src="js/production-mode.js"></script> -->
-    
-    <!-- SCRIPT BRUTAL POUR FORCER L'ACCÈS -->
-    <script>
-        // FORCER immédiatement, même avant le DOM
-        localStorage.setItem('authenticated', 'true');
-        localStorage.setItem('login_time', Date.now().toString());
-        localStorage.setItem('current_user', 'Utilisateur Direct');
-        
-        // Fonction brutale pour masquer l'auth
-        function forceHideAuth() {
-            const loginScreen = document.getElementById('login-screen');
-            const app = document.getElementById('app');
-            
-            if (loginScreen) {
-                loginScreen.style.display = 'none';
-                loginScreen.style.visibility = 'hidden';
-                loginScreen.style.position = 'absolute';
-                loginScreen.style.left = '-9999px';
-                loginScreen.remove(); // SUPPRIMER carrément l'élément
-            }
-            
-            if (app) {
-                app.style.display = 'block';
-                app.style.visibility = 'visible';
-                app.style.opacity = '1';
-            }
-            
-            console.log('[FORCE] Écran de connexion supprimé - Application forcée');
-        }
-        
-        // Exécuter IMMÉDIATEMENT
-        forceHideAuth();
-        
-        // Et aussi au chargement du DOM
-        document.addEventListener('DOMContentLoaded', forceHideAuth);
-        
-        // Et après un petit délai pour être sûr
-        setTimeout(forceHideAuth, 100);
-        setTimeout(forceHideAuth, 500);
-        setTimeout(forceHideAuth, 1000);
-    </script>
     <script src="js/logger-config.js"></script>
     <script src="js/logger-migration.js"></script>
     <script src="js/console-control.js"></script>
@@ -67,110 +26,11 @@
 
 </head>
 <body class="bg-gray-100">
-    <!-- Écran de connexion DÉSACTIVÉ -->
-    <div id="login-screen" style="display: none !important; visibility: hidden !important; position: absolute; left: -9999px;">
-        <div class="bg-white rounded-lg shadow-2xl p-8 w-full max-w-md mx-4">
-            <div class="text-center mb-8">
-                <div class="mx-auto w-16 h-16 bg-blue-600 rounded-full flex items-center justify-center mb-4">
-                    <i class="fas fa-lock text-white text-2xl"></i>
-                </div>
-                <h2 class="text-2xl font-bold text-gray-800 mb-2">Accès sécurisé</h2>
-                <p class="text-gray-600">Veuillez saisir le mot de passe pour accéder à l'application</p>
-            </div>
-            
-            <form id="login-form" class="space-y-6" novalidate>
-                <div>
-                    <label for="password" class="block text-sm font-medium text-gray-700 mb-2">
-                        Mot de passe
-                    </label>
-                    <div class="relative">
-                        <input 
-                            type="password" 
-                            id="password" 
-                            name="password"
-                            class="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-colors pl-12"
-                            placeholder="Saisissez votre mot de passe"
-                            required
-                        >
-                        <i class="fas fa-key absolute left-4 top-1/2 transform -translate-y-1/2 text-gray-400"></i>
-                    </div>
-                </div>
-                
-                <!-- Section captcha (cachée par défaut) -->
-                <div id="captcha-section" class="hidden">
-                    <label for="captcha-input" class="block text-sm font-medium text-gray-700 mb-2">
-                        Vérification anti-robot
-                    </label>
-                    <div class="bg-gray-50 border border-gray-300 rounded-lg p-4 mb-3">
-                        <div class="flex items-center justify-center space-x-3">
-                            <span id="captcha-question" class="text-lg font-mono bg-white px-3 py-2 rounded border text-center min-w-[120px]">
-                                <!-- Question générée automatiquement -->
-                            </span>
-                            <span class="text-lg font-semibold">=</span>
-                            <span class="text-lg font-semibold text-blue-600">?</span>
-                        </div>
-                    </div>
-                    <div class="relative">
-                        <input 
-                            type="number" 
-                            id="captcha-input"
-                            name="captcha-input"
-                            class="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-colors pl-12"
-                            placeholder="Entrez le résultat"
-                            autocomplete="off"
-                        />
-                        <i class="fas fa-calculator absolute left-4 top-1/2 transform -translate-y-1/2 text-gray-400"></i>
-                    </div>
-                    <p class="text-sm text-gray-500 mt-2">
-                        <i class="fas fa-shield-alt mr-1"></i>
-                        Cette vérification permet d'éviter les accès automatisés
-                    </p>
-                </div>
-                
-                <!-- Section d'identification utilisateur (cachée par défaut) -->
-                <div id="user-identification" class="hidden">
-                    <label for="user-select" class="block text-sm font-medium text-gray-700 mb-2">
-                        Qui êtes-vous ?
-                    </label>
-                    <div class="relative">
-                        <select 
-                            id="user-select" 
-                            name="user-select"
-                            class="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-colors pl-12 appearance-none bg-white"
-                        >
-                            <option value="">Chargement des utilisateurs...</option>
-                        </select>
-                        <i class="fas fa-user absolute left-4 top-1/2 transform -translate-y-1/2 text-gray-400"></i>
-                        <i class="fas fa-chevron-down absolute right-4 top-1/2 transform -translate-y-1/2 text-gray-400"></i>
-                    </div>
-                </div>
-                
-                <div id="error-message" class="hidden bg-red-50 border border-red-200 text-red-700 px-4 py-3 rounded-lg">
-                    <i class="fas fa-exclamation-triangle mr-2"></i>
-                    Mot de passe incorrect. Veuillez réessayer.
-                </div>
-                
-                <button 
-                    type="submit" 
-                    id="login-btn"
-                    class="w-full bg-blue-600 text-white py-3 px-4 rounded-lg hover:bg-blue-700 focus:ring-2 focus:ring-blue-500 focus:ring-offset-2 transition-colors font-medium"
-                >
-                    <i class="fas fa-sign-in-alt mr-2"></i>
-                    <span id="login-btn-text">Se connecter</span>
-                </button>
-            </form>
-            
-            <div class="mt-6 text-center">
-                <p class="text-xs text-gray-500">
-                    <i class="fas fa-info-circle mr-1"></i>
-                    Application de gestion des accès
-                </p>
-            </div>
-        </div>
-    </div>
+    <!-- Le nouveau système d'authentification créera son propre écran de connexion -->
 
-    <!-- Application principale (FORCÉE VISIBLE) -->
-    <div id="app" class="min-h-screen" style="display: block !important; visibility: visible !important; opacity: 1 !important;">
+
+    <!-- Application principale -->
+    <div id="app" class="min-h-screen" style="display: none;">
         <!-- Header -->
         <header class="bg-blue-600 text-white shadow-lg">
             <div class="container mx-auto px-4 py-4">
@@ -826,17 +686,15 @@
     <!-- Modals will be added here by JavaScript -->
     <div id="modal-container"></div>
 
-    <!-- Script d'authentification (doit être chargé en premier) -->
-    <script src="js/auth.js"></script>
-    <!-- Sélecteur d'utilisateur pour les logs -->
-    <script src="js/user-selector.js"></script>
+    <!-- Nouveau système d'authentification simple -->
+    <script src="js/new-auth.js"></script>
+
     <!-- Script de gestion du menu -->
     <script src="js/menu.js"></script>
     <!-- Système de logging -->
     <script src="js/logger.js"></script>
     <script src="js/logs.js"></script>
-    <!-- Démonstration du sélecteur d'utilisateur -->
-    <script src="js/user-selector-demo.js"></script>
+
     <script src="js/app.js"></script>
     <script src="js/teams.js"></script>
     <script src="js/users.js"></script>
