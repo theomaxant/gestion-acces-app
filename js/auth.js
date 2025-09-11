@@ -75,14 +75,14 @@ class SimpleAuth {
         if (this.loginBtn) {
             console.log('[AUTH] Ajout event listener sur bouton:', this.loginBtn);
             this.loginBtn.addEventListener('click', (e) => {
-                console.log('[BOUTON] === CLIC DETECTE === Étape:', {
+                console.error('[DEBUG BOUTON] === CLIC DETECTE === Étape:', {
                     isPasswordValidated: this.isPasswordValidated,
                     isCaptchaValidated: this.isCaptchaValidated,
                     userSelected: !!this.userSelect?.value
                 });
-                console.log('[DEBUG] Type evenement:', e.type);
-                console.log('[DEBUG] Element clique:', e.target);
-                console.log('[DEBUG] Current target:', e.currentTarget);
+                console.error('[DEBUG] Type evenement:', e.type);
+                console.error('[DEBUG] Element clique:', e.target);
+                console.error('[DEBUG] Current target:', e.currentTarget);
                 e.preventDefault();
                 e.stopPropagation();
                 this.handleLogin();
@@ -144,8 +144,9 @@ class SimpleAuth {
     }
     
     handleLogin() {
-        console.log('[LOGIN] === HANDLELOGIN APPELÉ ===');
-        console.log('[LOGIN] Etat actuel DÉTAILLÉ:', {
+        // Utiliser console.error pour passer les filtres de production
+        console.error('[DEBUG LOGIN] === HANDLELOGIN APPELÉ ===');
+        console.error('[DEBUG LOGIN] Etat actuel DÉTAILLÉ:', {
             isPasswordValidated: this.isPasswordValidated,
             isCaptchaValidated: this.isCaptchaValidated,
             hasSelectedUser: !!this.userSelect?.value,
@@ -156,11 +157,11 @@ class SimpleAuth {
         
         // Test pour voir dans quelle branche on va
         if (!this.isPasswordValidated) {
-            console.log('[LOGIN] >>> BRANCHE 1: Vérification mot de passe');
+            console.error('[DEBUG LOGIN] >>> BRANCHE 1: Vérification mot de passe');
         } else if (!this.isCaptchaValidated) {
-            console.log('[LOGIN] >>> BRANCHE 2: Vérification captcha');
+            console.error('[DEBUG LOGIN] >>> BRANCHE 2: Vérification captcha');
         } else {
-            console.log('[LOGIN] >>> BRANCHE 3: Sélection utilisateur - C\'EST ICI QUE ÇA DOIT MARCHER');
+            console.error('[DEBUG LOGIN] >>> BRANCHE 3: Sélection utilisateur - C\'EST ICI QUE ÇA DOIT MARCHER');
         }
         
         // Étape 1 : Vérification du mot de passe
@@ -289,10 +290,13 @@ class SimpleAuth {
         
         // TEMPORAIRE: Ajouter un bouton de debug pour forcer la connexion
         this.addDebugButton();
+        
+        // TEST DIRECT: Ajouter un onclick en dur pour tester
+        this.addDirectTest();
     }
     
     login() {
-        console.log('[LOGIN] 🚀 FONCTION LOGIN() APPELÉE ! Utilisateur:', this.currentUser);
+        console.error('[DEBUG LOGIN] 🚀 FONCTION LOGIN() APPELÉE ! Utilisateur:', this.currentUser);
         
         // Marquer comme connecté et enregistrer l'utilisateur identifié
         localStorage.setItem('authenticated', 'true');
@@ -602,7 +606,23 @@ class SimpleAuth {
         
         // Insérer le bouton après le bouton principal
         this.loginBtn.parentNode.insertBefore(debugBtn, this.loginBtn.nextSibling);
-        console.log('[DEBUG] Bouton de debug ajouté');
+        console.error('[DEBUG] Bouton de debug ajouté');
+    }
+    
+    /**
+     * TEMPORAIRE: Test direct avec onclick 
+     */
+    addDirectTest() {
+        // Ajouter un onclick direct sur le bouton principal
+        this.loginBtn.onclick = () => {
+            console.error('[DEBUG DIRECT] ONCLICK DIRECT DÉCLENCHÉ !');
+            alert('ONCLICK DIRECT FONCTIONNE !');
+            if (this.userSelect.value) {
+                this.currentUser = this.userSelect.value;
+                this.login();
+            }
+        };
+        console.error('[DEBUG] onclick direct ajouté au bouton principal');
     }
 
     /**
