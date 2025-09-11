@@ -75,7 +75,11 @@ class SimpleAuth {
         if (this.loginBtn) {
             console.log('[AUTH] Ajout event listener sur bouton:', this.loginBtn);
             this.loginBtn.addEventListener('click', (e) => {
-                console.log('[BOUTON] === CLIC DETECTE ===');
+                console.log('[BOUTON] === CLIC DETECTE === Étape:', {
+                    isPasswordValidated: this.isPasswordValidated,
+                    isCaptchaValidated: this.isCaptchaValidated,
+                    userSelected: !!this.userSelect?.value
+                });
                 console.log('[DEBUG] Type evenement:', e.type);
                 console.log('[DEBUG] Element clique:', e.target);
                 console.log('[DEBUG] Current target:', e.currentTarget);
@@ -140,12 +144,24 @@ class SimpleAuth {
     }
     
     handleLogin() {
-        console.log('[LOGIN] handleLogin appele - Debut de la connexion');
-        console.log('[LOGIN] Etat actuel:', {
+        console.log('[LOGIN] === HANDLELOGIN APPELÉ ===');
+        console.log('[LOGIN] Etat actuel DÉTAILLÉ:', {
             isPasswordValidated: this.isPasswordValidated,
             isCaptchaValidated: this.isCaptchaValidated,
-            hasSelectedUser: !!this.userSelect?.value
+            hasSelectedUser: !!this.userSelect?.value,
+            selectedUserValue: this.userSelect?.value,
+            userSelectElement: this.userSelect,
+            buttonDisabled: this.loginBtn?.disabled
         });
+        
+        // Test pour voir dans quelle branche on va
+        if (!this.isPasswordValidated) {
+            console.log('[LOGIN] >>> BRANCHE 1: Vérification mot de passe');
+        } else if (!this.isCaptchaValidated) {
+            console.log('[LOGIN] >>> BRANCHE 2: Vérification captcha');
+        } else {
+            console.log('[LOGIN] >>> BRANCHE 3: Sélection utilisateur - C\'EST ICI QUE ÇA DOIT MARCHER');
+        }
         
         // Étape 1 : Vérification du mot de passe
         if (!this.isPasswordValidated) {
@@ -255,6 +271,13 @@ class SimpleAuth {
         this.loginBtnText.textContent = 'Se connecter';
         this.loginBtn.querySelector('i').className = 'fas fa-sign-in-alt mr-2';
         
+        // S'assurer que le bouton est activé
+        this.loginBtn.disabled = false;
+        console.log('[UI] Bouton configuré pour étape 3 - Texte:', this.loginBtnText.textContent, 'Disabled:', this.loginBtn.disabled);
+        
+        // RE-ATTACHER L'EVENT LISTENER au cas où il aurait été perdu
+        this.reattachButtonListener();
+        
         // Mettre le focus sur le select
         this.userSelect.focus();
         
@@ -263,9 +286,14 @@ class SimpleAuth {
         if (instructionText) {
             instructionText.textContent = 'Sélectionnez votre nom pour vous connecter';
         }
+        
+        // TEMPORAIRE: Ajouter un bouton de debug pour forcer la connexion
+        this.addDebugButton();
     }
     
     login() {
+        console.log('[LOGIN] 🚀 FONCTION LOGIN() APPELÉE ! Utilisateur:', this.currentUser);
+        
         // Marquer comme connecté et enregistrer l'utilisateur identifié
         localStorage.setItem('authenticated', 'true');
         localStorage.setItem('login_time', Date.now().toString());
@@ -407,14 +435,23 @@ class SimpleAuth {
     }
     
     setLoading(loading) {
-        if (this.loginBtn) {
+        if (this.loginBtn && this.loginBtnText) {
+            this.loginBtn.disabled = loading;
+            
             if (loading) {
-                this.loginBtn.disabled = true;
-                this.loginBtn.innerHTML = '<i class="fas fa-spinner fa-spin mr-2"></i>Connexion...';
+                this.loginBtn.querySelector('i').className = 'fas fa-spinner fa-spin mr-2';
+                this.loginBtnText.textContent = 'Connexion...';
             } else {
-                this.loginBtn.disabled = false;
-                this.loginBtn.innerHTML = '<i class="fas fa-sign-in-alt mr-2"></i>Se connecter';
+                this.loginBtn.querySelector('i').className = 'fas fa-sign-in-alt mr-2';
+                this.loginBtnText.textContent = 'Se connecter';
             }
+            
+            console.log('[UI] setLoading:', loading, '- Bouton disabled:', this.loginBtn.disabled);
+        } else {
+            console.error('[ERROR] setLoading - Éléments bouton non trouvés:', {
+                loginBtn: !!this.loginBtn,
+                loginBtnText: !!this.loginBtnText
+            });
         }
     }
     
@@ -541,6 +578,55 @@ class SimpleAuth {
         console.log('[UI] Utilisateurs disponibles (ordre alphabetique):', sortedNames);
     }
     
+    /**
+     * TEMPORAIRE: Ajouter un bouton de debug pour forcer la connexion
+     */
+    addDebugButton() {
+        // Éviter de créer plusieurs boutons
+        if (document.getElementById('debug-login-btn')) return;
+        
+        const debugBtn = document.createElement('button');
+        debugBtn.id = 'debug-login-btn';
+        debugBtn.textContent = '🔧 FORCER LA CONNEXION (DEBUG)';
+        debugBtn.className = 'w-full mt-4 bg-red-600 text-white py-3 px-4 rounded-lg hover:bg-red-700 transition-colors';
+        debugBtn.addEventListener('click', (e) => {
+            e.preventDefault();
+            console.log('[DEBUG] 🔧 BOUTON DEBUG CLIQUÉ - Forcer la connexion');
+            if (this.userSelect.value) {
+                this.currentUser = this.userSelect.value;
+                this.login();
+            } else {
+                alert('Sélectionnez d\'abord un utilisateur !');
+            }
+        });
+        
+        // Insérer le bouton après le bouton principal
+        this.loginBtn.parentNode.insertBefore(debugBtn, this.loginBtn.nextSibling);
+        console.log('[DEBUG] Bouton de debug ajouté');
+    }
+
+    /**
+     * Re-attacher l'event listener du bouton (au cas où il serait perdu)
+     */
+    reattachButtonListener() {
+        if (this.loginBtn) {
+            // Supprimer tous les event listeners existants en clonant l'élément
+            const newBtn = this.loginBtn.cloneNode(true);
+            this.loginBtn.parentNode.replaceChild(newBtn, this.loginBtn);
+            this.loginBtn = newBtn;
+            
+            // Re-attacher l'event listener
+            this.loginBtn.addEventListener('click', (e) => {
+                console.log('[BOUTON] ⚡ NOUVEAU CLIC DETECTÉ - Forcement fonctionnel !');
+                e.preventDefault();
+                e.stopPropagation();
+                this.handleLogin();
+            });
+            
+            console.log('[FIX] Event listener ré-attaché au bouton');
+        }
+    }
+
     /**
      * Générer une question de captcha mathématique
      */
