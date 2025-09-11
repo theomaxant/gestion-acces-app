@@ -149,18 +149,39 @@ class Logger {
      */
     getUserInfo() {
         const sessionInfo = window.auth?.getSessionInfo();
-        const currentUser = window.auth?.getCurrentUser();
+        
+        // Priorité au sélecteur d'utilisateur si disponible
+        let currentUser = 'Utilisateur non identifié';
+        let userDetails = null;
+        
+        if (window.userSelector) {
+            currentUser = window.userSelector.getCurrentUser();
+            userDetails = window.userSelector.getCurrentUserData();
+        } else if (window.auth) {
+            currentUser = window.auth.getCurrentUser();
+        } else {
+            currentUser = localStorage.getItem('current_user') || 'Utilisateur Direct';
+        }
+        
         const userAgent = navigator.userAgent;
         const timestamp = new Date().toLocaleString('fr-FR');
         
         return JSON.stringify({
             sessionActive: sessionInfo?.connected || false,
             loginTime: sessionInfo?.loginTime || 'Inconnue',
-            identifiedUser: currentUser || 'Utilisateur non identifié',
+            identifiedUser: currentUser,
+            userDetails: userDetails ? {
+                nom: userDetails.nom,
+                prenom: userDetails.prenom,
+                poste: userDetails.poste,
+                equipe: userDetails.equipe,
+                userId: userDetails.id
+            } : null,
             userAgent: userAgent,
             timestamp: timestamp,
             ip: 'Client-side', // Pas accessible côté client
-            language: navigator.language
+            language: navigator.language,
+            source: window.userSelector ? 'user-selector' : 'auth-system'
         });
     }
     
@@ -842,6 +863,7 @@ class Logger {
             'IMPORT': '📥 Import',
             'BACKUP': '💾 Sauvegarde',
             'CONFIG_CHANGE': '⚙️ Configuration',
+            'USER_CHANGE': '👤 Changement utilisateur',
             'ERROR': '❌ Erreur',
             'WARNING': '⚠️ Avertissement'
         };
@@ -866,15 +888,94 @@ class Logger {
             'IMPORT': 'text-teal-600 bg-teal-50',
             'BACKUP': 'text-violet-600 bg-violet-50',
             'CONFIG_CHANGE': 'text-emerald-600 bg-emerald-50',
+            'USER_CHANGE': 'text-blue-600 bg-blue-50',
             'ERROR': 'text-red-700 bg-red-100',
             'WARNING': 'text-amber-600 bg-amber-50'
         };
         return colors[action] || 'text-gray-600 bg-gray-50';
     }
+    
+    /**
+     * Méthodes utilitaires pour simplifier le logging avec utilisateurs
+     */
+    
+    // Log de création avec utilisateur
+    async logCreation(tableName, recordId, newData, details = '') {
+        const currentUser = this.getCurrentUserName();
+        const enhancedDetails = details || `Créé par ${currentUser}`;
+        await this.log('CREATE', tableName, recordId, null, newData, enhancedDetails);
+    }
+    
+    // Log de modification avec utilisateur
+    async logUpdate(tableName, recordId, oldData, newData, details = '') {
+        const currentUser = this.getCurrentUserName();
+        const enhancedDetails = details || `Modifié par ${currentUser}`;
+        await this.log('UPDATE', tableName, recordId, oldData, newData, enhancedDetails);
+    }
+    
+    // Log de suppression avec utilisateur
+    async logDeletion(tableName, recordId, oldData = null, details = '') {
+        const currentUser = this.getCurrentUserName();
+        const enhancedDetails = details || `Supprimé par ${currentUser}`;
+        await this.log('DELETE', tableName, recordId, oldData, null, enhancedDetails);
+    }
+    
+    // Log d'action générique avec utilisateur
+    async logAction(action, tableName = '', recordId = '', oldData = null, newData = null, details = '') {
+        const currentUser = this.getCurrentUserName();
+        const enhancedDetails = details || `Action ${action} par ${currentUser}`;
+        await this.log(action, tableName, recordId, oldData, newData, enhancedDetails);
+    }
+    
+    // Obtenir le nom de l'utilisateur actuel de manière simplifiée
+    getCurrentUserName() {
+        if (window.userSelector) {
+            return window.userSelector.getCurrentUser();
+        } else if (window.auth) {
+            return window.auth.getCurrentUser();
+        } else {
+            return localStorage.getItem('current_user') || 'Utilisateur Direct';
+        }
+    }
+    
+    // Méthode pour changer rapidement d'utilisateur et logger le changement
+    async changeUser(newUser, reason = '') {
+        const oldUser = this.getCurrentUserName();
+        
+        if (window.userSelector) {
+            window.userSelector.setCurrentUser(newUser);
+        } else {
+            localStorage.setItem('current_user', newUser);
+        }
+        
+        const details = `Changement d'utilisateur de "${oldUser}" vers "${newUser}"`;
+        await this.logAction('USER_CHANGE', '', '', { old_user: oldUser }, { new_user: newUser }, reason || details);
+    }
 }
 
 // Initialiser le logger
 window.logger = new Logger();
+
+// Ajouter des fonctions utilitaires globales pour faciliter l'utilisation
+window.addEventListener('DOMContentLoaded', () => {
+    // Attendre que le sélecteur d'utilisateur soit initialisé
+    setTimeout(() => {
+        if (window.logger) {
+            // Fonctions globales pratiques pour le logging
+            window.logCreation = (table, id, data, details) => window.logger.logCreation(table, id, data, details);
+            window.logUpdate = (table, id, oldData, newData, details) => window.logger.logUpdate(table, id, oldData, newData, details);
+            window.logDeletion = (table, id, data, details) => window.logger.logDeletion(table, id, data, details);
+            window.logAction = (action, table, id, oldData, newData, details) => window.logger.logAction(action, table, id, oldData, newData, details);
+            
+            console.log('[LOGGER] Fonctions de logging avec utilisateur disponibles:');
+            console.log('  - logCreation(table, id, data, details)');
+            console.log('  - logUpdate(table, id, oldData, newData, details)');
+            console.log('  - logDeletion(table, id, data, details)');
+            console.log('  - logAction(action, table, id, oldData, newData, details)');
+            console.log('  - logger.changeUser(newUser, reason)');
+        }
+    }, 600);
+});
 
 // Hook pour intercepter les modifications dans l'application existante
 class LoggerHooks {

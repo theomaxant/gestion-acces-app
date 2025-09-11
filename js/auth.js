@@ -392,7 +392,11 @@ class AuthManager {
 
     // Méthode pour la compatibilité avec logger.js
     getCurrentUser() {
-        return localStorage.getItem('current_user') || 'Utilisateur inconnu';
+        // Utiliser le sélecteur d'utilisateur si disponible
+        if (window.userSelector) {
+            return window.userSelector.getCurrentUser();
+        }
+        return localStorage.getItem('current_user') || 'Utilisateur Direct';
     }
 
     // Alias pour la compatibilité avec menu.js
