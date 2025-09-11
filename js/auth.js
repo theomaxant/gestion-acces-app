@@ -75,14 +75,6 @@ class SimpleAuth {
         if (this.loginBtn) {
             console.log('[AUTH] Ajout event listener sur bouton:', this.loginBtn);
             this.loginBtn.addEventListener('click', (e) => {
-                console.error('[DEBUG BOUTON] === CLIC DETECTE === Étape:', {
-                    isPasswordValidated: this.isPasswordValidated,
-                    isCaptchaValidated: this.isCaptchaValidated,
-                    userSelected: !!this.userSelect?.value
-                });
-                console.error('[DEBUG] Type evenement:', e.type);
-                console.error('[DEBUG] Element clique:', e.target);
-                console.error('[DEBUG] Current target:', e.currentTarget);
                 e.preventDefault();
                 e.stopPropagation();
                 this.handleLogin();
@@ -144,24 +136,20 @@ class SimpleAuth {
     }
     
     handleLogin() {
-        // Utiliser console.error pour passer les filtres de production
-        console.error('[DEBUG LOGIN] === HANDLELOGIN APPELÉ ===');
-        console.error('[DEBUG LOGIN] Etat actuel DÉTAILLÉ:', {
+        console.log('[LOGIN] handleLogin appele');
+        console.log('[LOGIN] Etat:', {
             isPasswordValidated: this.isPasswordValidated,
             isCaptchaValidated: this.isCaptchaValidated,
-            hasSelectedUser: !!this.userSelect?.value,
-            selectedUserValue: this.userSelect?.value,
-            userSelectElement: this.userSelect,
-            buttonDisabled: this.loginBtn?.disabled
+            hasSelectedUser: !!this.userSelect?.value
         });
         
-        // Test pour voir dans quelle branche on va
+        // Déterminer l'étape actuelle
         if (!this.isPasswordValidated) {
-            console.error('[DEBUG LOGIN] >>> BRANCHE 1: Vérification mot de passe');
+            console.log('[LOGIN] Étape: Vérification mot de passe');
         } else if (!this.isCaptchaValidated) {
-            console.error('[DEBUG LOGIN] >>> BRANCHE 2: Vérification captcha');
+            console.log('[LOGIN] Étape: Vérification captcha');
         } else {
-            console.error('[DEBUG LOGIN] >>> BRANCHE 3: Sélection utilisateur - C\'EST ICI QUE ÇA DOIT MARCHER');
+            console.log('[LOGIN] Étape: Sélection utilisateur');
         }
         
         // Étape 1 : Vérification du mot de passe
@@ -208,19 +196,12 @@ class SimpleAuth {
             
         // Étape 3 : Sélection de l'utilisateur
         } else {
-            console.log('[LOGIN] Étape 3 - Sélection utilisateur');
-            console.log('[LOGIN] Element userSelect:', this.userSelect);
-            console.log('[LOGIN] Valeur sélectionnée:', this.userSelect?.value);
-            
             const selectedUser = this.userSelect.value;
             
             if (!selectedUser) {
-                console.warn('[LOGIN] Aucun utilisateur sélectionné');
                 this.showError('Veuillez sélectionner qui vous êtes.');
                 return;
             }
-            
-            console.log('[LOGIN] Utilisateur sélectionné:', selectedUser);
             this.currentUser = selectedUser;
             this.login();
         }
@@ -291,12 +272,11 @@ class SimpleAuth {
         // TEMPORAIRE: Ajouter un bouton de debug pour forcer la connexion
         this.addDebugButton();
         
-        // TEST DIRECT: Ajouter un onclick en dur pour tester
-        this.addDirectTest();
+        // Code de debug supprimé
     }
     
     login() {
-        console.error('[DEBUG LOGIN] 🚀 FONCTION LOGIN() APPELÉE ! Utilisateur:', this.currentUser);
+        console.log('[LOGIN] Connexion réussie pour:', this.currentUser);
         
         // Marquer comme connecté et enregistrer l'utilisateur identifié
         localStorage.setItem('authenticated', 'true');
@@ -609,21 +589,7 @@ class SimpleAuth {
         console.error('[DEBUG] Bouton de debug ajouté');
     }
     
-    /**
-     * TEMPORAIRE: Test direct avec onclick 
-     */
-    addDirectTest() {
-        // Ajouter un onclick direct sur le bouton principal
-        this.loginBtn.onclick = () => {
-            console.error('[DEBUG DIRECT] ONCLICK DIRECT DÉCLENCHÉ !');
-            alert('ONCLICK DIRECT FONCTIONNE !');
-            if (this.userSelect.value) {
-                this.currentUser = this.userSelect.value;
-                this.login();
-            }
-        };
-        console.error('[DEBUG] onclick direct ajouté au bouton principal');
-    }
+
 
     /**
      * Re-attacher l'event listener du bouton (au cas où il serait perdu)
