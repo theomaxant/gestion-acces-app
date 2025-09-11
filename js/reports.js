@@ -86,22 +86,28 @@ class ReportsManager {
             
             // Charger les données
             console.log('📊 [REPORTS] Chargement utilisateurs...');
-            this.users = await window.D1API.getRecords('utilisateurs') || [];
+            const usersResult = await window.D1API.get('utilisateurs');
+            this.users = usersResult?.data || [];
             
             console.log('📊 [REPORTS] Chargement logiciels...');
-            this.software = await window.D1API.getRecords('logiciels') || [];
+            const softwareResult = await window.D1API.get('logiciels');
+            this.software = softwareResult?.data || [];
             
             console.log('📊 [REPORTS] Chargement accès...');
-            this.access = await window.D1API.getRecords('acces') || [];
+            const accessResult = await window.D1API.get('acces');
+            this.access = accessResult?.data || [];
             
             console.log('📊 [REPORTS] Chargement coûts...');
-            this.costs = await window.D1API.getRecords('couts_licences') || [];
+            const costsResult = await window.D1API.get('couts_licences');
+            this.costs = costsResult?.data || [];
             
             console.log('📊 [REPORTS] Chargement droits...');
-            this.droits = await window.D1API.getRecords('droits') || [];
+            const droitsResult = await window.D1API.get('droits');
+            this.droits = droitsResult?.data || [];
             
             console.log('📊 [REPORTS] Chargement équipes...');
-            this.teams = await window.D1API.getRecords('equipes') || [];
+            const teamsResult = await window.D1API.get('equipes');
+            this.teams = teamsResult?.data || [];
             
             console.log('✅ [REPORTS] Données chargées avec succès:', {
                 users: this.users.length,
