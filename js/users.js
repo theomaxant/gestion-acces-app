@@ -111,7 +111,7 @@ class UsersManager {
                             <i class="fas fa-sort ml-1"></i>
                         </th>
                         <th class="px-3 sm:px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider cursor-pointer hover:bg-gray-100" onclick="window.usersManager.sortTable('cout')">
-                            <span class="hidden sm:inline">Coût/Mois</span>
+                            <span class="hidden sm:inline">Coût Annuel</span>
                             <span class="sm:hidden">€</span>
                             <i class="fas fa-sort ml-1"></i>
                         </th>
@@ -158,7 +158,8 @@ class UsersManager {
                     <div class="text-sm text-gray-900">${nbLogiciels}</div>
                 </td>
                 <td class="px-3 sm:px-6 py-3 sm:py-4 whitespace-nowrap text-center">
-                    <div class="text-sm font-bold text-blue-600">${userCost.toFixed(2)}€</div>
+                    <div class="text-sm font-medium text-purple-600">${(userCost * 12).toFixed(2)}€</div>
+                    <div class="text-xs text-gray-500">(${userCost.toFixed(2)}€/mois)</div>
                 </td>
                 <td class="hidden sm:table-cell px-3 sm:px-6 py-3 sm:py-4 whitespace-nowrap">
                     <span class="px-2 inline-flex text-xs leading-5 font-semibold rounded-full ${

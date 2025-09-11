@@ -114,7 +114,7 @@ class AccessManager {
                             <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Utilisateur</th>
                             <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Logiciel</th>
                             <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Droit</th>
-                            <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Coût/Mois</th>
+                            <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Coût Annuel</th>
                             <th class="px-6 py-3 text-right text-xs font-medium text-gray-500 uppercase tracking-wider">Actions</th>
                         </tr>
                     </thead>
@@ -150,10 +150,19 @@ class AccessManager {
 
         let costDisplay = 'Non défini';
         if (cost) {
+            const monthlyCoût = cost.cout_mensuel;
+            const annualCost = monthlyCoût * 12;
+            
             if (droit && droit.nom === 'Accès communs') {
-                costDisplay = `${cost.cout_mensuel}€ (partagé)`;
+                costDisplay = `
+                    <div class="text-sm font-medium text-purple-600">${annualCost.toFixed(2)}€</div>
+                    <div class="text-xs text-gray-500">(${monthlyCoût.toFixed(2)}€/mois - partagé)</div>
+                `;
             } else {
-                costDisplay = `${cost.cout_mensuel}€`;
+                costDisplay = `
+                    <div class="text-sm font-medium text-purple-600">${annualCost.toFixed(2)}€</div>
+                    <div class="text-xs text-gray-500">(${monthlyCoût.toFixed(2)}€/mois)</div>
+                `;
             }
         }
 
