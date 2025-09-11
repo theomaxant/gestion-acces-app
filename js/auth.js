@@ -191,13 +191,19 @@ class SimpleAuth {
             
         // Étape 3 : Sélection de l'utilisateur
         } else {
+            console.log('[LOGIN] Étape 3 - Sélection utilisateur');
+            console.log('[LOGIN] Element userSelect:', this.userSelect);
+            console.log('[LOGIN] Valeur sélectionnée:', this.userSelect?.value);
+            
             const selectedUser = this.userSelect.value;
             
             if (!selectedUser) {
+                console.warn('[LOGIN] Aucun utilisateur sélectionné');
                 this.showError('Veuillez sélectionner qui vous êtes.');
                 return;
             }
             
+            console.log('[LOGIN] Utilisateur sélectionné:', selectedUser);
             this.currentUser = selectedUser;
             this.login();
         }
@@ -490,6 +496,18 @@ class SimpleAuth {
      * Populer le select avec la liste des utilisateurs
      */
     populateUserSelect() {
+        // Vérifier que l'élément existe
+        if (!this.userSelect) {
+            console.error('[ERROR] Element user-select non trouvé lors de la population');
+            this.userSelect = document.getElementById('user-select');
+            if (!this.userSelect) {
+                console.error('[CRITICAL] Impossible de trouver l\'élément user-select dans le DOM');
+                return;
+            }
+        }
+        
+        console.log('[UI] Population du select utilisateurs, element trouvé:', this.userSelect);
+        
         // Vider le select (garder seulement l'option par défaut)
         this.userSelect.innerHTML = '<option value="">Sélectionnez votre nom</option>';
         
