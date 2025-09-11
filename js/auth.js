@@ -136,21 +136,6 @@ class SimpleAuth {
     }
     
     handleLogin() {
-        console.log('[LOGIN] handleLogin appele');
-        console.log('[LOGIN] Etat:', {
-            isPasswordValidated: this.isPasswordValidated,
-            isCaptchaValidated: this.isCaptchaValidated,
-            hasSelectedUser: !!this.userSelect?.value
-        });
-        
-        // Déterminer l'étape actuelle
-        if (!this.isPasswordValidated) {
-            console.log('[LOGIN] Étape: Vérification mot de passe');
-        } else if (!this.isCaptchaValidated) {
-            console.log('[LOGIN] Étape: Vérification captcha');
-        } else {
-            console.log('[LOGIN] Étape: Sélection utilisateur');
-        }
         
         // Étape 1 : Vérification du mot de passe
         if (!this.isPasswordValidated) {
@@ -249,16 +234,8 @@ class SimpleAuth {
         // Afficher la sélection utilisateur
         this.userIdentification.classList.remove('hidden');
         
-        // Changer le texte du bouton
-        this.loginBtnText.textContent = 'Se connecter';
-        this.loginBtn.querySelector('i').className = 'fas fa-sign-in-alt mr-2';
-        
-        // S'assurer que le bouton est activé
-        this.loginBtn.disabled = false;
-        console.log('[UI] Bouton configuré pour étape 3 - Texte:', this.loginBtnText.textContent, 'Disabled:', this.loginBtn.disabled);
-        
-        // RE-ATTACHER L'EVENT LISTENER au cas où il aurait été perdu
-        this.reattachButtonListener();
+        // Changer le texte du bouton  
+        this.setLoading(false);  // Utiliser setLoading pour restaurer le bouton proprement
         
         // Mettre le focus sur le select
         this.userSelect.focus();
@@ -269,10 +246,7 @@ class SimpleAuth {
             instructionText.textContent = 'Sélectionnez votre nom pour vous connecter';
         }
         
-        // TEMPORAIRE: Ajouter un bouton de debug pour forcer la connexion
-        this.addDebugButton();
-        
-        // Code de debug supprimé
+        // Focus sur le select utilisateur pour une meilleure UX
     }
     
     login() {
@@ -419,23 +393,14 @@ class SimpleAuth {
     }
     
     setLoading(loading) {
-        if (this.loginBtn && this.loginBtnText) {
-            this.loginBtn.disabled = loading;
-            
+        if (this.loginBtn) {
             if (loading) {
-                this.loginBtn.querySelector('i').className = 'fas fa-spinner fa-spin mr-2';
-                this.loginBtnText.textContent = 'Connexion...';
+                this.loginBtn.disabled = true;
+                this.loginBtn.innerHTML = '<i class="fas fa-spinner fa-spin mr-2"></i>Connexion...';
             } else {
-                this.loginBtn.querySelector('i').className = 'fas fa-sign-in-alt mr-2';
-                this.loginBtnText.textContent = 'Se connecter';
+                this.loginBtn.disabled = false;
+                this.loginBtn.innerHTML = '<i class="fas fa-sign-in-alt mr-2"></i><span id="login-btn-text">Se connecter</span>';
             }
-            
-            console.log('[UI] setLoading:', loading, '- Bouton disabled:', this.loginBtn.disabled);
-        } else {
-            console.error('[ERROR] setLoading - Éléments bouton non trouvés:', {
-                loginBtn: !!this.loginBtn,
-                loginBtnText: !!this.loginBtnText
-            });
         }
     }
     
@@ -517,18 +482,6 @@ class SimpleAuth {
      * Populer le select avec la liste des utilisateurs
      */
     populateUserSelect() {
-        // Vérifier que l'élément existe
-        if (!this.userSelect) {
-            console.error('[ERROR] Element user-select non trouvé lors de la population');
-            this.userSelect = document.getElementById('user-select');
-            if (!this.userSelect) {
-                console.error('[CRITICAL] Impossible de trouver l\'élément user-select dans le DOM');
-                return;
-            }
-        }
-        
-        console.log('[UI] Population du select utilisateurs, element trouvé:', this.userSelect);
-        
         // Vider le select (garder seulement l'option par défaut)
         this.userSelect.innerHTML = '<option value="">Sélectionnez votre nom</option>';
         
