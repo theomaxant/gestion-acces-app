@@ -117,6 +117,7 @@ class SoftwareManager {
                         <th class="hidden lg:table-cell px-3 sm:px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Paiement</th>
                         <th class="hidden lg:table-cell px-3 sm:px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Date souscription</th>
                         <th class="hidden lg:table-cell px-3 sm:px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Prochain paiement</th>
+                        <th class="hidden xl:table-cell px-3 sm:px-6 py-3 text-center text-xs font-medium text-gray-500 uppercase tracking-wider">📋 Engagement</th>
                         <th class="hidden sm:table-cell px-3 sm:px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Accès</th>
                         <th class="hidden lg:table-cell px-3 sm:px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Coût Annuel</th>
                         <th class="hidden sm:table-cell px-3 sm:px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Statut</th>
@@ -184,6 +185,18 @@ class SoftwareManager {
                 <td class="hidden lg:table-cell px-3 sm:px-6 py-3 sm:py-4">
                     ${nextPayment ? `<div class="text-sm ${nextPayment.color}">${nextPayment.date}</div>` : '<div class="text-sm text-gray-400">-</div>'}
                 </td>
+                <td class="hidden xl:table-cell px-3 sm:px-6 py-3 sm:py-4">
+                    <div class="text-center">
+                        ${software.engagement ? 
+                            '<span class="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-red-100 text-red-800">📋 Engagement</span>' : 
+                            '<span class="text-gray-400 text-sm">-</span>'
+                        }
+                        ${software.engagement && software.date_fin_contrat ? 
+                            `<div class="text-xs text-gray-500 mt-1">Fin: ${new Date(software.date_fin_contrat).toLocaleDateString('fr-FR')}</div>` : 
+                            ''
+                        }
+                    </div>
+                </td>
                 <td class="hidden sm:table-cell px-3 sm:px-6 py-3 sm:py-4">
                     <div class="text-sm text-center">
                         <span class="inline-flex items-center justify-center w-8 h-8 rounded-full ${this.countActiveAccessForSoftware(software.id) > 0 ? 'bg-green-100 text-green-800' : 'bg-gray-100 text-gray-500'} text-sm font-medium">
@@ -241,6 +254,7 @@ class SoftwareManager {
                             <div><strong>Coût annuel:</strong> ${annualCost.toFixed(2)}€</div>
                             <div><strong>Accès actifs:</strong> ${this.countActiveAccessForSoftware(software.id)}</div>
                             ${nextPayment ? `<div class="${nextPayment.color}"><strong>Prochain paiement:</strong> ${nextPayment.date}</div>` : ''}
+                            ${software.engagement ? `<div class="text-red-600"><strong>📋 Engagement:</strong> Fin ${new Date(software.date_fin_contrat).toLocaleDateString('fr-FR')}</div>` : ''}
                             ${team ? `<div><strong>Équipe:</strong> ${team.nom}</div>` : ''}
                             ${payerUser ? `<div><strong>Payé par:</strong> ${payerUser.nom} ${payerUser.prenom}</div>` : ''}
                         </div>
@@ -346,6 +360,41 @@ class SoftwareManager {
                                 🛒 Application Shopify (e-commerce)
                             </label>
                         </div>
+                        <div class="flex items-center">
+                            <input type="checkbox" id="software-engagement" 
+                                   class="h-4 w-4 text-red-600 focus:ring-red-500 border-gray-300 rounded"
+                                   onchange="toggleEngagementFields()">
+                            <label for="software-engagement" class="ml-2 block text-sm text-gray-700 font-medium">
+                                📋 Engagement contractuel
+                            </label>
+                        </div>
+                    </div>
+                    
+                    <!-- Champs d'engagement (conditionnels) -->
+                    <div id="engagement-fields" class="space-y-4 border-l-4 border-red-200 pl-4 bg-red-50 p-4 rounded hidden">
+                        <div class="text-sm text-red-800 font-medium mb-3">
+                            ⚠️ Champs obligatoires pour les logiciels avec engagement
+                        </div>
+                        <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+                            <div>
+                                <label class="block text-sm font-medium text-gray-700 mb-1">
+                                    Date de fin de contrat *
+                                    <span class="text-red-500">●</span>
+                                </label>
+                                <input type="date" id="software-contract-end" 
+                                       class="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-red-500">
+                                <p class="text-xs text-gray-500 mt-1">Date d'expiration du contrat d'engagement</p>
+                            </div>
+                            <div>
+                                <label class="block text-sm font-medium text-gray-700 mb-1">
+                                    Date limite d'annulation *
+                                    <span class="text-red-500">●</span>
+                                </label>
+                                <input type="date" id="software-cancellation-deadline" 
+                                       class="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-red-500">
+                                <p class="text-xs text-gray-500 mt-1">Dernier délai pour annuler le contrat</p>
+                            </div>
+                        </div>
                     </div>
                 </div>
             </form>
@@ -404,6 +453,15 @@ class SoftwareManager {
             return;
         }
 
+        // Validation des champs d'engagement
+        let engagementData;
+        try {
+            engagementData = window.validateEngagementDates();
+        } catch (error) {
+            window.app?.showAlert(error.message, 'error');
+            return;
+        }
+
         try {
             const softwareData = {
                 nom,
@@ -415,6 +473,9 @@ class SoftwareManager {
                 moyen_paiement,
                 periodicite,
                 date_souscription,
+                engagement: engagementData.engagement,
+                date_fin_contrat: engagementData.date_fin_contrat,
+                date_limite_annulation: engagementData.date_limite_annulation,
                 archived: false
             };
 
@@ -558,6 +619,41 @@ class SoftwareManager {
                             <label for="software-shopify" class="ml-2 block text-sm text-gray-700">
                                 🛒 Application Shopify (e-commerce)
                             </label>
+                        </div>
+                        <div class="flex items-center">
+                            <input type="checkbox" id="software-engagement" ${software.engagement ? 'checked' : ''}
+                                   class="h-4 w-4 text-red-600 focus:ring-red-500 border-gray-300 rounded"
+                                   onchange="toggleEngagementFields()">
+                            <label for="software-engagement" class="ml-2 block text-sm text-gray-700 font-medium">
+                                📋 Engagement contractuel
+                            </label>
+                        </div>
+                    </div>
+                    
+                    <!-- Champs d'engagement (conditionnels) -->
+                    <div id="engagement-fields" class="space-y-4 border-l-4 border-red-200 pl-4 bg-red-50 p-4 rounded ${software.engagement ? '' : 'hidden'}">
+                        <div class="text-sm text-red-800 font-medium mb-3">
+                            ⚠️ Champs obligatoires pour les logiciels avec engagement
+                        </div>
+                        <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+                            <div>
+                                <label class="block text-sm font-medium text-gray-700 mb-1">
+                                    Date de fin de contrat *
+                                    <span class="text-red-500">●</span>
+                                </label>
+                                <input type="date" id="software-contract-end" value="${software.date_fin_contrat || ''}"
+                                       class="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-red-500">
+                                <p class="text-xs text-gray-500 mt-1">Date d'expiration du contrat d'engagement</p>
+                            </div>
+                            <div>
+                                <label class="block text-sm font-medium text-gray-700 mb-1">
+                                    Date limite d'annulation *
+                                    <span class="text-red-500">●</span>
+                                </label>
+                                <input type="date" id="software-cancellation-deadline" value="${software.date_limite_annulation || ''}"
+                                       class="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-red-500">
+                                <p class="text-xs text-gray-500 mt-1">Dernier délai pour annuler le contrat</p>
+                            </div>
                         </div>
                     </div>
                 </div>
@@ -940,6 +1036,80 @@ class SoftwareManager {
         return activeAccess.length;
     }
 }
+
+// Fonction globale pour gérer l'affichage des champs d'engagement
+window.toggleEngagementFields = function() {
+    const engagementCheckbox = document.getElementById('software-engagement');
+    const engagementFields = document.getElementById('engagement-fields');
+    const contractEndField = document.getElementById('software-contract-end');
+    const cancellationDeadlineField = document.getElementById('software-cancellation-deadline');
+    
+    if (engagementCheckbox && engagementFields) {
+        if (engagementCheckbox.checked) {
+            engagementFields.classList.remove('hidden');
+            // Rendre les champs obligatoires
+            if (contractEndField) contractEndField.required = true;
+            if (cancellationDeadlineField) cancellationDeadlineField.required = true;
+        } else {
+            engagementFields.classList.add('hidden');
+            // Retirer l'obligation et vider les champs
+            if (contractEndField) {
+                contractEndField.required = false;
+                contractEndField.value = '';
+            }
+            if (cancellationDeadlineField) {
+                cancellationDeadlineField.required = false;
+                cancellationDeadlineField.value = '';
+            }
+        }
+    }
+};
+
+// Fonction globale de validation des dates d'engagement
+window.validateEngagementDates = function() {
+    const engagementCheckbox = document.getElementById('software-engagement');
+    
+    if (engagementCheckbox && engagementCheckbox.checked) {
+        const contractEndDate = document.getElementById('software-contract-end').value;
+        const cancellationDeadline = document.getElementById('software-cancellation-deadline').value;
+        
+        if (!contractEndDate) {
+            throw new Error('La date de fin de contrat est requise pour les logiciels avec engagement');
+        }
+        
+        if (!cancellationDeadline) {
+            throw new Error('La date limite d\'annulation est requise pour les logiciels avec engagement');
+        }
+        
+        // Vérifier que la date limite d'annulation est antérieure à la date de fin de contrat
+        const contractEnd = new Date(contractEndDate);
+        const cancellationLimit = new Date(cancellationDeadline);
+        
+        if (cancellationLimit >= contractEnd) {
+            throw new Error('La date limite d\'annulation doit être antérieure à la date de fin de contrat');
+        }
+        
+        // Vérifier que les dates ne sont pas dans le passé
+        const today = new Date();
+        today.setHours(0, 0, 0, 0);
+        
+        if (contractEnd < today) {
+            throw new Error('La date de fin de contrat ne peut pas être dans le passé');
+        }
+        
+        return {
+            engagement: true,
+            date_fin_contrat: contractEndDate,
+            date_limite_annulation: cancellationDeadline
+        };
+    }
+    
+    return {
+        engagement: false,
+        date_fin_contrat: null,
+        date_limite_annulation: null
+    };
+};
 
 // Initialiser le gestionnaire des logiciels
 document.addEventListener('DOMContentLoaded', () => {
