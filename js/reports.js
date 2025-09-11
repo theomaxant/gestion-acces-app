@@ -76,9 +76,11 @@ class ReportsManager {
         console.log('📊 [REPORTS] Chargement des données...');
         
         try {
-            // Vérifier que l'API Supabase est disponible
+            // Attendre que l'API Supabase soit disponible
+            await this.waitForSupabaseAPI();
+            
             if (!window.supabaseAPI) {
-                console.error('❌ [REPORTS] API Supabase non disponible');
+                console.error('❌ [REPORTS] API Supabase toujours non disponible après attente');
                 return;
             }
             
@@ -971,6 +973,26 @@ class ReportsManager {
         if (activeBtn) {
             activeBtn.classList.add('ring-4', 'ring-blue-300');
             activeBtn.classList.remove('hover:shadow-lg');
+        }
+    }
+
+    // FONCTION D'ATTENTE API SUPABASE
+    async waitForSupabaseAPI() {
+        console.log('📊 [REPORTS] Attente de l\'API Supabase...');
+        
+        let attempts = 0;
+        const maxAttempts = 20; // 10 secondes max
+        
+        while (!window.supabaseAPI && attempts < maxAttempts) {
+            console.log('📊 [REPORTS] Tentative', attempts + 1, '/ API Supabase non disponible, attente...');
+            await new Promise(resolve => setTimeout(resolve, 500)); // Attendre 500ms
+            attempts++;
+        }
+        
+        if (window.supabaseAPI) {
+            console.log('✅ [REPORTS] API Supabase trouvée après', attempts, 'tentatives');
+        } else {
+            console.error('❌ [REPORTS] API Supabase non trouvée après', maxAttempts, 'tentatives');
         }
     }
 
