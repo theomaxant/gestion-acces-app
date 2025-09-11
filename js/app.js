@@ -283,6 +283,12 @@ class AccessManagementApp {
             document.getElementById('stat-cost-monthly').textContent = `${totalCost.toFixed(2)}€`;
             document.getElementById('stat-cost-annual').textContent = `${annualCost.toFixed(2)}€`;
 
+            // Calculer les accès (total et externes)
+            const totalAccess = activeAccess.length;
+            const externalAccess = await this.calculateExternalAccess();
+            document.getElementById('stat-access-total').textContent = totalAccess;
+            document.getElementById('stat-access-external').textContent = externalAccess;
+
             // Calculer le coût des externes
             const externalCost = await this.calculateExternalUsersCost();
             const externalAnnualCost = externalCost * 12;
@@ -387,6 +393,29 @@ class AccessManagementApp {
             return Math.round(totalCost * 100) / 100;
         } catch (error) {
             console.error('Erreur lors du calcul des coûts externes:', error);
+            return 0;
+        }
+    }
+
+    async calculateExternalAccess() {
+        try {
+            const [usersResult, accessResult] = await Promise.all([
+                window.D1API.get('utilisateurs'),
+                window.D1API.get('acces')
+            ]);
+
+            const users = (usersResult.data || []).filter(u => !u.archived && u.externe);
+            const access = accessResult.data || [];
+            
+            // Récupérer les IDs des utilisateurs externes
+            const externalUserIds = users.map(u => u.id);
+            
+            // Compter les accès des utilisateurs externes
+            const externalAccess = access.filter(acc => externalUserIds.includes(acc.utilisateur_id));
+            
+            return externalAccess.length;
+        } catch (error) {
+            console.error('Erreur lors du calcul des accès externes:', error);
             return 0;
         }
     }
