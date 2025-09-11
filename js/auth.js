@@ -385,6 +385,16 @@ class AuthManager {
             currentStep: this.currentStep
         };
     }
+
+    // Méthode pour la compatibilité avec logger.js
+    getCurrentUser() {
+        return localStorage.getItem('current_user') || 'Utilisateur inconnu';
+    }
+
+    // Alias pour la compatibilité avec menu.js
+    handleLogout() {
+        return this.logout();
+    }
 }
 
 // Initialisation
