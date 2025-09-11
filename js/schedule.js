@@ -175,8 +175,12 @@ class ScheduleManager {
             'Juillet', 'Août', 'Septembre', 'Octobre', 'Novembre', 'Décembre'
         ];
 
+        // Afficher les 3 prochains mois consécutifs (mois actuel + 2 suivants)
         for (let i = 0; i < 3; i++) {
-            const targetDate = new Date(today.getFullYear(), today.getMonth() + i, 1);
+            const targetDate = new Date(today);
+            targetDate.setMonth(today.getMonth() + i);
+            targetDate.setDate(1); // Premier jour du mois
+            
             const monthData = this.calculateMonthlyPayments(targetDate.getMonth(), targetDate.getFullYear());
             
             const block = document.getElementById(`month-${i + 1}-block`);

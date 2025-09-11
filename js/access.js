@@ -221,7 +221,7 @@ class AccessManager {
                                 class="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500">
                             <option value="">Sélectionner un utilisateur</option>
                             ${activeUsers.map(user => 
-                                `<option value="${user.id}">${user.nom} ${user.prenom || ''} - ${user.email || 'Pas d\'email'}</option>`
+                                `<option value="${user.id}">${user.externe ? '🏢 ' : ''}${user.nom} ${user.prenom || ''} - ${user.email || 'Pas d\'email'}</option>`
                             ).join('')}
                         </select>
                     </div>
@@ -384,7 +384,7 @@ class AccessManager {
                             <option value="">Sélectionner un utilisateur</option>
                             ${activeUsers.map(user => 
                                 `<option value="${user.id}" ${user.id === access.utilisateur_id ? 'selected' : ''}>
-                                    ${user.nom} ${user.prenom || ''} - ${user.email || 'Pas d\'email'}
+                                    ${user.externe ? '🏢 ' : ''}${user.nom} ${user.prenom || ''} - ${user.email || 'Pas d\'email'}
                                 </option>`
                             ).join('')}
                         </select>

@@ -276,13 +276,18 @@ class AccessManagementApp {
             // Mettre à jour les statistiques
             document.getElementById('stat-users').textContent = activeUsers.length;
             document.getElementById('stat-software').textContent = activeSoftware.length;
-            document.getElementById('stat-access').textContent = activeAccess.length;
 
             // Calculer le coût total
             const totalCost = await this.calculateTotalCost();
             const annualCost = totalCost * 12;
             document.getElementById('stat-cost-monthly').textContent = `${totalCost.toFixed(2)}€`;
             document.getElementById('stat-cost-annual').textContent = `${annualCost.toFixed(2)}€`;
+
+            // Calculer le coût des externes
+            const externalCost = await this.calculateExternalUsersCost();
+            const externalAnnualCost = externalCost * 12;
+            document.getElementById('stat-external-cost-monthly').textContent = `${externalCost.toFixed(2)}€`;
+            document.getElementById('stat-external-cost-annual').textContent = `${externalAnnualCost.toFixed(2)}€`;
 
             // Charger les statistiques par équipe
             await this.loadTeamStats();
@@ -334,6 +339,54 @@ class AccessManagementApp {
             return Math.round(totalCost * 100) / 100;
         } catch (error) {
             console.error('Erreur lors du calcul des coûts:', error);
+            return 0;
+        }
+    }
+
+    async calculateExternalUsersCost() {
+        try {
+            const [usersResult, accessResult, costsResult, droitsResult] = await Promise.all([
+                window.D1API.get('utilisateurs'),
+                window.D1API.get('acces'),
+                window.D1API.get('couts_licences'),
+                window.D1API.get('droits')
+            ]);
+
+            const users = (usersResult.data || []).filter(u => !u.archived && u.externe);
+            const access = accessResult.data || [];
+            const costs = costsResult.data || [];
+            const droits = droitsResult.data || [];
+            
+            let totalCost = 0;
+            const processedSharedAccess = new Set(); // Pour éviter de compter plusieurs fois les accès communs
+            
+            // Récupérer les IDs des utilisateurs externes
+            const externalUserIds = users.map(u => u.id);
+
+            for (const acc of access) {
+                // Ne compter que les accès des utilisateurs externes
+                if (!externalUserIds.includes(acc.utilisateur_id)) continue;
+                
+                const cost = costs.find(c => c.logiciel_id === acc.logiciel_id && c.droit_id === acc.droit_id);
+                if (cost) {
+                    const droit = droits.find(d => d.id === acc.droit_id);
+                    
+                    if (droit && droit.nom === 'Accès communs') {
+                        // Pour les accès communs, ne compter qu'une fois par logiciel
+                        const sharedKey = `${acc.logiciel_id}_${acc.droit_id}`;
+                        if (!processedSharedAccess.has(sharedKey)) {
+                            totalCost += cost.cout_mensuel;
+                            processedSharedAccess.add(sharedKey);
+                        }
+                    } else {
+                        totalCost += cost.cout_mensuel;
+                    }
+                }
+            }
+
+            return Math.round(totalCost * 100) / 100;
+        } catch (error) {
+            console.error('Erreur lors du calcul des coûts externes:', error);
             return 0;
         }
     }
@@ -409,6 +462,9 @@ class AccessManagementApp {
 
     async loadCharts() {
         try {
+            // Graphique des utilisateurs internes vs externes
+            await this.loadExternalUsersChart();
+            
             // Graphique des coûts par logiciel
             await this.loadCostChart();
             
@@ -419,6 +475,114 @@ class AccessManagementApp {
             await this.loadPaymentMethodChart();
         } catch (error) {
             console.error('Erreur lors du chargement des graphiques:', error);
+        }
+    }
+
+    async loadExternalUsersChart() {
+        const ctx = document.getElementById('externalUsersChart');
+        if (!ctx) {
+            console.warn('Element externalUsersChart non trouvé');
+            return;
+        }
+
+        try {
+            const [usersResult, accessResult, costsResult, droitsResult] = await Promise.all([
+                window.D1API.get('utilisateurs'),
+                window.D1API.get('acces'),
+                window.D1API.get('couts_licences'),
+                window.D1API.get('droits')
+            ]);
+
+            const users = (usersResult.data || []).filter(u => !u.archived);
+            const access = accessResult.data || [];
+            const costs = costsResult.data || [];
+            const droits = droitsResult.data || [];
+
+            // Compter les utilisateurs internes vs externes
+            const internalUsers = users.filter(u => !u.externe);
+            const externalUsers = users.filter(u => u.externe);
+
+            // Calculer les coûts
+            const totalCost = await this.calculateTotalCost();
+            const externalCost = await this.calculateExternalUsersCost();
+            const internalCost = totalCost - externalCost;
+
+            // Détruire le graphique existant s'il existe
+            if (this.externalUsersChartInstance) {
+                this.externalUsersChartInstance.destroy();
+            }
+
+            // Créer le graphique combiné (barres pour utilisateurs, ligne pour coûts)
+            this.externalUsersChartInstance = new Chart(ctx, {
+                type: 'bar',
+                data: {
+                    labels: ['Utilisateurs Internes', 'Utilisateurs Externes'],
+                    datasets: [
+                        {
+                            type: 'bar',
+                            label: 'Nombre d\'utilisateurs',
+                            data: [internalUsers.length, externalUsers.length],
+                            backgroundColor: ['rgba(59, 130, 246, 0.7)', 'rgba(249, 115, 22, 0.7)'],
+                            borderColor: ['rgba(59, 130, 246, 1)', 'rgba(249, 115, 22, 1)'],
+                            borderWidth: 2,
+                            yAxisID: 'y'
+                        },
+                        {
+                            type: 'line',
+                            label: 'Coût mensuel (€)',
+                            data: [internalCost, externalCost],
+                            backgroundColor: 'rgba(34, 197, 94, 0.2)',
+                            borderColor: 'rgba(34, 197, 94, 1)',
+                            borderWidth: 3,
+                            fill: false,
+                            tension: 0.1,
+                            pointRadius: 8,
+                            pointBackgroundColor: 'rgba(34, 197, 94, 1)',
+                            yAxisID: 'y1'
+                        }
+                    ]
+                },
+                options: {
+                    responsive: true,
+                    maintainAspectRatio: false,
+                    scales: {
+                        y: {
+                            type: 'linear',
+                            display: true,
+                            position: 'left',
+                            title: {
+                                display: true,
+                                text: 'Nombre d\'utilisateurs'
+                            }
+                        },
+                        y1: {
+                            type: 'linear',
+                            display: true,
+                            position: 'right',
+                            title: {
+                                display: true,
+                                text: 'Coût mensuel (€)'
+                            },
+                            grid: {
+                                drawOnChartArea: false,
+                            },
+                        }
+                    },
+                    plugins: {
+                        legend: {
+                            display: true,
+                            position: 'top'
+                        },
+                        title: {
+                            display: true,
+                            text: `Total: ${users.length} utilisateurs - Coût total: ${totalCost.toFixed(2)}€/mois`
+                        }
+                    }
+                }
+            });
+
+        } catch (error) {
+            console.error('Erreur lors du chargement du graphique des utilisateurs externes:', error);
         }
     }
 

@@ -103,6 +103,7 @@ class UsersManager {
                         <th class="px-3 sm:px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider cursor-pointer hover:bg-gray-100" onclick="window.usersManager.sortTable('equipe')">
                             Équipe <i class="fas fa-sort ml-1"></i>
                         </th>
+                        <th class="hidden lg:table-cell px-3 sm:px-6 py-3 text-center text-xs font-medium text-gray-500 uppercase tracking-wider">🏢 Externe</th>
                         <th class="hidden xl:table-cell px-3 sm:px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Poste</th>
                         <th class="px-3 sm:px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider cursor-pointer hover:bg-gray-100" onclick="window.usersManager.sortTable('nb_logiciels')">
                             <span class="hidden sm:inline">Nb Logiciels</span>
@@ -143,6 +144,12 @@ class UsersManager {
                 </td>
                 <td class="px-3 sm:px-6 py-3 sm:py-4 whitespace-nowrap">
                     <div class="text-sm text-gray-600">${team?.nom || 'Aucune équipe'}</div>
+                </td>
+                <td class="hidden lg:table-cell px-3 sm:px-6 py-3 sm:py-4 whitespace-nowrap text-center">
+                    ${user.externe ? 
+                        '<span class="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-orange-100 text-orange-800">🏢 Externe</span>' : 
+                        '<span class="text-gray-400 text-sm">-</span>'
+                    }
                 </td>
                 <td class="hidden xl:table-cell px-3 sm:px-6 py-3 sm:py-4 whitespace-nowrap">
                     <div class="text-sm text-gray-600">${user.poste || 'Non renseigné'}</div>
@@ -226,7 +233,14 @@ class UsersManager {
                             ).join('')}
                         </select>
                     </div>
-                    <div class="border-t pt-4">
+                    <div class="border-t pt-4 space-y-3">
+                        <div class="flex items-center">
+                            <input type="checkbox" id="user-externe" 
+                                   class="h-4 w-4 text-orange-600 focus:ring-orange-500 border-gray-300 rounded">
+                            <label for="user-externe" class="ml-2 block text-sm text-gray-700 font-medium">
+                                🏢 Utilisateur externe (ne fait pas partie de l'entreprise)
+                            </label>
+                        </div>
                         <div class="flex items-center">
                             <input type="checkbox" id="user-add-base-access" checked
                                    class="h-4 w-4 text-blue-600 focus:ring-blue-500 border-gray-300 rounded">
@@ -256,6 +270,7 @@ class UsersManager {
         const email = document.getElementById('user-email').value.trim();
         const poste = document.getElementById('user-poste').value.trim();
         const equipe_id = document.getElementById('user-equipe').value;
+        const externe = document.getElementById('user-externe')?.checked || false;
         const addBaseAccess = !userId && document.getElementById('user-add-base-access')?.checked;
 
         // Validation des champs obligatoires
@@ -287,6 +302,7 @@ class UsersManager {
                 email,
                 poste,
                 equipe_id,
+                externe,
                 archived: false
             };
 
@@ -383,6 +399,15 @@ class UsersManager {
                                 `<option value="${team.id}" ${team.id === user.equipe_id ? 'selected' : ''}>${team.nom}</option>`
                             ).join('')}
                         </select>
+                    </div>
+                    <div class="border-t pt-4">
+                        <div class="flex items-center">
+                            <input type="checkbox" id="user-externe" ${user.externe ? 'checked' : ''}
+                                   class="h-4 w-4 text-orange-600 focus:ring-orange-500 border-gray-300 rounded">
+                            <label for="user-externe" class="ml-2 block text-sm text-gray-700 font-medium">
+                                🏢 Utilisateur externe (ne fait pas partie de l'entreprise)
+                            </label>
+                        </div>
                     </div>
                 </div>
             </form>

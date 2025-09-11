@@ -316,7 +316,7 @@ class SoftwareManager {
         const usersResponse = await window.D1API.get('utilisateurs');
         const users = (usersResponse.data || []).filter(u => !u.archived);
         const usersOptions = users.map(user => 
-            `<option value="${user.id}">${user.nom} ${user.prenom || ''}</option>`
+            `<option value="${user.id}">${user.externe ? '🏢 ' : ''}${user.nom} ${user.prenom || ''}</option>`
         ).join('');
 
         // Charger les équipes
@@ -577,7 +577,7 @@ class SoftwareManager {
         const usersResponse = await window.D1API.get('utilisateurs');
         const users = (usersResponse.data || []).filter(u => !u.archived);
         const usersOptions = users.map(user => 
-            `<option value="${user.id}" ${user.id === software.payer_id ? 'selected' : ''}>${user.nom} ${user.prenom || ''}</option>`
+            `<option value="${user.id}" ${user.id === software.payer_id ? 'selected' : ''}>${user.externe ? '🏢 ' : ''}${user.nom} ${user.prenom || ''}</option>`
         ).join('');
 
         // Charger les équipes
@@ -830,7 +830,7 @@ class SoftwareManager {
                         <div class="space-y-2 sm:space-y-0 sm:flex sm:space-x-2">
                             <select id="select-user" class="w-full sm:flex-1 px-2 py-1 border border-gray-300 rounded text-sm">
                                 <option value="">Sélectionner un utilisateur</option>
-                                ${users.map(user => `<option value="${user.id}">${user.nom} ${user.prenom}</option>`).join('')}
+                                ${users.map(user => `<option value="${user.id}">${user.externe ? '🏢 ' : ''}${user.nom} ${user.prenom}</option>`).join('')}
                             </select>
                             <select id="select-right" class="w-full sm:flex-1 px-2 py-1 border border-gray-300 rounded text-sm">
                                 <option value="">Sélectionner un droit</option>
