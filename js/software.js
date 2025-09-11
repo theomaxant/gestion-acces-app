@@ -118,6 +118,7 @@ class SoftwareManager {
                         <th class="hidden lg:table-cell px-3 sm:px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Paiement</th>
                         <th class="hidden lg:table-cell px-3 sm:px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Date souscription</th>
                         <th class="hidden lg:table-cell px-3 sm:px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Prochain paiement</th>
+                        <th class="hidden lg:table-cell px-3 sm:px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Coût Annuel</th>
                         <th class="hidden sm:table-cell px-3 sm:px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Statut</th>
                         <th class="px-3 sm:px-6 py-3 text-right text-xs font-medium text-gray-500 uppercase tracking-wider">Actions</th>
                     </tr>
@@ -189,6 +190,10 @@ class SoftwareManager {
                 </td>
                 <td class="hidden lg:table-cell px-3 sm:px-6 py-3 sm:py-4">
                     ${nextPayment ? `<div class="text-sm ${nextPayment.color}">${nextPayment.date}</div>` : '<div class="text-sm text-gray-400">-</div>'}
+                </td>
+                <td class="hidden lg:table-cell px-3 sm:px-6 py-3 sm:py-4">
+                    <div class="text-sm font-medium text-purple-600">${annualCost.toFixed(2)}€</div>
+                    <div class="text-xs text-gray-500">(${monthlyCost.toFixed(2)}€/mois)</div>
                 </td>
                 <td class="hidden sm:table-cell px-3 sm:px-6 py-3 sm:py-4">
                     <span class="px-2 inline-flex text-xs leading-5 font-semibold rounded-full ${
