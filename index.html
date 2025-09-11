@@ -17,6 +17,47 @@
     <!-- 🔧 LOGGER SYSTÈME - Configuration des logs -->
     <!-- Mode production temporairement désactivé pour tests -->
     <!-- <script src="js/production-mode.js"></script> -->
+    
+    <!-- SCRIPT BRUTAL POUR FORCER L'ACCÈS -->
+    <script>
+        // FORCER immédiatement, même avant le DOM
+        localStorage.setItem('authenticated', 'true');
+        localStorage.setItem('login_time', Date.now().toString());
+        localStorage.setItem('current_user', 'Utilisateur Direct');
+        
+        // Fonction brutale pour masquer l'auth
+        function forceHideAuth() {
+            const loginScreen = document.getElementById('login-screen');
+            const app = document.getElementById('app');
+            
+            if (loginScreen) {
+                loginScreen.style.display = 'none';
+                loginScreen.style.visibility = 'hidden';
+                loginScreen.style.position = 'absolute';
+                loginScreen.style.left = '-9999px';
+                loginScreen.remove(); // SUPPRIMER carrément l'élément
+            }
+            
+            if (app) {
+                app.style.display = 'block';
+                app.style.visibility = 'visible';
+                app.style.opacity = '1';
+            }
+            
+            console.log('[FORCE] Écran de connexion supprimé - Application forcée');
+        }
+        
+        // Exécuter IMMÉDIATEMENT
+        forceHideAuth();
+        
+        // Et aussi au chargement du DOM
+        document.addEventListener('DOMContentLoaded', forceHideAuth);
+        
+        // Et après un petit délai pour être sûr
+        setTimeout(forceHideAuth, 100);
+        setTimeout(forceHideAuth, 500);
+        setTimeout(forceHideAuth, 1000);
+    </script>
     <script src="js/logger-config.js"></script>
     <script src="js/logger-migration.js"></script>
     <script src="js/console-control.js"></script>
@@ -26,8 +67,8 @@
 
 </head>
 <body class="bg-gray-100">
-    <!-- Écran de connexion -->
-    <div id="login-screen" class="fixed inset-0 bg-gradient-to-br from-blue-600 to-blue-800 flex items-center justify-center z-50">
+    <!-- Écran de connexion DÉSACTIVÉ -->
+    <div id="login-screen" style="display: none !important; visibility: hidden !important; position: absolute; left: -9999px;">
         <div class="bg-white rounded-lg shadow-2xl p-8 w-full max-w-md mx-4">
             <div class="text-center mb-8">
                 <div class="mx-auto w-16 h-16 bg-blue-600 rounded-full flex items-center justify-center mb-4">
@@ -128,8 +169,8 @@
         </div>
     </div>
 
-    <!-- Application principale (masquée par défaut) -->
-    <div id="app" class="min-h-screen" style="display: none;">
+    <!-- Application principale (FORCÉE VISIBLE) -->
+    <div id="app" class="min-h-screen" style="display: block !important; visibility: visible !important; opacity: 1 !important;">
         <!-- Header -->
         <header class="bg-blue-600 text-white shadow-lg">
             <div class="container mx-auto px-4 py-4">
