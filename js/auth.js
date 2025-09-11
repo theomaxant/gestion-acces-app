@@ -67,6 +67,10 @@ class AuthManager {
         document.getElementById('captcha-input').value = '';
         document.getElementById('user-select').value = '';
         
+        // SUPPRIMER LES ATTRIBUTS REQUIRED PROBLÉMATIQUES
+        document.getElementById('captcha-input').removeAttribute('required');
+        document.getElementById('user-select').removeAttribute('required');
+        
         // Masquer toutes les sections
         document.getElementById('captcha-section').classList.add('hidden');
         document.getElementById('user-identification').classList.add('hidden');
