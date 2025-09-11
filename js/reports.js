@@ -257,6 +257,7 @@ class ReportsManager {
                 users: softwareUsers,
                 totalUsers: softwareUsers.length,
                 totalCost: totalCost,
+                totalCostAnnual: totalCost * 12, // Coût annuel
                 costs: softwareCosts
             };
         });
@@ -370,6 +371,7 @@ class ReportsManager {
         const totalSoftware = data.length;
         const totalUsers = data.reduce((sum, item) => sum + item.totalUsers, 0);
         const totalCost = data.reduce((sum, item) => sum + item.totalCost, 0);
+        const totalCostAnnual = data.reduce((sum, item) => sum + item.totalCostAnnual, 0);
         
         return `
             <div class="space-y-6">
@@ -389,7 +391,7 @@ class ReportsManager {
                             </button>
                         </div>
                     </div>
-                    <div class="grid grid-cols-1 md:grid-cols-3 gap-4">
+                    <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
                         <div class="text-center">
                             <div class="text-3xl font-bold">${totalSoftware}</div>
                             <div class="text-blue-100">Logiciels</div>
@@ -400,7 +402,11 @@ class ReportsManager {
                         </div>
                         <div class="text-center">
                             <div class="text-3xl font-bold">${totalCost.toFixed(2)}€</div>
-                            <div class="text-blue-100">Coût Total</div>
+                            <div class="text-blue-100">Coût Mensuel</div>
+                        </div>
+                        <div class="text-center">
+                            <div class="text-3xl font-bold">${totalCostAnnual.toFixed(2)}€</div>
+                            <div class="text-blue-100">Coût Annuel</div>
                         </div>
                     </div>
                 </div>
@@ -423,6 +429,7 @@ class ReportsManager {
                                         <div class="text-2xl font-bold text-blue-600">${software.totalUsers}</div>
                                         <div class="text-sm text-gray-500">utilisateurs</div>
                                         <div class="text-lg font-semibold text-green-600">${software.totalCost.toFixed(2)}€/mois</div>
+                                        <div class="text-base font-medium text-purple-600">${software.totalCostAnnual.toFixed(2)}€/an</div>
                                         <button onclick="window.reportsManager.exportSingleSoftwareExcel(${software.id})" 
                                                 class="mt-1 bg-blue-500 hover:bg-blue-600 text-white px-3 py-1 rounded text-xs">
                                             <i class="fas fa-download mr-1"></i>Export
@@ -470,7 +477,7 @@ class ReportsManager {
         return `
             <div class="space-y-6">
                 <!-- En-tête avec statistiques et export -->
-                <div class="bg-gradient-to-r from-purple-500 to-purple-600 text-white p-6 rounded-lg">
+                <div class="bg-gradient-to-r from-green-500 to-green-600 text-white p-6 rounded-lg">
                     <div class="flex justify-between items-start mb-4">
                         <div>
                             <h2 class="text-2xl font-bold mb-2">
@@ -488,15 +495,15 @@ class ReportsManager {
                     <div class="grid grid-cols-1 md:grid-cols-3 gap-4">
                         <div class="text-center">
                             <div class="text-3xl font-bold">${totalUsers}</div>
-                            <div class="text-purple-100">Utilisateurs</div>
+                            <div class="text-green-100">Utilisateurs</div>
                         </div>
                         <div class="text-center">
                             <div class="text-3xl font-bold">${totalSoftware}</div>
-                            <div class="text-purple-100">Total Accès</div>
+                            <div class="text-green-100">Total Accès</div>
                         </div>
                         <div class="text-center">
                             <div class="text-3xl font-bold">${totalCost.toFixed(2)}€</div>
-                            <div class="text-purple-100">Coût Total</div>
+                            <div class="text-green-100">Coût Total</div>
                         </div>
                     </div>
                 </div>
@@ -516,11 +523,11 @@ class ReportsManager {
                                         </div>
                                     </div>
                                     <div class="text-right">
-                                        <div class="text-2xl font-bold text-purple-600">${user.totalSoftware}</div>
+                                        <div class="text-2xl font-bold text-green-600">${user.totalSoftware}</div>
                                         <div class="text-sm text-gray-500">logiciels</div>
                                         <div class="text-lg font-semibold text-green-600">${user.totalCost.toFixed(2)}€/mois</div>
                                         <button onclick="window.reportsManager.exportSingleUserExcel(${user.id})" 
-                                                class="mt-1 bg-purple-500 hover:bg-purple-600 text-white px-3 py-1 rounded text-xs">
+                                                class="mt-1 bg-green-500 hover:bg-green-600 text-white px-3 py-1 rounded text-xs">
                                             <i class="fas fa-download mr-1"></i>Export
                                         </button>
                                     </div>
@@ -538,7 +545,7 @@ class ReportsManager {
                                                 <div class="font-medium">${soft.nom}</div>
                                                 <div class="text-sm text-gray-600">${soft.editeur} v${soft.version}</div>
                                                 <div class="text-xs text-gray-500 mt-1 flex justify-between">
-                                                    <span class="bg-purple-100 text-purple-800 px-2 py-1 rounded">${soft.niveau}</span>
+                                                    <span class="bg-green-100 text-green-800 px-2 py-1 rounded">${soft.niveau}</span>
                                                     <span class="text-green-600 font-medium">${soft.cout_mensuel}€/mois</span>
                                                 </div>
                                             </div>
@@ -566,7 +573,7 @@ class ReportsManager {
         return `
             <div class="space-y-6">
                 <!-- En-tête avec statistiques et export -->
-                <div class="bg-gradient-to-r from-orange-500 to-orange-600 text-white p-6 rounded-lg">
+                <div class="bg-gradient-to-r from-purple-500 to-purple-600 text-white p-6 rounded-lg">
                     <div class="flex justify-between items-start mb-4">
                         <div>
                             <h2 class="text-2xl font-bold mb-2">
@@ -584,15 +591,15 @@ class ReportsManager {
                     <div class="grid grid-cols-1 md:grid-cols-3 gap-4">
                         <div class="text-center">
                             <div class="text-3xl font-bold">${totalTeams}</div>
-                            <div class="text-orange-100">Équipes</div>
+                            <div class="text-purple-100">Équipes</div>
                         </div>
                         <div class="text-center">
                             <div class="text-3xl font-bold">${totalUsers}</div>
-                            <div class="text-orange-100">Total Utilisateurs</div>
+                            <div class="text-purple-100">Total Utilisateurs</div>
                         </div>
                         <div class="text-center">
                             <div class="text-3xl font-bold">${totalCost.toFixed(2)}€</div>
-                            <div class="text-orange-100">Coût Total</div>
+                            <div class="text-purple-100">Coût Total</div>
                         </div>
                     </div>
                 </div>
@@ -608,11 +615,11 @@ class ReportsManager {
                                         <div class="text-sm text-gray-600 mt-1">${team.description}</div>
                                     </div>
                                     <div class="text-right">
-                                        <div class="text-2xl font-bold text-orange-600">${team.totalUsers}</div>
+                                        <div class="text-2xl font-bold text-purple-600">${team.totalUsers}</div>
                                         <div class="text-sm text-gray-500">utilisateurs</div>
                                         <div class="text-lg font-semibold text-green-600">${team.totalCost.toFixed(2)}€/mois</div>
                                         <button onclick="window.reportsManager.exportSingleTeamExcel(${team.id})" 
-                                                class="mt-1 bg-orange-500 hover:bg-orange-600 text-white px-3 py-1 rounded text-xs">
+                                                class="mt-1 bg-purple-500 hover:bg-purple-600 text-white px-3 py-1 rounded text-xs">
                                             <i class="fas fa-download mr-1"></i>Export
                                         </button>
                                     </div>
@@ -697,7 +704,8 @@ class ReportsManager {
                 'Version': soft.version,
                 'Statut': soft.statut,
                 'Nb Utilisateurs': soft.totalUsers,
-                'Coût Mensuel €': soft.totalCost.toFixed(2)
+                'Coût Mensuel €': soft.totalCost.toFixed(2),
+                'Coût Annuel €': soft.totalCostAnnual.toFixed(2)
             }));
             
             const ws1 = XLSX.utils.json_to_sheet(summaryData);
@@ -1024,6 +1032,7 @@ class ReportsManager {
                 ],
                 totalUsers: 2,
                 totalCost: 25.50,
+                totalCostAnnual: 306.00, // 25.50 * 12
                 costs: [{id: 1, cout_mensuel: 12.75}]
             },
             {
@@ -1041,6 +1050,7 @@ class ReportsManager {
                 ],
                 totalUsers: 1,
                 totalCost: 22.99,
+                totalCostAnnual: 275.88, // 22.99 * 12
                 costs: [{id: 2, cout_mensuel: 22.99}]
             }
         ];
