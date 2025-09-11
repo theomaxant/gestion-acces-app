@@ -281,11 +281,16 @@ main {
 
 /* Login screen */
 #login-screen {
+    position: fixed !important;
+    top: 0 !important;
+    left: 0 !important;
+    width: 100vw !important;
+    height: 100vh !important;
+    z-index: 9999 !important;
     display: flex;
-    min-height: 100vh;
     align-items: center;
     justify-content: center;
-    background-color: #f3f4f6;
+    background: linear-gradient(135deg, #2563eb, #1d4ed8);
 }
 
 .login-container {
