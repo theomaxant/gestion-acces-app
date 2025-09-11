@@ -84,9 +84,7 @@
                                     <button id="nav-process" class="submenu-btn w-full text-left px-4 py-3 hover:bg-gray-100 transition-colors text-gray-700 border-b border-gray-100">
                                         <i class="fas fa-book mr-3 w-5 text-blue-600"></i>Process
                                     </button>
-                                    <button id="nav-tutorials" class="submenu-btn w-full text-left px-4 py-3 hover:bg-gray-100 transition-colors text-gray-700 border-b border-gray-100">
-                                        <i class="fas fa-graduation-cap mr-3 w-5 text-blue-600"></i>Tutoriels
-                                    </button>
+
                                     <button id="nav-logout" class="submenu-btn w-full text-left px-4 py-3 hover:bg-red-100 transition-colors text-red-600">
                                         <i class="fas fa-sign-out-alt mr-3 w-5 text-red-600"></i>Déconnexion
                                     </button>
@@ -140,9 +138,7 @@
                             <button id="mobile-nav-process" class="mobile-nav-btn w-full text-left px-6 py-3 rounded-lg hover:bg-blue-500 transition-colors text-sm min-h-[48px] active:bg-blue-600">
                                 <i class="fas fa-book mr-3 w-5"></i>Process
                             </button>
-                            <button id="mobile-nav-tutorials" class="mobile-nav-btn w-full text-left px-6 py-3 rounded-lg hover:bg-blue-500 transition-colors text-sm min-h-[48px] active:bg-blue-600">
-                                <i class="fas fa-graduation-cap mr-3 w-5"></i>Tutoriels
-                            </button>
+
                             <button id="mobile-nav-logout" class="mobile-nav-btn w-full text-left px-6 py-2 rounded-lg hover:bg-red-500 transition-colors text-sm text-red-200">
                                 <i class="fas fa-sign-out-alt mr-3 w-5"></i>Déconnexion
                             </button>
@@ -600,28 +596,83 @@
                 </div>
             </div>
 
-            <!-- Process View -->
+            <!-- Process View (documentation statique des processus) -->
             <div id="process-view" class="view hidden">
-                <!-- Le contenu sera généré dynamiquement par ProcessManager -->
-            </div>
-
-            <!-- Tutorials View (pour les tutoriels interactifs F1) -->
-            <div id="tutorials-view" class="view hidden">
-                <div class="max-w-4xl mx-auto px-4 py-8">
-                    <div class="text-center">
-                        <h1 class="text-3xl font-bold text-gray-900 mb-4">🎓 Tutoriels Interactifs</h1>
-                        <p class="text-gray-600 mb-8">
-                            Les tutoriels sont intégrés dans chaque page de l'application.<br>
-                            Utilisez la touche <kbd class="bg-gray-200 px-2 py-1 rounded font-mono">F1</kbd> sur n'importe quelle page pour démarrer le tutoriel correspondant.
-                        </p>
-                        <div class="bg-blue-50 border border-blue-200 rounded-lg p-6">
-                            <h3 class="font-semibold text-blue-900 mb-3">Comment utiliser les tutoriels :</h3>
-                            <div class="text-left text-blue-800 space-y-2">
-                                <div>• <strong>F1</strong> : Ouvrir le menu des tutoriels</div>
-                                <div>• <strong>Navigation guidée</strong> : Suivez les étapes pas-à-pas</div>
-                                <div>• <strong>Tooltips interactifs</strong> : Cliquez sur "Suivant" pour continuer</div>
-                                <div>• <strong>Escape</strong> : Quitter à tout moment</div>
+                <div class="max-w-7xl mx-auto px-4 py-6">
+                    <!-- En-tête -->
+                    <div class="text-center mb-6">
+                        <h1 class="text-2xl font-bold text-gray-900 mb-2">📚 Documentation des Processus</h1>
+                        <p class="text-gray-600">Sélectionnez un processus dans le menu ci-dessous</p>
+                    </div>
+                    
+                    <!-- Menu horizontal compact -->
+                    <div class="bg-white rounded-lg shadow-sm border mb-6">
+                        <div class="flex overflow-x-auto">
+                            <div class="flex space-x-1 p-2 min-w-max mx-auto">
+                                <button class="process-menu-btn flex-shrink-0 flex flex-col items-center px-3 py-2 rounded-lg hover:bg-blue-50 transition-all duration-200 cursor-pointer border-2 border-transparent hover:border-blue-200 hover:shadow-sm" 
+                                        data-process="vue-ensemble" onclick="showProcessInline(this.dataset.process)">
+                                    <div class="text-blue-600 text-lg mb-1">
+                                        <i class="fas fa-eye"></i>
+                                    </div>
+                                    <span class="text-xs font-medium text-gray-700 whitespace-nowrap">Vue d'Ensemble</span>
+                                </button>
+                                
+                                <button class="process-menu-btn flex-shrink-0 flex flex-col items-center px-3 py-2 rounded-lg hover:bg-green-50 transition-all duration-200 cursor-pointer border-2 border-transparent hover:border-green-200 hover:shadow-sm" 
+                                        data-process="structure-donnees" onclick="showProcessInline(this.dataset.process)">
+                                    <div class="text-green-600 text-lg mb-1">
+                                        <i class="fas fa-database"></i>
+                                    </div>
+                                    <span class="text-xs font-medium text-gray-700 whitespace-nowrap">Structure</span>
+                                </button>
+                                
+                                <button class="process-menu-btn flex-shrink-0 flex flex-col items-center px-3 py-2 rounded-lg hover:bg-purple-50 transition-all duration-200 cursor-pointer border-2 border-transparent hover:border-purple-200 hover:shadow-sm" 
+                                        data-process="gestion-utilisateurs" onclick="showProcessInline(this.dataset.process)">
+                                    <div class="text-purple-600 text-lg mb-1">
+                                        <i class="fas fa-users"></i>
+                                    </div>
+                                    <span class="text-xs font-medium text-gray-700 whitespace-nowrap">Utilisateurs</span>
+                                </button>
+                                
+                                <button class="process-menu-btn flex-shrink-0 flex flex-col items-center px-3 py-2 rounded-lg hover:bg-orange-50 transition-all duration-200 cursor-pointer border-2 border-transparent hover:border-orange-200 hover:shadow-sm" 
+                                        data-process="gestion-logiciels" onclick="showProcessInline(this.dataset.process)">
+                                    <div class="text-orange-600 text-lg mb-1">
+                                        <i class="fas fa-laptop"></i>
+                                    </div>
+                                    <span class="text-xs font-medium text-gray-700 whitespace-nowrap">Logiciels</span>
+                                </button>
+                                
+                                <button class="process-menu-btn flex-shrink-0 flex flex-col items-center px-3 py-2 rounded-lg hover:bg-red-50 transition-all duration-200 cursor-pointer border-2 border-transparent hover:border-red-200 hover:shadow-sm" 
+                                        data-process="gestion-acces" onclick="showProcessInline(this.dataset.process)">
+                                    <div class="text-red-600 text-lg mb-1">
+                                        <i class="fas fa-key"></i>
+                                    </div>
+                                    <span class="text-xs font-medium text-gray-700 whitespace-nowrap">Accès</span>
+                                </button>
+                                
+                                <button class="process-menu-btn flex-shrink-0 flex flex-col items-center px-3 py-2 rounded-lg hover:bg-indigo-50 transition-all duration-200 cursor-pointer border-2 border-transparent hover:border-indigo-200 hover:shadow-sm" 
+                                        data-process="rapports-financiers" onclick="showProcessInline(this.dataset.process)">
+                                    <div class="text-indigo-600 text-lg mb-1">
+                                        <i class="fas fa-chart-line"></i>
+                                    </div>
+                                    <span class="text-xs font-medium text-gray-700 whitespace-nowrap">Rapports</span>
+                                </button>
+                                
+                                <button class="process-menu-btn flex-shrink-0 flex flex-col items-center px-3 py-2 rounded-lg hover:bg-gray-50 transition-all duration-200 cursor-pointer border-2 border-transparent hover:border-gray-300 hover:shadow-sm" 
+                                        data-process="logs-audit" onclick="showProcessInline(this.dataset.process)">
+                                    <div class="text-gray-600 text-lg mb-1">
+                                        <i class="fas fa-search"></i>
+                                    </div>
+                                    <span class="text-xs font-medium text-gray-700 whitespace-nowrap">Logs & Audit</span>
+                                </button>
                             </div>
+                        </div>
+                    </div>
+                    
+                    <!-- Zone de contenu -->
+                    <div id="process-content-area" class="bg-white rounded-lg shadow-sm border p-6 min-h-96">
+                        <div class="text-center py-12 text-gray-500">
+                            <i class="fas fa-book-open text-4xl mb-4"></i>
+                            <p class="text-lg">Sélectionnez un processus pour afficher sa documentation</p>
                         </div>
                     </div>
                 </div>
@@ -704,7 +755,7 @@
     <script src="js/reports.js"></script>
     <script src="js/import.js"></script>
     <script src="js/schedule.js"></script>
-    <script src="js/process-manager.js"></script>
-    <script src="js/tutorials.js"></script>
+
+    <script src="js/process-documentation-simple.js"></script>
 </body>
 </html>

@@ -160,6 +160,15 @@
 - **🔇 Logs optimisés** : Console silencieuse production, debug intelligent
 - **💯 Coûts annuels partout** : Vision long terme, négociations facilitées
 - **🎨 Interface harmonisée** : Couleurs cohérentes, UX optimisée
+- **📚 Documentation statique** : Système complet de documentation avec export Markdown
+
+### 📚 **Documentation des Processus**
+- **Interface moderne** : Documentation complète accessible via le menu "Tutoriels"
+- **7 processus détaillés** : Vue d'ensemble, structure données, gestion utilisateurs/logiciels/accès, rapports financiers, logs & audit
+- **Navigation intuitive** : Menu organisé par catégories (Introduction, Technique, Processus)
+- **Export Markdown** : Bouton d'export par processus pour documentation externe
+- **Contenu complet** : Procédures pas-à-pas, bonnes pratiques, exemples concrets
+- **Remplacement tutoriels** : Documentation statique remplace les anciens tutoriels interactifs
 
 ### 💡 **ROI & Optimisation**
 - **Économies mesurables** : Identification logiciels sous-utilisés (-20 à -40%)
@@ -191,6 +200,24 @@
 - ✅ Nouveau système simple et efficace activé
 - ✅ 10 utilisateurs chargés et fonctionnels
 - ✅ Logs automatiquement enrichis avec identité utilisateur
+
+### 🆕 **NOUVEAU : Documentation Statique des Processus**
+
+**Remplacement complet** du système de tutoriels interactifs par une documentation statique moderne avec export Markdown.
+
+**🎯 Fonctionnalités du Système de Documentation :**
+- 📚 **7 processus documentés** - Vue d'ensemble, structure données, gestion (utilisateurs/logiciels/accès), rapports financiers, logs & audit
+- 🗂️ **Navigation organisée** - Menu par catégories : Introduction, Technique, Processus
+- 📄 **Export Markdown** - Bouton d'export par processus pour documentation externe 
+- 🎨 **Interface moderne** - Modal plein écran avec navigation fluide
+- 📋 **Contenu complet** - Procédures détaillées, bonnes pratiques, exemples concrets
+- 🔄 **Remplacement propre** - Suppression des anciens tutoriels interactifs
+
+**Fichiers modifiés/créés :**
+- **`js/process-documentation.js`** - Nouveau système de documentation complet (36 000+ caractères)
+- **`index.html`** - Interface mise à jour avec nouvelle section documentation
+- **`js/app.js`** - Événements pour ouverture de la documentation
+- **❌ `js/tutorials.js`** - Ancien système supprimé
 
 ### ✅ Fonctionnalité Précédente : Sélecteur d'Utilisateur pour les Logs
 
