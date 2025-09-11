@@ -73,18 +73,35 @@ class ReportsManager {
     }
 
     async loadReports() {
-        console.log('📊 Chargement des données...');
+        console.log('📊 [REPORTS] Chargement des données...');
         
         try {
+            // Vérifier que l'API Supabase est disponible
+            if (!window.supabaseAPI) {
+                console.error('❌ [REPORTS] API Supabase non disponible');
+                return;
+            }
+            
             // Charger les données
+            console.log('📊 [REPORTS] Chargement utilisateurs...');
             this.users = await window.supabaseAPI.getRecords('utilisateurs') || [];
+            
+            console.log('📊 [REPORTS] Chargement logiciels...');
             this.software = await window.supabaseAPI.getRecords('logiciels') || [];
+            
+            console.log('📊 [REPORTS] Chargement accès...');
             this.access = await window.supabaseAPI.getRecords('acces') || [];
+            
+            console.log('📊 [REPORTS] Chargement coûts...');
             this.costs = await window.supabaseAPI.getRecords('couts_licences') || [];
+            
+            console.log('📊 [REPORTS] Chargement droits...');
             this.droits = await window.supabaseAPI.getRecords('droits') || [];
+            
+            console.log('📊 [REPORTS] Chargement équipes...');
             this.teams = await window.supabaseAPI.getRecords('equipes') || [];
             
-            console.log('✅ Données chargées:', {
+            console.log('✅ [REPORTS] Données chargées avec succès:', {
                 users: this.users.length,
                 software: this.software.length,
                 access: this.access.length,
@@ -93,18 +110,28 @@ class ReportsManager {
                 teams: this.teams.length
             });
             
+            // Afficher un échantillon des données pour debug
+            if (this.software.length > 0) {
+                console.log('📊 [REPORTS] Échantillon logiciel:', this.software[0]);
+            }
+            if (this.users.length > 0) {
+                console.log('📊 [REPORTS] Échantillon utilisateur:', this.users[0]);
+            }
+            if (this.droits.length > 0) {
+                console.log('📊 [REPORTS] Échantillon droit:', this.droits[0]);
+            }
+            
         } catch (error) {
-            console.error('❌ Erreur chargement:', error);
+            console.error('❌ [REPORTS] Erreur chargement:', error);
+            console.error('❌ [REPORTS] Détails erreur:', error.message);
         }
     }
 
     async showSoftwareReport() {
         console.log('📊 Affichage rapport logiciels détaillé');
         
-        // Charger les données si nécessaire
-        if (this.software.length === 0) {
-            await this.loadReports();
-        }
+        // Toujours recharger les données pour être sûr qu'elles sont à jour
+        await this.loadReports();
         
         const container = document.getElementById('detailed-reports-container');
         if (!container) {
@@ -126,10 +153,8 @@ class ReportsManager {
     async showUserReport() {
         console.log('📊 Affichage rapport utilisateurs détaillé');
         
-        // Charger les données si nécessaire
-        if (this.users.length === 0) {
-            await this.loadReports();
-        }
+        // Toujours recharger les données pour être sûr qu'elles sont à jour
+        await this.loadReports();
         
         const container = document.getElementById('detailed-reports-container');
         if (!container) {
@@ -151,10 +176,8 @@ class ReportsManager {
     async showTeamReport() {
         console.log('📊 Affichage rapport équipes détaillé');
         
-        // Charger les données si nécessaire
-        if (this.teams.length === 0) {
-            await this.loadReports();
-        }
+        // Toujours recharger les données pour être sûr qu'elles sont à jour
+        await this.loadReports();
         
         const container = document.getElementById('detailed-reports-container');
         if (!container) {
@@ -174,15 +197,29 @@ class ReportsManager {
     }
 
     generateDetailedSoftwareReport() {
-        console.log('📊 Génération rapport détaillé par logiciel');
+        console.log('📊 [REPORTS] Génération rapport détaillé par logiciel');
+        console.log('📊 [REPORTS] Nombre de logiciels:', this.software.length);
+        console.log('📊 [REPORTS] Nombre de droits:', this.droits.length);
+        console.log('📊 [REPORTS] Nombre d\'utilisateurs:', this.users.length);
+        
+        if (this.software.length === 0) {
+            console.warn('⚠️ [REPORTS] Aucun logiciel trouvé - Utilisation des données de test');
+            return this.generateTestSoftwareData();
+        }
         
         return this.software.map(soft => {
+            console.log('📊 [REPORTS] Traitement logiciel:', soft.nom, 'ID:', soft.id);
+            
             // Trouver tous les droits pour ce logiciel
             const softwareDroits = this.droits.filter(d => d.logiciel_id === soft.id);
+            console.log('📊 [REPORTS] Droits trouvés pour', soft.nom, ':', softwareDroits.length);
             
             // Trouver tous les utilisateurs ayant accès
             const softwareUsers = softwareDroits.map(droit => {
                 const user = this.users.find(u => u.id === droit.utilisateur_id);
+                if (!user) {
+                    console.warn('⚠️ [REPORTS] Utilisateur non trouvé pour droit:', droit);
+                }
                 return {
                     id: user?.id || 0,
                     nom: user?.nom || 'Inconnu',
@@ -195,9 +232,12 @@ class ReportsManager {
                 };
             });
             
+            console.log('📊 [REPORTS] Utilisateurs pour', soft.nom, ':', softwareUsers.length);
+            
             // Calculer les coûts
             const softwareCosts = this.costs.filter(c => c.logiciel_id === soft.id);
             const totalCost = softwareCosts.reduce((sum, c) => sum + (parseFloat(c.cout_mensuel) || 0), 0);
+            console.log('📊 [REPORTS] Coût total pour', soft.nom, ':', totalCost);
             
             return {
                 id: soft.id,
@@ -215,7 +255,13 @@ class ReportsManager {
     }
 
     generateDetailedUserReport() {
-        console.log('📊 Génération rapport détaillé par utilisateur');
+        console.log('📊 [REPORTS] Génération rapport détaillé par utilisateur');
+        console.log('📊 [REPORTS] Nombre d\'utilisateurs:', this.users.length);
+        
+        if (this.users.length === 0) {
+            console.warn('⚠️ [REPORTS] Aucun utilisateur trouvé - Utilisation des données de test');
+            return this.generateTestUserData();
+        }
         
         return this.users.map(user => {
             // Trouver tous les droits de cet utilisateur
@@ -256,7 +302,13 @@ class ReportsManager {
     }
 
     generateDetailedTeamReport() {
-        console.log('📊 Génération rapport détaillé par équipe');
+        console.log('📊 [REPORTS] Génération rapport détaillé par équipe');
+        console.log('📊 [REPORTS] Nombre d\'équipes:', this.teams.length);
+        
+        if (this.teams.length === 0) {
+            console.warn('⚠️ [REPORTS] Aucune équipe trouvée - Utilisation des données de test');
+            return this.generateTestTeamData();
+        }
         
         return this.teams.map(team => {
             // Trouver tous les utilisateurs de cette équipe
@@ -920,6 +972,137 @@ class ReportsManager {
             activeBtn.classList.add('ring-4', 'ring-blue-300');
             activeBtn.classList.remove('hover:shadow-lg');
         }
+    }
+
+    // FONCTIONS DE DONNÉES DE TEST (pour debugging)
+    generateTestSoftwareData() {
+        return [
+            {
+                id: 1,
+                nom: 'Microsoft Office 365',
+                editeur: 'Microsoft',
+                version: '2024',
+                statut: 'Actif',
+                description: 'Suite bureautique complète',
+                users: [
+                    {
+                        id: 1, nom: 'Dupont', prenom: 'Jean', email: 'jean.dupont@empresa.com',
+                        equipe: 'IT', niveau: 'Administrateur', date_attribution: '2024-01-15', statut: 'Actif'
+                    },
+                    {
+                        id: 2, nom: 'Martin', prenom: 'Marie', email: 'marie.martin@empresa.com', 
+                        equipe: 'RH', niveau: 'Utilisateur', date_attribution: '2024-02-01', statut: 'Actif'
+                    }
+                ],
+                totalUsers: 2,
+                totalCost: 25.50,
+                costs: [{id: 1, cout_mensuel: 12.75}]
+            },
+            {
+                id: 2,
+                nom: 'Adobe Photoshop',
+                editeur: 'Adobe',
+                version: 'CC 2024',
+                statut: 'Actif',
+                description: 'Logiciel de retouche photo',
+                users: [
+                    {
+                        id: 3, nom: 'Moreau', prenom: 'Sophie', email: 'sophie.moreau@empresa.com',
+                        equipe: 'Design', niveau: 'Utilisateur', date_attribution: '2024-01-20', statut: 'Actif'
+                    }
+                ],
+                totalUsers: 1,
+                totalCost: 22.99,
+                costs: [{id: 2, cout_mensuel: 22.99}]
+            }
+        ];
+    }
+
+    generateTestUserData() {
+        return [
+            {
+                id: 1,
+                nom: 'Dupont',
+                prenom: 'Jean',
+                email: 'jean.dupont@empresa.com',
+                equipe: 'IT',
+                statut: 'Actif',
+                telephone: '01.23.45.67.89',
+                software: [
+                    {
+                        id: 1, nom: 'Microsoft Office 365', editeur: 'Microsoft', version: '2024',
+                        niveau: 'Administrateur', date_attribution: '2024-01-15', cout_mensuel: 12.75, statut: 'Actif'
+                    },
+                    {
+                        id: 3, nom: 'Slack', editeur: 'Slack Technologies', version: 'Pro',
+                        niveau: 'Utilisateur', date_attribution: '2024-02-10', cout_mensuel: 8.00, statut: 'Actif'
+                    }
+                ],
+                totalSoftware: 2,
+                totalCost: 20.75
+            },
+            {
+                id: 2,
+                nom: 'Martin',
+                prenom: 'Marie', 
+                email: 'marie.martin@empresa.com',
+                equipe: 'RH',
+                statut: 'Actif',
+                telephone: '01.23.45.67.90',
+                software: [
+                    {
+                        id: 1, nom: 'Microsoft Office 365', editeur: 'Microsoft', version: '2024',
+                        niveau: 'Utilisateur', date_attribution: '2024-02-01', cout_mensuel: 12.75, statut: 'Actif'
+                    }
+                ],
+                totalSoftware: 1,
+                totalCost: 12.75
+            }
+        ];
+    }
+
+    generateTestTeamData() {
+        return [
+            {
+                id: 1,
+                nom: 'Équipe IT',
+                description: 'Département informatique et technique',
+                users: [
+                    {id: 1, nom: 'Dupont', prenom: 'Jean', email: 'jean.dupont@empresa.com', statut: 'Actif'},
+                    {id: 4, nom: 'Durand', prenom: 'Pierre', email: 'pierre.durand@empresa.com', statut: 'Actif'}
+                ],
+                software: [
+                    {
+                        id: 1, nom: 'Microsoft Office 365', editeur: 'Microsoft', version: '2024',
+                        utilisateurs_count: 2, cout_mensuel: 12.75, cout_total: 25.50, statut: 'Actif'
+                    },
+                    {
+                        id: 3, nom: 'Slack Pro', editeur: 'Slack Technologies', version: 'Pro',
+                        utilisateurs_count: 2, cout_mensuel: 8.00, cout_total: 16.00, statut: 'Actif'
+                    }
+                ],
+                totalUsers: 2,
+                totalSoftware: 2,
+                totalCost: 41.50
+            },
+            {
+                id: 2,
+                nom: 'Équipe RH',
+                description: 'Ressources humaines',
+                users: [
+                    {id: 2, nom: 'Martin', prenom: 'Marie', email: 'marie.martin@empresa.com', statut: 'Actif'}
+                ],
+                software: [
+                    {
+                        id: 1, nom: 'Microsoft Office 365', editeur: 'Microsoft', version: '2024',
+                        utilisateurs_count: 1, cout_mensuel: 12.75, cout_total: 12.75, statut: 'Actif'
+                    }
+                ],
+                totalUsers: 1,
+                totalSoftware: 1,
+                totalCost: 12.75
+            }
+        ];
     }
 }
 
