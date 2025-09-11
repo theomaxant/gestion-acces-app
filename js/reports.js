@@ -79,34 +79,34 @@ class ReportsManager {
             // Attendre que l'API Supabase soit disponible
             await this.waitForSupabaseAPI();
             
-            if (!window.supabaseAPI) {
+            if (!window.D1API) {
                 console.error('❌ [REPORTS] API Supabase toujours non disponible après attente');
                 return;
             }
             
             // Charger les données
             console.log('📊 [REPORTS] Chargement utilisateurs...');
-            const usersResult = await window.supabaseAPI.get('utilisateurs');
+            const usersResult = await window.D1API.get('utilisateurs');
             this.users = usersResult?.data || [];
             
             console.log('📊 [REPORTS] Chargement logiciels...');
-            const softwareResult = await window.supabaseAPI.get('logiciels');
+            const softwareResult = await window.D1API.get('logiciels');
             this.software = softwareResult?.data || [];
             
             console.log('📊 [REPORTS] Chargement accès...');
-            const accessResult = await window.supabaseAPI.get('acces');
+            const accessResult = await window.D1API.get('acces');
             this.access = accessResult?.data || [];
             
             console.log('📊 [REPORTS] Chargement coûts...');
-            const costsResult = await window.supabaseAPI.get('couts_licences');
+            const costsResult = await window.D1API.get('couts_licences');
             this.costs = costsResult?.data || [];
             
             console.log('📊 [REPORTS] Chargement droits...');
-            const droitsResult = await window.supabaseAPI.get('droits');
+            const droitsResult = await window.D1API.get('droits');
             this.droits = droitsResult?.data || [];
             
             console.log('📊 [REPORTS] Chargement équipes...');
-            const teamsResult = await window.supabaseAPI.get('equipes');
+            const teamsResult = await window.D1API.get('equipes');
             this.teams = teamsResult?.data || [];
             
             console.log('✅ [REPORTS] Données chargées avec succès:', {
