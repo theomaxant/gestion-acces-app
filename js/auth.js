@@ -15,17 +15,17 @@ class AuthManager {
     }
 
     init() {
-        console.log('[AUTH] Initialisation du système d\'authentification');
+        console.log('[AUTH] Authentification désactivée - Accès direct à l\'application');
         
-        // Vérifier si déjà connecté
-        if (this.isLoggedIn()) {
-            this.showApp();
-            return;
-        }
+        // ACCÈS DIRECT SANS AUTHENTIFICATION
+        localStorage.setItem('authenticated', 'true');
+        localStorage.setItem('login_time', Date.now().toString());
+        localStorage.setItem('current_user', 'Utilisateur');
         
-        // Afficher l'écran de connexion
-        this.showLogin();
-        this.setupEvents();
+        // Afficher directement l'application
+        this.showApp();
+        
+        // Charger les utilisateurs en arrière-plan (pour compatibilité)
         this.loadUsers();
     }
 
