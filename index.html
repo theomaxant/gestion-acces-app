@@ -217,12 +217,12 @@
                                 <p class="text-gray-600 text-xs">Coût Total</p>
                                 <div class="space-y-1">
                                     <div class="flex items-center">
-                                        <span class="text-xs text-gray-500 w-12">Mens:</span>
-                                        <span id="stat-cost-monthly" class="text-sm font-bold text-gray-900">0€</span>
+                                        <span class="text-xs text-gray-500 w-12 flex-shrink-0">Mens:</span>
+                                        <span id="stat-cost-monthly" class="text-sm font-bold text-gray-900 ml-1 min-w-0">0€</span>
                                     </div>
                                     <div class="flex items-center">
-                                        <span class="text-xs text-gray-500 w-12">Ann:</span>
-                                        <span id="stat-cost-annual" class="text-sm font-bold text-blue-600">0€</span>
+                                        <span class="text-xs text-gray-500 w-12 flex-shrink-0">Ann:</span>
+                                        <span id="stat-cost-annual" class="text-sm font-bold text-blue-600 ml-1 min-w-0">0€</span>
                                     </div>
                                 </div>
                             </div>
@@ -260,7 +260,7 @@
                 </div>
 
                 <!-- Top 3 Sections -->
-                <div class="grid grid-cols-1 lg:grid-cols-2 gap-6 mb-8">
+                <div class="grid grid-cols-1 lg:grid-cols-3 gap-6 mb-8">
                     <!-- Top 3 Logiciels -->
                     <div class="bg-white rounded-lg shadow-md p-6">
                         <h3 class="text-lg font-semibold mb-4 flex items-center">
@@ -280,6 +280,17 @@
                         </h3>
                         <div id="top-users-container" class="space-y-3">
                             <!-- Top users will be loaded here -->
+                        </div>
+                    </div>
+
+                    <!-- Top 3 Équipes -->
+                    <div class="bg-white rounded-lg shadow-md p-6">
+                        <h3 class="text-lg font-semibold mb-4 flex items-center">
+                            <i class="fas fa-trophy text-green-500 mr-2"></i>
+                            Top 3 Équipes (Coût Annuel)
+                        </h3>
+                        <div id="top-teams-container" class="space-y-3">
+                            <!-- Top teams will be loaded here -->
                         </div>
                     </div>
                 </div>
