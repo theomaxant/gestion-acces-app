@@ -241,7 +241,49 @@ Consultez `GUIDE-SELECTION-MULTIPLE-UTILISATEURS.md` pour le guide détaillé.
 
 ## 📋 Dernières Mises à Jour (12/09/2025)
 
-### 🆕 **NOUVEAU : Système de Pagination Uniforme** 📄
+### 🆕 **NOUVEAU : Logiciels à Coût Fixe** 💰
+
+**Implémentation complète** d'un système de coût fixe pour les logiciels avec tarification forfaitaire indépendante du nombre d'utilisateurs.
+
+**🎯 Fonctionnalités du Coût Fixe :**
+- 💰 **Checkbox "Coût fixe"** - Interface simple pour activer le mode forfaitaire
+- 🔢 **Montant mensuel fixe** - Saisie du coût global en euros HT/mois
+- 🏷️ **Badge violet "💰 Coût Fixe"** - Identification visuelle dans les tableaux
+- 📊 **Calculs automatiques** - Mise à jour de tous les systèmes (tableaux, rapports, échéancier)
+- 🔄 **Conversion flexible** - Basculer entre coût fixe et coût par accès
+- 📱 **Interface responsive** - Adaptation mobile avec mentions explicites
+
+**💼 Cas d'usage idéaux :**
+- 🏢 **Licences d'entreprise** : Adobe Creative Suite, Office 365 Famille
+- 📦 **Forfaits illimités** : Slack Premium, Zoom Pro, GitHub Enterprise  
+- 🛠️ **Logiciels internes** : Applications développées en interne avec maintenance
+- 🎯 **Abonnements globaux** : Jira Cloud, Confluence, outils de monitoring
+
+**🔧 Systèmes automatiquement mis à jour :**
+- ✅ **Tableau des logiciels** - Coût annuel avec mention "(fixe)"
+- ✅ **Échéancier** - Calcul des paiements avec coûts forfaitaires
+- ✅ **Tableau de bord** - Statistiques globales incluant les coûts fixes
+- ✅ **Tous les rapports** - Calculs précis logiciels/utilisateurs/équipes
+- ✅ **Table des accès** - Affichage "coût fixe global" au lieu de coût unitaire
+- ✅ **Vue équipes** - Budgets incluant les forfaits partagés
+
+**📁 Fichiers créés/modifiés :**
+- **`sql/add_fixed_cost_to_logiciels.sql`** - Script SQL pour les nouvelles colonnes
+- **`js/software.js`** - Interface coût fixe + validation + calculs mis à jour
+- **`js/schedule.js`** - Échéancier compatible avec coûts forfaitaires
+- **`js/access.js`** - Affichage adapté pour logiciels à coût fixe
+- **`GUIDE-LOGICIELS-COUT-FIXE.md`** - Documentation complète
+
+### 🆕 **CORRECTION : Navigation Échéancier** 📅
+
+**Problème résolu** : Les boutons de navigation changeaient de trimestre au lieu de mois.
+
+**✅ Corrections apportées :**
+- 🗓️ **Navigation mensuelle** - Les flèches changent maintenant de mois en mois
+- 🔄 **Synchronisation** - Les blocs mensuels se mettent à jour avec le calendrier
+- 📊 **Cohérence** - Affichage des 3 mois consécutifs relatifs à la navigation
+
+### 🆕 **NOUVEAU : Système de Pagination Uniforme** 📄 (11/09/2025)
 
 **Implémentation complète** d'un système de pagination pour toutes les tables avec pages de 100 éléments pour optimiser les performances et l'ergonomie.
 
@@ -467,6 +509,9 @@ logUpdate("table", "id", oldData, newData, "détails");
 - ✅ **NOUVEAU** : Sélection multiple compatible avec pagination
 - ✅ **NOUVEAU** : Persistance pages via localStorage
 - ✅ **NOUVEAU** : Animations fluides et navigation intelligente
+- ✅ **NOUVEAU** : Logiciels à coût fixe avec calculs automatiques
+- ✅ **NOUVEAU** : Navigation échéancier corrigée (mensuelle au lieu de trimestrielle)
+- ✅ **NOUVEAU** : Interface complète pour gestion forfaits et licences d'entreprise
 
 ## 🎨 Personnalisation
 
@@ -508,6 +553,10 @@ logUpdate("table", "id", oldData, newData, "détails");
 ├── css/
 │   ├── pagination.css      # Styles pagination
 │   └── bulk-selection.css  # Styles sélection multiple
+├── sql/
+│   ├── add_fixed_cost_to_logiciels.sql  # Script coût fixe
+│   └── add_engagement_fields_to_logiciels.sql  # Script engagement
+├── GUIDE-LOGICIELS-COUT-FIXE.md  # Guide coût fixe
 └── README.md               # Documentation
 ```
 
