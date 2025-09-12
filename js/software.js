@@ -1091,9 +1091,10 @@ class SoftwareManager {
         const software = this.software.find(s => s.id === softwareId);
         if (!software) return 0;
         
-        // Si le logiciel a un coût fixe, retourner directement ce coût
+        // Commencer par le coût fixe si applicable
+        let totalCost = 0;
         if (software.cout_fixe && software.cout_fixe_mensuel) {
-            return software.cout_fixe_mensuel;
+            totalCost = software.cout_fixe_mensuel;
         }
         
         const softwareAccess = this.access.filter(a => a.logiciel_id === softwareId);
@@ -1101,8 +1102,6 @@ class SoftwareManager {
         
         // Les coûts dans couts_licences sont mensuels
         // Périodicité utilisée seulement pour l'échéancier, pas pour les calculs de coûts
-        
-        let totalCost = 0;
         const processedShared = new Set();
 
         for (const acc of softwareAccess) {

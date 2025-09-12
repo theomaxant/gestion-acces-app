@@ -555,14 +555,14 @@ class AccessManager {
     calculateSoftwareCost(softwareId) {
         const software = this.software.find(s => s.id === softwareId);
         
-        // Si le logiciel a un coût fixe, retourner ce coût
+        // Commencer par le coût fixe si applicable
+        let totalCost = 0;
         if (software && software.cout_fixe && software.cout_fixe_mensuel) {
-            return software.cout_fixe_mensuel;
+            totalCost = software.cout_fixe_mensuel;
         }
         
-        // Sinon, logique habituelle basée sur les accès
+        // Ensuite, ajouter les coûts basés sur les accès
         const softwareAccess = this.getAccessBySoftware(softwareId);
-        let totalCost = 0;
         const processedShared = new Set();
 
         for (const acc of softwareAccess) {
