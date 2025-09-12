@@ -8,6 +8,7 @@ class UsersManager {
         this.showArchived = false;
         this.sortColumn = 'nom';
         this.sortDirection = 'asc';
+        this.selectedUsers = new Set(); // Pour la sélection multiple
         this.init();
     }
 
@@ -39,6 +40,11 @@ class UsersManager {
         document.getElementById('users-search')?.addEventListener('input', (e) => {
             this.filterUsers(e.target.value);
         });
+
+        // Bouton pour ajout en masse d'applications
+        document.getElementById('bulk-add-software-btn')?.addEventListener('click', () => {
+            this.showBulkAddSoftwareModal();
+        });
     }
 
     async loadUsers() {
@@ -69,9 +75,10 @@ class UsersManager {
         const term = searchTerm.toLowerCase();
 
         rows.forEach(row => {
-            const name = row.cells[0]?.textContent.toLowerCase() || '';
-            const email = row.cells[1]?.textContent.toLowerCase() || '';
-            const team = row.cells[2]?.textContent.toLowerCase() || '';
+            // Maintenant la première colonne est la checkbox, donc décaler d'une colonne
+            const name = row.cells[1]?.textContent.toLowerCase() || '';
+            const email = row.cells[2]?.textContent.toLowerCase() || '';
+            const team = row.cells[3]?.textContent.toLowerCase() || '';
 
             if (name.includes(term) || email.includes(term) || team.includes(term)) {
                 row.style.display = '';
@@ -93,6 +100,9 @@ class UsersManager {
             <table class="min-w-full table-auto">
                 <thead class="bg-gray-50">
                     <tr>
+                        <th class="px-3 py-3 text-center text-xs font-medium text-gray-500 uppercase tracking-wider w-12">
+                            <input type="checkbox" id="select-all-users" class="rounded" onchange="window.usersManager.toggleSelectAll(this.checked)">
+                        </th>
                         <th class="px-3 sm:px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider cursor-pointer hover:bg-gray-100" onclick="window.usersManager.sortTable('nom')">
                             Nom <i class="fas fa-sort ml-1"></i>
                         </th>
@@ -136,6 +146,12 @@ class UsersManager {
         
         return `
             <tr class="${user.archived ? 'bg-gray-50 text-gray-500' : ''}">
+                <td class="px-3 py-3 sm:py-4 text-center">
+                    <input type="checkbox" class="user-checkbox rounded" 
+                           data-user-id="${user.id}" 
+                           ${this.selectedUsers.has(user.id) ? 'checked' : ''}
+                           onchange="window.usersManager.toggleUserSelection('${user.id}', this.checked)">
+                </td>
                 <td class="px-3 sm:px-6 py-3 sm:py-4 whitespace-nowrap">
                     <div class="text-sm font-medium text-gray-900">${user.nom} ${user.prenom || ''}</div>
                 </td>
@@ -871,6 +887,486 @@ class UsersManager {
         } catch (error) {
             console.error('Erreur lors de l\'ajout des accès de base:', error);
             window.app?.showAlert('Erreur lors de l\'ajout des accès de base', 'warning');
+        }
+    }
+
+    // =================== FONCTIONNALITÉS DE SÉLECTION MULTIPLE ===================
+
+    toggleSelectAll(checked) {
+        const filteredUsers = this.showArchived ? 
+            this.users : 
+            this.users.filter(u => !u.archived);
+
+        if (checked) {
+            // Sélectionner tous les utilisateurs visibles
+            filteredUsers.forEach(user => {
+                this.selectedUsers.add(user.id);
+            });
+        } else {
+            // Désélectionner tous les utilisateurs
+            this.selectedUsers.clear();
+        }
+
+        // Mettre à jour les cases à cocher individuelles
+        const checkboxes = document.querySelectorAll('.user-checkbox');
+        checkboxes.forEach(checkbox => {
+            const userId = checkbox.getAttribute('data-user-id');
+            checkbox.checked = this.selectedUsers.has(userId);
+        });
+
+        this.updateBulkActionsUI();
+    }
+
+    toggleUserSelection(userId, checked) {
+        if (checked) {
+            this.selectedUsers.add(userId);
+        } else {
+            this.selectedUsers.delete(userId);
+        }
+
+        // Mettre à jour la case "Sélectionner tout"
+        const selectAllCheckbox = document.getElementById('select-all-users');
+        if (selectAllCheckbox) {
+            const filteredUsers = this.showArchived ? 
+                this.users : 
+                this.users.filter(u => !u.archived);
+            
+            const allVisible = filteredUsers.every(user => this.selectedUsers.has(user.id));
+            const someSelected = filteredUsers.some(user => this.selectedUsers.has(user.id));
+            
+            selectAllCheckbox.checked = allVisible;
+            selectAllCheckbox.indeterminate = someSelected && !allVisible;
+        }
+
+        this.updateBulkActionsUI();
+    }
+
+    updateBulkActionsUI() {
+        const selectedCount = this.selectedUsers.size;
+        let bulkActionsBar = document.getElementById('bulk-actions-bar');
+
+        if (selectedCount > 0) {
+            if (!bulkActionsBar) {
+                this.createBulkActionsBar();
+            } else {
+                this.updateBulkActionsCount();
+            }
+        } else {
+            if (bulkActionsBar) {
+                bulkActionsBar.remove();
+            }
+        }
+    }
+
+    createBulkActionsBar() {
+        const usersView = document.getElementById('users-view');
+        if (!usersView) return;
+
+        const bulkActionsHTML = `
+            <div id="bulk-actions-bar" class="fixed bottom-4 left-1/2 transform -translate-x-1/2 bg-blue-600 text-white rounded-lg shadow-lg px-4 py-3 flex items-center space-x-4 z-50">
+                <div class="flex items-center">
+                    <i class="fas fa-check-circle mr-2"></i>
+                    <span id="selected-count">${this.selectedUsers.size}</span>
+                    <span class="ml-1">utilisateur${this.selectedUsers.size > 1 ? 's' : ''} sélectionné${this.selectedUsers.size > 1 ? 's' : ''}</span>
+                </div>
+                
+                <div class="flex items-center space-x-2">
+                    <button onclick="window.usersManager.showBulkAddSoftwareModal()" 
+                            class="bg-green-500 hover:bg-green-600 px-3 py-1 rounded text-sm flex items-center">
+                        <i class="fas fa-plus mr-1"></i>
+                        Ajouter Applications
+                    </button>
+                    
+                    <button onclick="window.usersManager.showBulkRemoveAccessModal()" 
+                            class="bg-red-500 hover:bg-red-600 px-3 py-1 rounded text-sm flex items-center">
+                        <i class="fas fa-minus mr-1"></i>
+                        Retirer Accès
+                    </button>
+                    
+                    <button onclick="window.usersManager.clearSelection()" 
+                            class="bg-gray-500 hover:bg-gray-600 px-3 py-1 rounded text-sm flex items-center">
+                        <i class="fas fa-times mr-1"></i>
+                        Annuler
+                    </button>
+                </div>
+            </div>
+        `;
+
+        usersView.insertAdjacentHTML('beforeend', bulkActionsHTML);
+    }
+
+    updateBulkActionsCount() {
+        const countElement = document.getElementById('selected-count');
+        if (countElement) {
+            countElement.textContent = this.selectedUsers.size;
+            const textElement = countElement.nextElementSibling;
+            if (textElement) {
+                textElement.textContent = ` utilisateur${this.selectedUsers.size > 1 ? 's' : ''} sélectionné${this.selectedUsers.size > 1 ? 's' : ''}`;
+            }
+        }
+    }
+
+    clearSelection() {
+        this.selectedUsers.clear();
+        
+        // Décocher toutes les cases
+        const checkboxes = document.querySelectorAll('.user-checkbox, #select-all-users');
+        checkboxes.forEach(checkbox => {
+            checkbox.checked = false;
+            checkbox.indeterminate = false;
+        });
+        
+        // Supprimer la barre d'actions
+        const bulkActionsBar = document.getElementById('bulk-actions-bar');
+        if (bulkActionsBar) {
+            bulkActionsBar.remove();
+        }
+    }
+
+    showBulkAddSoftwareModal() {
+        if (this.selectedUsers.size === 0) {
+            window.app?.showAlert('Aucun utilisateur sélectionné', 'warning');
+            return;
+        }
+
+        const selectedUserNames = Array.from(this.selectedUsers).map(userId => {
+            const user = this.users.find(u => u.id === userId);
+            return user ? `${user.nom} ${user.prenom || ''}`.trim() : 'Utilisateur inconnu';
+        });
+
+        const activeSoftware = this.software.filter(s => !s.archived);
+
+        const modalContent = `
+            <div class="space-y-4">
+                <div class="bg-blue-50 border border-blue-200 rounded-lg p-4">
+                    <h4 class="font-medium text-blue-900 mb-2">
+                        <i class="fas fa-users mr-2"></i>
+                        ${this.selectedUsers.size} utilisateur${this.selectedUsers.size > 1 ? 's' : ''} sélectionné${this.selectedUsers.size > 1 ? 's' : ''}
+                    </h4>
+                    <div class="text-sm text-blue-800 max-h-20 overflow-y-auto">
+                        ${selectedUserNames.join(', ')}
+                    </div>
+                </div>
+
+                <div>
+                    <label class="block text-sm font-medium text-gray-700 mb-2">
+                        Sélectionner l'application à ajouter *
+                    </label>
+                    <select id="bulk-software-select" required
+                            class="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500">
+                        <option value="">-- Choisir une application --</option>
+                        ${activeSoftware.map(soft => 
+                            `<option value="${soft.id}">${soft.nom}</option>`
+                        ).join('')}
+                    </select>
+                </div>
+
+                <div>
+                    <label class="block text-sm font-medium text-gray-700 mb-2">
+                        Niveau d'accès *
+                    </label>
+                    <select id="bulk-right-select" required
+                            class="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500">
+                        <option value="">-- Choisir un niveau d'accès --</option>
+                        ${this.droits.map(droit => 
+                            `<option value="${droit.id}">${droit.nom}</option>`
+                        ).join('')}
+                    </select>
+                </div>
+
+                <div class="bg-yellow-50 border border-yellow-200 rounded-lg p-3">
+                    <div class="flex items-start">
+                        <i class="fas fa-info-circle text-yellow-600 mt-0.5 mr-2"></i>
+                        <div class="text-sm text-yellow-800">
+                            <p class="font-medium mb-1">Attention :</p>
+                            <p>Cette action ajoutera l'accès sélectionné à tous les utilisateurs choisis.</p>
+                            <p>Si un utilisateur a déjà cet accès, il sera ignoré.</p>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        `;
+
+        const actions = [
+            {
+                text: `Ajouter à ${this.selectedUsers.size} utilisateur${this.selectedUsers.size > 1 ? 's' : ''}`,
+                class: 'px-4 py-2 bg-green-600 text-white rounded-lg hover:bg-green-700',
+                onclick: 'window.usersManager.executeBulkAddSoftware()'
+            }
+        ];
+
+        window.app?.showModal('Ajout en masse d\'applications', modalContent, actions);
+    }
+
+    async executeBulkAddSoftware() {
+        const softwareId = document.getElementById('bulk-software-select')?.value;
+        const rightId = document.getElementById('bulk-right-select')?.value;
+
+        if (!softwareId || !rightId) {
+            window.app?.showAlert('Veuillez sélectionner une application et un niveau d\'accès', 'error');
+            return;
+        }
+
+        const software = this.software.find(s => s.id === softwareId);
+        const right = this.droits.find(d => d.id === rightId);
+
+        try {
+            let successCount = 0;
+            let skipCount = 0;
+            const errors = [];
+
+            // Récupérer tous les accès existants pour éviter les doublons
+            const accessResult = await window.D1API.get('acces');
+            const existingAccess = accessResult.data || [];
+
+            for (const userId of this.selectedUsers) {
+                // Vérifier si l'accès existe déjà
+                const existingAccess_user = existingAccess.find(acc => 
+                    acc.utilisateur_id === userId && 
+                    acc.logiciel_id === softwareId && 
+                    acc.droit_id === rightId
+                );
+
+                if (existingAccess_user) {
+                    skipCount++;
+                    continue;
+                }
+
+                try {
+                    const result = await window.D1API.create('acces', {
+                        utilisateur_id: userId,
+                        logiciel_id: softwareId,
+                        droit_id: rightId
+                    });
+
+                    if (result.success) {
+                        successCount++;
+                        
+                        // Log de l'ajout d'accès
+                        if (window.logger) {
+                            const user = this.users.find(u => u.id === userId);
+                            await window.logger.log('CREATE', 'acces', result.data.id, null, {
+                                utilisateur_id: userId,
+                                logiciel_id: softwareId,
+                                droit_id: rightId
+                            }, `Ajout en masse: ${software?.nom} (${right?.nom}) pour ${user?.nom} ${user?.prenom}`);
+                        }
+                    } else {
+                        throw new Error(result.error);
+                    }
+                } catch (error) {
+                    const user = this.users.find(u => u.id === userId);
+                    errors.push(`${user?.nom || 'Utilisateur inconnu'}: ${error.message}`);
+                }
+            }
+
+            // Fermer le modal
+            document.querySelector('.fixed')?.remove();
+
+            // Afficher le résultat
+            let message = `✅ ${successCount} accès ajouté${successCount > 1 ? 's' : ''}`;
+            if (skipCount > 0) {
+                message += `\n⚠️ ${skipCount} accès ignoré${skipCount > 1 ? 's' : ''} (déjà existant${skipCount > 1 ? 's' : ''})`;
+            }
+            if (errors.length > 0) {
+                message += `\n❌ ${errors.length} erreur${errors.length > 1 ? 's' : ''}`;
+                console.error('Erreurs lors de l\'ajout en masse:', errors);
+            }
+
+            window.app?.showAlert(message, successCount > 0 ? 'success' : 'warning');
+            
+            // Rafraîchir les données
+            await this.loadUsers();
+            
+        } catch (error) {
+            console.error('Erreur lors de l\'ajout en masse:', error);
+            window.app?.showAlert('Erreur lors de l\'ajout en masse', 'error');
+        }
+    }
+
+    showBulkRemoveAccessModal() {
+        if (this.selectedUsers.size === 0) {
+            window.app?.showAlert('Aucun utilisateur sélectionné', 'warning');
+            return;
+        }
+
+        // Récupérer les accès communs à tous les utilisateurs sélectionnés
+        const commonAccess = this.getCommonAccessForUsers(Array.from(this.selectedUsers));
+        
+        if (commonAccess.length === 0) {
+            window.app?.showAlert('Aucun accès commun trouvé entre les utilisateurs sélectionnés', 'info');
+            return;
+        }
+
+        const selectedUserNames = Array.from(this.selectedUsers).map(userId => {
+            const user = this.users.find(u => u.id === userId);
+            return user ? `${user.nom} ${user.prenom || ''}`.trim() : 'Utilisateur inconnu';
+        });
+
+        const modalContent = `
+            <div class="space-y-4">
+                <div class="bg-red-50 border border-red-200 rounded-lg p-4">
+                    <h4 class="font-medium text-red-900 mb-2">
+                        <i class="fas fa-users mr-2"></i>
+                        ${this.selectedUsers.size} utilisateur${this.selectedUsers.size > 1 ? 's' : ''} sélectionné${this.selectedUsers.size > 1 ? 's' : ''}
+                    </h4>
+                    <div class="text-sm text-red-800 max-h-20 overflow-y-auto">
+                        ${selectedUserNames.join(', ')}
+                    </div>
+                </div>
+
+                <div>
+                    <label class="block text-sm font-medium text-gray-700 mb-2">
+                        Accès communs à supprimer
+                    </label>
+                    <div class="max-h-40 overflow-y-auto border border-gray-300 rounded-lg">
+                        ${commonAccess.map(access => {
+                            const software = this.software.find(s => s.id === access.logiciel_id);
+                            const right = this.droits.find(d => d.id === access.droit_id);
+                            return `
+                                <label class="flex items-center p-3 hover:bg-gray-50 cursor-pointer border-b border-gray-100 last:border-b-0">
+                                    <input type="checkbox" class="bulk-remove-access rounded mr-3" 
+                                           data-software-id="${access.logiciel_id}" 
+                                           data-right-id="${access.droit_id}">
+                                    <div class="flex-1">
+                                        <div class="font-medium text-gray-900">${software?.nom || 'Application inconnue'}</div>
+                                        <div class="text-sm text-gray-600">${right?.nom || 'Niveau inconnu'}</div>
+                                    </div>
+                                </label>
+                            `;
+                        }).join('')}
+                    </div>
+                </div>
+
+                <div class="bg-yellow-50 border border-yellow-200 rounded-lg p-3">
+                    <div class="flex items-start">
+                        <i class="fas fa-exclamation-triangle text-yellow-600 mt-0.5 mr-2"></i>
+                        <div class="text-sm text-yellow-800">
+                            <p class="font-medium mb-1">Attention :</p>
+                            <p>Cette action supprimera les accès sélectionnés pour tous les utilisateurs choisis.</p>
+                            <p>Cette action est irréversible.</p>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        `;
+
+        const actions = [
+            {
+                text: `Supprimer les accès sélectionnés`,
+                class: 'px-4 py-2 bg-red-600 text-white rounded-lg hover:bg-red-700',
+                onclick: 'window.usersManager.executeBulkRemoveAccess()'
+            }
+        ];
+
+        window.app?.showModal('Suppression en masse d\'accès', modalContent, actions);
+    }
+
+    getCommonAccessForUsers(userIds) {
+        if (!this.access || userIds.length === 0) return [];
+
+        // Récupérer les accès du premier utilisateur
+        const firstUserAccess = this.access.filter(acc => acc.utilisateur_id === userIds[0]);
+        
+        // Trouver les accès communs à tous les utilisateurs
+        const commonAccess = firstUserAccess.filter(firstAcc => {
+            return userIds.every(userId => {
+                return this.access.some(acc => 
+                    acc.utilisateur_id === userId && 
+                    acc.logiciel_id === firstAcc.logiciel_id && 
+                    acc.droit_id === firstAcc.droit_id
+                );
+            });
+        });
+
+        // Retourner les accès uniques (dédoublonner par logiciel + droit)
+        const uniqueAccess = [];
+        commonAccess.forEach(acc => {
+            const exists = uniqueAccess.some(unique => 
+                unique.logiciel_id === acc.logiciel_id && unique.droit_id === acc.droit_id
+            );
+            if (!exists) {
+                uniqueAccess.push({
+                    logiciel_id: acc.logiciel_id,
+                    droit_id: acc.droit_id
+                });
+            }
+        });
+
+        return uniqueAccess;
+    }
+
+    async executeBulkRemoveAccess() {
+        const selectedAccess = document.querySelectorAll('.bulk-remove-access:checked');
+        
+        if (selectedAccess.length === 0) {
+            window.app?.showAlert('Veuillez sélectionner au moins un accès à supprimer', 'error');
+            return;
+        }
+
+        try {
+            let successCount = 0;
+            const errors = [];
+
+            // Récupérer tous les accès existants
+            const accessResult = await window.D1API.get('acces');
+            const allAccess = accessResult.data || [];
+
+            for (const checkbox of selectedAccess) {
+                const softwareId = checkbox.getAttribute('data-software-id');
+                const rightId = checkbox.getAttribute('data-right-id');
+
+                for (const userId of this.selectedUsers) {
+                    // Trouver l'accès spécifique à supprimer
+                    const accessToRemove = allAccess.find(acc => 
+                        acc.utilisateur_id === userId && 
+                        acc.logiciel_id === softwareId && 
+                        acc.droit_id === rightId
+                    );
+
+                    if (accessToRemove) {
+                        try {
+                            const result = await window.D1API.delete('acces', accessToRemove.id);
+                            if (result.success) {
+                                successCount++;
+                                
+                                // Log de la suppression
+                                if (window.logger) {
+                                    const user = this.users.find(u => u.id === userId);
+                                    const software = this.software.find(s => s.id === softwareId);
+                                    const right = this.droits.find(d => d.id === rightId);
+                                    await window.logger.log('DELETE', 'acces', accessToRemove.id, accessToRemove, null, 
+                                        `Suppression en masse: ${software?.nom} (${right?.nom}) pour ${user?.nom} ${user?.prenom}`);
+                                }
+                            } else {
+                                throw new Error(result.error);
+                            }
+                        } catch (error) {
+                            const user = this.users.find(u => u.id === userId);
+                            errors.push(`${user?.nom || 'Utilisateur inconnu'}: ${error.message}`);
+                        }
+                    }
+                }
+            }
+
+            // Fermer le modal
+            document.querySelector('.fixed')?.remove();
+
+            // Afficher le résultat
+            let message = `✅ ${successCount} accès supprimé${successCount > 1 ? 's' : ''}`;
+            if (errors.length > 0) {
+                message += `\n❌ ${errors.length} erreur${errors.length > 1 ? 's' : ''}`;
+                console.error('Erreurs lors de la suppression en masse:', errors);
+            }
+
+            window.app?.showAlert(message, successCount > 0 ? 'success' : 'error');
+            
+            // Rafraîchir les données
+            await this.loadUsers();
+            
+        } catch (error) {
+            console.error('Erreur lors de la suppression en masse:', error);
+            window.app?.showAlert('Erreur lors de la suppression en masse', 'error');
         }
     }
 }
