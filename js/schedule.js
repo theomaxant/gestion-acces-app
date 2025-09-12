@@ -2,6 +2,8 @@ class ScheduleManager {
     constructor() {
         this.currentDate = new Date();
         this.software = [];
+        this.isNavigating = false; // Protection contre clics multiples
+        this.listenersSetup = false; // Protection contre configuration multiple
         this.init();
     }
 
@@ -13,6 +15,9 @@ class ScheduleManager {
     }
 
     setupEventListeners() {
+        // Éviter de reconfigurer si déjà fait
+        if (this.listenersSetup) return;
+        
         // Utiliser une référence stable à this pour éviter les problèmes de contexte
         const self = this;
         
@@ -20,28 +25,62 @@ class ScheduleManager {
         const nextBtn = document.getElementById('next-month-btn');
         
         if (prevBtn) {
-            prevBtn.addEventListener('click', function() {
-                // Navigation précédente d'exactement 1 mois
-                const currentYear = self.currentDate.getFullYear();
-                const currentMonth = self.currentDate.getMonth();
-                self.currentDate = new Date(currentYear, currentMonth - 1, 1);
+            prevBtn.addEventListener('click', function(e) {
+                e.preventDefault();
+                e.stopPropagation();
                 
-                self.renderCalendar();
-                self.renderMonthlyBlocks();
+                // Protection contre les clics multiples rapides
+                if (self.isNavigating) return;
+                self.isNavigating = true;
+                
+                try {
+                    console.warn('🔙 Navigation précédente - 1 mois');
+                    // Navigation précédente d'exactement 1 mois
+                    const currentYear = self.currentDate.getFullYear();
+                    const currentMonth = self.currentDate.getMonth();
+                    self.currentDate = new Date(currentYear, currentMonth - 1, 1);
+                    
+                    self.renderCalendar();
+                    self.renderMonthlyBlocks();
+                } finally {
+                    // Délai de sécurité pour éviter les clics rapides
+                    setTimeout(() => {
+                        self.isNavigating = false;
+                    }, 200);
+                }
             });
         }
 
         if (nextBtn) {
-            nextBtn.addEventListener('click', function() {
-                // Navigation suivante d'exactement 1 mois  
-                const currentYear = self.currentDate.getFullYear();
-                const currentMonth = self.currentDate.getMonth();
-                self.currentDate = new Date(currentYear, currentMonth + 1, 1);
+            nextBtn.addEventListener('click', function(e) {
+                e.preventDefault();
+                e.stopPropagation();
                 
-                self.renderCalendar();
-                self.renderMonthlyBlocks();
+                // Protection contre les clics multiples rapides
+                if (self.isNavigating) return;
+                self.isNavigating = true;
+                
+                try {
+                    console.warn('➡️ Navigation suivante + 1 mois');
+                    // Navigation suivante d'exactement 1 mois  
+                    const currentYear = self.currentDate.getFullYear();
+                    const currentMonth = self.currentDate.getMonth();
+                    self.currentDate = new Date(currentYear, currentMonth + 1, 1);
+                    
+                    self.renderCalendar();
+                    self.renderMonthlyBlocks();
+                } finally {
+                    // Délai de sécurité pour éviter les clics rapides
+                    setTimeout(() => {
+                        self.isNavigating = false;
+                    }, 200);
+                }
             });
         }
+        
+        // Marquer comme configuré pour éviter les doublons
+        this.listenersSetup = true;
+        console.warn('📅 Gestionnaires d\'événements configurés une seule fois');
     }
 
     async loadData() {
@@ -424,11 +463,15 @@ class ScheduleManager {
     }
 }
 
-// Global instance
+// Global instance avec protection contre les multiples instances
 let scheduleManager;
 
-// Initialize when DOM is loaded
+// Initialize when DOM is loaded avec protection
 document.addEventListener('DOMContentLoaded', () => {
-    scheduleManager = new ScheduleManager();
-    window.scheduleManager = scheduleManager;
+    // Éviter la création multiple d'instances
+    if (!scheduleManager) {
+        scheduleManager = new ScheduleManager();
+        window.scheduleManager = scheduleManager;
+        console.warn('📅 ScheduleManager initialisé une seule fois');
+    }
 });
