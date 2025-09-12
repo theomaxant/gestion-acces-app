@@ -10,6 +10,7 @@ class SoftwareManager {
         this.showShopifyOnly = false;
         this.sortColumn = 'nom';
         this.sortDirection = 'asc';
+        this.selectedSoftware = new Set(); // Pour la sélection multiple
         this.init();
     }
 
@@ -76,9 +77,10 @@ class SoftwareManager {
         const term = searchTerm.toLowerCase();
 
         rows.forEach(row => {
-            const name = row.cells[0]?.textContent.toLowerCase() || '';
-            const description = row.cells[1]?.textContent.toLowerCase() || '';
-            const cost = row.cells[2]?.textContent.toLowerCase() || '';
+            // Maintenant la première colonne est la checkbox, donc décaler d'une colonne
+            const name = row.cells[1]?.textContent.toLowerCase() || '';
+            const description = row.cells[2]?.textContent.toLowerCase() || '';
+            const cost = row.cells[3]?.textContent.toLowerCase() || '';
 
             if (name.includes(term) || description.includes(term) || cost.includes(term)) {
                 row.style.display = '';
@@ -149,6 +151,9 @@ class SoftwareManager {
             <table class="min-w-full table-auto">
                 <thead class="bg-gray-50">
                     <tr>
+                        <th class="px-3 py-3 text-center text-xs font-medium text-gray-500 uppercase tracking-wider w-12">
+                            <input type="checkbox" id="select-all-software" class="rounded" onchange="window.softwareManager.toggleSelectAll(this.checked)">
+                        </th>
                         <th class="px-3 sm:px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider cursor-pointer hover:bg-gray-100" onclick="window.softwareManager.sortTable('nom')">
                             Logiciel <i class="fas fa-sort ml-1"></i>
                         </th>
@@ -157,7 +162,7 @@ class SoftwareManager {
                         <th class="hidden lg:table-cell px-3 sm:px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Prochain paiement</th>
                         <th class="hidden xl:table-cell px-3 sm:px-6 py-3 text-center text-xs font-medium text-gray-500 uppercase tracking-wider">📋 Engagement</th>
                         <th class="hidden sm:table-cell px-3 sm:px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Accès</th>
-                        <th class="hidden lg:table-cell px-3 sm:px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Coût Annuel</th>
+                        <th class="hidden lg:table-cell px-3 sm:px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Coût Annuel HT</th>
                         <th class="px-3 sm:px-6 py-3 text-right text-xs font-medium text-gray-500 uppercase tracking-wider">Actions</th>
                     </tr>
                 </thead>
@@ -205,6 +210,12 @@ class SoftwareManager {
 
         return `
             <tr${rowClass}>
+                <td class="px-3 py-3 sm:py-4 text-center">
+                    <input type="checkbox" class="software-checkbox rounded" 
+                           data-software-id="${software.id}" 
+                           ${this.selectedSoftware.has(software.id) ? 'checked' : ''}
+                           onchange="window.softwareManager.toggleSoftwareSelection('${software.id}', this.checked)">
+                </td>
                 <td class="px-3 sm:px-6 py-3 sm:py-4">
                     <div class="flex items-center">
                         ${engagementAlert && engagementAlert.isAlert ? '<span class="text-red-500 mr-2" title="' + engagementAlert.message + '">⚠️</span>' : ''}
@@ -228,9 +239,15 @@ class SoftwareManager {
                     </div>
                 </td>
                 <td class="hidden lg:table-cell px-3 sm:px-6 py-3 sm:py-4">
-                    <div class="text-sm ${nextPayment ? nextPayment.color : 'text-gray-400'}">
-                        ${nextPayment ? nextPayment.date : '-'}
-                        ${engagementAlert && engagementAlert.isAlert ? `<br><span class="text-red-600 text-xs">⚠️ Résiliation: ${engagementAlert.date}</span>` : ''}
+                    <div class="text-sm">
+                        ${software.date_souscription ? 
+                            `<div class="text-xs text-gray-500 mb-1">Souscrit: ${new Date(software.date_souscription).toLocaleDateString('fr-FR')}</div>` : 
+                            ''
+                        }
+                        <div class="${nextPayment ? nextPayment.color : 'text-gray-400'}">
+                            ${nextPayment ? nextPayment.date : '-'}
+                        </div>
+                        ${engagementAlert && engagementAlert.isAlert ? `<div class="text-red-600 text-xs mt-1">⚠️ Résiliation: ${engagementAlert.date}</div>` : ''}
                     </div>
                 </td>
                 <td class="hidden xl:table-cell px-3 sm:px-6 py-3 sm:py-4">
@@ -298,6 +315,7 @@ class SoftwareManager {
                             <div><strong>Coût mensuel:</strong> ${monthlyCost.toFixed(2)}€</div>
                             <div><strong>Coût annuel:</strong> ${annualCost.toFixed(2)}€</div>
                             <div><strong>Accès actifs:</strong> ${this.countActiveAccessForSoftware(software.id)}</div>
+                            ${software.date_souscription ? `<div><strong>Souscrit le:</strong> ${new Date(software.date_souscription).toLocaleDateString('fr-FR')}</div>` : ''}
                             ${nextPayment ? `<div class="${nextPayment.color}"><strong>Prochain paiement:</strong> ${nextPayment.date}</div>` : ''}
                             ${software.engagement ? `<div class="text-red-600"><strong>📋 Engagement:</strong> Fin ${new Date(software.date_fin_contrat).toLocaleDateString('fr-FR')}</div>` : ''}
                             ${engagementAlert && engagementAlert.isAlert ? `<div class="text-red-600"><strong>⚠️ Résiliation limite:</strong> ${engagementAlert.date}</div>` : ''}
@@ -739,7 +757,7 @@ class SoftwareManager {
                                            value="${existingCost ? existingCost.cout_mensuel : ''}"
                                            placeholder="0.00"
                                            class="w-20 px-2 py-1 border border-gray-300 rounded text-sm">
-                                    <span class="text-sm text-gray-500">€/mois</span>
+                                    <span class="text-sm text-gray-500">€ HT/mois</span>
                                 </div>
                             </div>
                         `;
@@ -1113,6 +1131,308 @@ class SoftwareManager {
             return user && !user.archived;
         });
         return activeAccess.length;
+    }
+
+    // =================== FONCTIONNALITÉS DE SÉLECTION MULTIPLE ===================
+
+    toggleSelectAll(checked) {
+        let filteredSoftware = this.software;
+        
+        // Filtre archivé
+        if (!this.showArchived) {
+            filteredSoftware = filteredSoftware.filter(s => !s.archived);
+        }
+        
+        // Filtre Shopify uniquement
+        if (this.showShopifyOnly) {
+            filteredSoftware = filteredSoftware.filter(s => s.application_shopify === true);
+        }
+
+        if (checked) {
+            // Sélectionner tous les logiciels visibles
+            filteredSoftware.forEach(software => {
+                this.selectedSoftware.add(software.id);
+            });
+        } else {
+            // Désélectionner tous les logiciels
+            this.selectedSoftware.clear();
+        }
+
+        // Mettre à jour les cases à cocher individuelles
+        const checkboxes = document.querySelectorAll('.software-checkbox');
+        checkboxes.forEach(checkbox => {
+            const softwareId = checkbox.getAttribute('data-software-id');
+            checkbox.checked = this.selectedSoftware.has(softwareId);
+        });
+
+        this.updateBulkActionsUI();
+    }
+
+    toggleSoftwareSelection(softwareId, checked) {
+        if (checked) {
+            this.selectedSoftware.add(softwareId);
+        } else {
+            this.selectedSoftware.delete(softwareId);
+        }
+
+        // Mettre à jour la case "Sélectionner tout"
+        const selectAllCheckbox = document.getElementById('select-all-software');
+        if (selectAllCheckbox) {
+            let filteredSoftware = this.software;
+            
+            // Appliquer les mêmes filtres que dans l'affichage
+            if (!this.showArchived) {
+                filteredSoftware = filteredSoftware.filter(s => !s.archived);
+            }
+            if (this.showShopifyOnly) {
+                filteredSoftware = filteredSoftware.filter(s => s.application_shopify === true);
+            }
+            
+            const allVisible = filteredSoftware.every(software => this.selectedSoftware.has(software.id));
+            const someSelected = filteredSoftware.some(software => this.selectedSoftware.has(software.id));
+            
+            selectAllCheckbox.checked = allVisible;
+            selectAllCheckbox.indeterminate = someSelected && !allVisible;
+        }
+
+        this.updateBulkActionsUI();
+    }
+
+    updateBulkActionsUI() {
+        const selectedCount = this.selectedSoftware.size;
+        let bulkActionsBar = document.getElementById('bulk-actions-bar-software');
+
+        if (selectedCount > 0) {
+            if (!bulkActionsBar) {
+                this.createBulkActionsBar();
+            } else {
+                this.updateBulkActionsCount();
+            }
+        } else {
+            if (bulkActionsBar) {
+                bulkActionsBar.remove();
+            }
+        }
+    }
+
+    createBulkActionsBar() {
+        const softwareView = document.getElementById('software-view');
+        if (!softwareView) return;
+
+        const bulkActionsHTML = `
+            <div id="bulk-actions-bar-software" class="fixed bottom-4 left-1/2 transform -translate-x-1/2 bg-green-600 text-white rounded-lg shadow-lg px-4 py-3 flex items-center space-x-4 z-50">
+                <div class="flex items-center">
+                    <i class="fas fa-check-circle mr-2"></i>
+                    <span id="selected-count-software">${this.selectedSoftware.size}</span>
+                    <span class="ml-1">logiciel${this.selectedSoftware.size > 1 ? 's' : ''} sélectionné${this.selectedSoftware.size > 1 ? 's' : ''}</span>
+                </div>
+                
+                <div class="flex items-center space-x-2">
+                    <button onclick="window.softwareManager.showBulkAddUsersModal()" 
+                            class="bg-blue-500 hover:bg-blue-600 px-3 py-1 rounded text-sm flex items-center">
+                        <i class="fas fa-user-plus mr-1"></i>
+                        Ajouter Utilisateurs
+                    </button>
+                    
+                    <button onclick="window.softwareManager.clearSelection()" 
+                            class="bg-gray-500 hover:bg-gray-600 px-3 py-1 rounded text-sm flex items-center">
+                        <i class="fas fa-times mr-1"></i>
+                        Annuler
+                    </button>
+                </div>
+            </div>
+        `;
+
+        softwareView.insertAdjacentHTML('beforeend', bulkActionsHTML);
+    }
+
+    updateBulkActionsCount() {
+        const countElement = document.getElementById('selected-count-software');
+        if (countElement) {
+            countElement.textContent = this.selectedSoftware.size;
+            const textElement = countElement.nextElementSibling;
+            if (textElement) {
+                textElement.textContent = ` logiciel${this.selectedSoftware.size > 1 ? 's' : ''} sélectionné${this.selectedSoftware.size > 1 ? 's' : ''}`;
+            }
+        }
+    }
+
+    clearSelection() {
+        this.selectedSoftware.clear();
+        
+        // Décocher toutes les cases
+        const checkboxes = document.querySelectorAll('.software-checkbox, #select-all-software');
+        checkboxes.forEach(checkbox => {
+            checkbox.checked = false;
+            checkbox.indeterminate = false;
+        });
+        
+        // Supprimer la barre d'actions
+        const bulkActionsBar = document.getElementById('bulk-actions-bar-software');
+        if (bulkActionsBar) {
+            bulkActionsBar.remove();
+        }
+    }
+
+    showBulkAddUsersModal() {
+        if (this.selectedSoftware.size === 0) {
+            window.app?.showAlert('Aucun logiciel sélectionné', 'warning');
+            return;
+        }
+
+        const selectedSoftwareNames = Array.from(this.selectedSoftware).map(softwareId => {
+            const software = this.software.find(s => s.id === softwareId);
+            return software ? software.nom : 'Logiciel inconnu';
+        });
+
+        const activeUsers = this.users.filter(u => !u.archived);
+
+        const modalContent = `
+            <div class="space-y-4">
+                <div class="bg-green-50 border border-green-200 rounded-lg p-4">
+                    <h4 class="font-medium text-green-900 mb-2">
+                        <i class="fas fa-laptop mr-2"></i>
+                        ${this.selectedSoftware.size} logiciel${this.selectedSoftware.size > 1 ? 's' : ''} sélectionné${this.selectedSoftware.size > 1 ? 's' : ''}
+                    </h4>
+                    <div class="text-sm text-green-800 max-h-20 overflow-y-auto">
+                        ${selectedSoftwareNames.join(', ')}
+                    </div>
+                </div>
+
+                <div>
+                    <label class="block text-sm font-medium text-gray-700 mb-2">
+                        Sélectionner l'utilisateur à ajouter *
+                    </label>
+                    <select id="bulk-user-select" required
+                            class="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-green-500">
+                        <option value="">-- Choisir un utilisateur --</option>
+                        ${activeUsers.map(user => 
+                            `<option value="${user.id}">${user.externe ? '🏢 ' : ''}${user.nom} ${user.prenom || ''}</option>`
+                        ).join('')}
+                    </select>
+                </div>
+
+                <div>
+                    <label class="block text-sm font-medium text-gray-700 mb-2">
+                        Niveau d'accès *
+                    </label>
+                    <select id="bulk-right-select-software" required
+                            class="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-green-500">
+                        <option value="">-- Choisir un niveau d'accès --</option>
+                        ${this.droits.map(droit => 
+                            `<option value="${droit.id}">${droit.nom}</option>`
+                        ).join('')}
+                    </select>
+                </div>
+
+                <div class="bg-yellow-50 border border-yellow-200 rounded-lg p-3">
+                    <div class="flex items-start">
+                        <i class="fas fa-info-circle text-yellow-600 mt-0.5 mr-2"></i>
+                        <div class="text-sm text-yellow-800">
+                            <p class="font-medium mb-1">Attention :</p>
+                            <p>Cette action donnera accès aux logiciels sélectionnés à l'utilisateur choisi.</p>
+                            <p>Si l'utilisateur a déjà un accès à un logiciel, il sera ignoré.</p>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        `;
+
+        const actions = [
+            {
+                text: `Donner accès à ${this.selectedSoftware.size} logiciel${this.selectedSoftware.size > 1 ? 's' : ''}`,
+                class: 'px-4 py-2 bg-green-600 text-white rounded-lg hover:bg-green-700',
+                onclick: 'window.softwareManager.executeBulkAddUsers()'
+            }
+        ];
+
+        window.app?.showModal('Ajout d\'utilisateur en masse aux logiciels', modalContent, actions);
+    }
+
+    async executeBulkAddUsers() {
+        const userId = document.getElementById('bulk-user-select')?.value;
+        const rightId = document.getElementById('bulk-right-select-software')?.value;
+
+        if (!userId || !rightId) {
+            window.app?.showAlert('Veuillez sélectionner un utilisateur et un niveau d\'accès', 'error');
+            return;
+        }
+
+        const user = this.users.find(u => u.id === userId);
+        const right = this.droits.find(d => d.id === rightId);
+
+        try {
+            let successCount = 0;
+            let skipCount = 0;
+            const errors = [];
+
+            // Récupérer tous les accès existants pour éviter les doublons
+            const accessResult = await window.D1API.get('acces');
+            const existingAccess = accessResult.data || [];
+
+            for (const softwareId of this.selectedSoftware) {
+                // Vérifier si l'accès existe déjà
+                const existingAccess_software = existingAccess.find(acc => 
+                    acc.utilisateur_id === userId && 
+                    acc.logiciel_id === softwareId && 
+                    acc.droit_id === rightId
+                );
+
+                if (existingAccess_software) {
+                    skipCount++;
+                    continue;
+                }
+
+                try {
+                    const result = await window.D1API.create('acces', {
+                        utilisateur_id: userId,
+                        logiciel_id: softwareId,
+                        droit_id: rightId
+                    });
+
+                    if (result.success) {
+                        successCount++;
+                        
+                        // Log de l'ajout d'accès
+                        if (window.logger) {
+                            const software = this.software.find(s => s.id === softwareId);
+                            await window.logger.log('CREATE', 'acces', result.data.id, null, {
+                                utilisateur_id: userId,
+                                logiciel_id: softwareId,
+                                droit_id: rightId
+                            }, `Ajout en masse: ${user?.nom} ${user?.prenom} vers ${software?.nom} (${right?.nom})`);
+                        }
+                    } else {
+                        throw new Error(result.error);
+                    }
+                } catch (error) {
+                    const software = this.software.find(s => s.id === softwareId);
+                    errors.push(`${software?.nom || 'Logiciel inconnu'}: ${error.message}`);
+                }
+            }
+
+            // Fermer le modal
+            document.querySelector('.fixed')?.remove();
+
+            // Afficher le résultat
+            let message = `✅ ${successCount} accès ajouté${successCount > 1 ? 's' : ''} pour ${user?.nom} ${user?.prenom}`;
+            if (skipCount > 0) {
+                message += `\n⚠️ ${skipCount} accès ignoré${skipCount > 1 ? 's' : ''} (déjà existant${skipCount > 1 ? 's' : ''})`;
+            }
+            if (errors.length > 0) {
+                message += `\n❌ ${errors.length} erreur${errors.length > 1 ? 's' : ''}`;
+                console.error('Erreurs lors de l\'ajout en masse:', errors);
+            }
+
+            window.app?.showAlert(message, successCount > 0 ? 'success' : 'warning');
+            
+            // Rafraîchir les données
+            await this.loadSoftware();
+            
+        } catch (error) {
+            console.error('Erreur lors de l\'ajout en masse d\'utilisateurs:', error);
+            window.app?.showAlert('Erreur lors de l\'ajout en masse d\'utilisateurs', 'error');
+        }
     }
 }
 

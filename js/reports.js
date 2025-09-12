@@ -473,7 +473,7 @@ class ReportsManager {
                                     <div class="text-right">
                                         <div class="text-2xl font-bold text-blue-600">${software.totalUsers}</div>
                                         <div class="text-sm text-gray-500">utilisateurs</div>
-                                        <div class="text-lg font-semibold text-green-600">${software.totalCost.toFixed(2)}€/mois</div>
+                                        <div class="text-lg font-semibold text-green-600">${software.totalCost.toFixed(2)}€ HT/mois</div>
                                         <div class="text-base font-medium text-purple-600">${software.totalCostAnnual.toFixed(2)}€/an</div>
                                         <button onclick="window.reportsManager.exportSingleSoftwareExcel(${software.id})" 
                                                 class="mt-1 bg-blue-500 hover:bg-blue-600 text-white px-3 py-1 rounded text-xs">
@@ -570,7 +570,7 @@ class ReportsManager {
                                     <div class="text-right">
                                         <div class="text-2xl font-bold text-green-600">${user.totalSoftware}</div>
                                         <div class="text-sm text-gray-500">logiciels</div>
-                                        <div class="text-lg font-semibold text-green-600">${user.totalCost.toFixed(2)}€/mois</div>
+                                        <div class="text-lg font-semibold text-green-600">${user.totalCost.toFixed(2)}€ HT/mois</div>
                                         <button onclick="window.reportsManager.exportSingleUserExcel(${user.id})" 
                                                 class="mt-1 bg-green-500 hover:bg-green-600 text-white px-3 py-1 rounded text-xs">
                                             <i class="fas fa-download mr-1"></i>Export
@@ -591,7 +591,7 @@ class ReportsManager {
                                                 <div class="text-sm text-gray-600">${soft.editeur} v${soft.version}</div>
                                                 <div class="text-xs text-gray-500 mt-1 flex justify-between">
                                                     <span class="bg-green-100 text-green-800 px-2 py-1 rounded">${soft.niveau}</span>
-                                                    <span class="text-green-600 font-medium">${soft.cout_mensuel}€/mois</span>
+                                                    <span class="text-green-600 font-medium">${soft.cout_mensuel}€ HT/mois</span>
                                                 </div>
                                             </div>
                                         `).join('')}
@@ -662,7 +662,7 @@ class ReportsManager {
                                     <div class="text-right">
                                         <div class="text-2xl font-bold text-purple-600">${team.totalUsers}</div>
                                         <div class="text-sm text-gray-500">utilisateurs</div>
-                                        <div class="text-lg font-semibold text-green-600">${team.totalCost.toFixed(2)}€/mois</div>
+                                        <div class="text-lg font-semibold text-green-600">${team.totalCost.toFixed(2)}€ HT/mois</div>
                                         <button onclick="window.reportsManager.exportSingleTeamExcel(${team.id})" 
                                                 class="mt-1 bg-purple-500 hover:bg-purple-600 text-white px-3 py-1 rounded text-xs">
                                             <i class="fas fa-download mr-1"></i>Export
@@ -708,8 +708,8 @@ class ReportsManager {
                                                             <div class="text-xs text-gray-500 mt-1">${soft.utilisateurs_count} utilisateurs</div>
                                                         </div>
                                                         <div class="text-right">
-                                                            <div class="text-sm text-green-600 font-medium">${soft.cout_mensuel}€/mois/user</div>
-                                                            <div class="text-lg font-bold text-green-700">${soft.cout_total.toFixed(2)}€/mois</div>
+                                                            <div class="text-sm text-green-600 font-medium">${soft.cout_mensuel}€ HT/mois/user</div>
+                                                            <div class="text-lg font-bold text-green-700">${soft.cout_total.toFixed(2)}€ HT/mois</div>
                                                         </div>
                                                     </div>
                                                 </div>

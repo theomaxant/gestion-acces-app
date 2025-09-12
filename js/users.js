@@ -121,8 +121,8 @@ class UsersManager {
                             <i class="fas fa-sort ml-1"></i>
                         </th>
                         <th class="px-3 sm:px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider cursor-pointer hover:bg-gray-100" onclick="window.usersManager.sortTable('cout')">
-                            <span class="hidden sm:inline">Coût Annuel</span>
-                            <span class="sm:hidden">€</span>
+                            <span class="hidden sm:inline">Coût Annuel HT</span>
+                            <span class="sm:hidden">€ HT</span>
                             <i class="fas fa-sort ml-1"></i>
                         </th>
                         <th class="hidden sm:table-cell px-3 sm:px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Statut</th>
@@ -597,7 +597,7 @@ class UsersManager {
                 <div class="space-y-4">
                     <h4 class="font-medium text-gray-900">Coûts pour: ${user.nom} ${user.prenom || ''}</h4>
                     <div class="bg-blue-50 p-4 rounded-lg">
-                        <div class="text-2xl font-bold text-blue-900">${totalCost.toFixed(2)}€ / mois</div>
+                        <div class="text-2xl font-bold text-blue-900">${totalCost.toFixed(2)}€ HT / mois</div>
                         <div class="text-sm text-blue-700">Coût total</div>
                     </div>
                     <div class="max-h-60 overflow-y-auto space-y-2">
@@ -608,7 +608,7 @@ class UsersManager {
                                     <span class="text-sm font-medium">${detail.software}</span>
                                     <span class="text-xs text-gray-500 ml-2">(${detail.droit})</span>
                                 </div>
-                                <span class="text-sm font-medium">${detail.cost.toFixed(2)}€</span>
+                                <span class="text-sm font-medium">${detail.cost.toFixed(2)}€ HT</span>
                             </div>
                         `).join('')}
                     </div>
@@ -977,6 +977,12 @@ class UsersManager {
                         Ajouter Applications
                     </button>
                     
+                    <button onclick="window.usersManager.showBulkChangeTeamModal()" 
+                            class="bg-purple-500 hover:bg-purple-600 px-3 py-1 rounded text-sm flex items-center">
+                        <i class="fas fa-users mr-1"></i>
+                        Changer Équipe
+                    </button>
+                    
                     <button onclick="window.usersManager.showBulkRemoveAccessModal()" 
                             class="bg-red-500 hover:bg-red-600 px-3 py-1 rounded text-sm flex items-center">
                         <i class="fas fa-minus mr-1"></i>
@@ -1294,6 +1300,140 @@ class UsersManager {
         });
 
         return uniqueAccess;
+    }
+
+    showBulkChangeTeamModal() {
+        if (this.selectedUsers.size === 0) {
+            window.app?.showAlert('Aucun utilisateur sélectionné', 'warning');
+            return;
+        }
+
+        const selectedUserNames = Array.from(this.selectedUsers).map(userId => {
+            const user = this.users.find(u => u.id === userId);
+            return user ? `${user.nom} ${user.prenom || ''}`.trim() : 'Utilisateur inconnu';
+        });
+
+        const activeTeams = this.teams.filter(t => !t.archived);
+
+        const modalContent = `
+            <div class="space-y-4">
+                <div class="bg-purple-50 border border-purple-200 rounded-lg p-4">
+                    <h4 class="font-medium text-purple-900 mb-2">
+                        <i class="fas fa-users mr-2"></i>
+                        ${this.selectedUsers.size} utilisateur${this.selectedUsers.size > 1 ? 's' : ''} sélectionné${this.selectedUsers.size > 1 ? 's' : ''}
+                    </h4>
+                    <div class="text-sm text-purple-800 max-h-20 overflow-y-auto">
+                        ${selectedUserNames.join(', ')}
+                    </div>
+                </div>
+
+                <div>
+                    <label class="block text-sm font-medium text-gray-700 mb-2">
+                        Nouvelle équipe *
+                    </label>
+                    <select id="bulk-team-select" required
+                            class="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-purple-500">
+                        <option value="">-- Choisir une équipe --</option>
+                        <option value="null">Aucune équipe</option>
+                        ${activeTeams.map(team => 
+                            `<option value="${team.id}">${team.nom}</option>`
+                        ).join('')}
+                    </select>
+                </div>
+
+                <div class="bg-blue-50 border border-blue-200 rounded-lg p-3">
+                    <div class="flex items-start">
+                        <i class="fas fa-info-circle text-blue-600 mt-0.5 mr-2"></i>
+                        <div class="text-sm text-blue-800">
+                            <p class="font-medium mb-1">Information :</p>
+                            <p>Cette action changera l'équipe de tous les utilisateurs sélectionnés.</p>
+                            <p>Les budgets et coûts seront automatiquement recalculés.</p>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        `;
+
+        const actions = [
+            {
+                text: `Changer l'équipe de ${this.selectedUsers.size} utilisateur${this.selectedUsers.size > 1 ? 's' : ''}`,
+                class: 'px-4 py-2 bg-purple-600 text-white rounded-lg hover:bg-purple-700',
+                onclick: 'window.usersManager.executeBulkChangeTeam()'
+            }
+        ];
+
+        window.app?.showModal('Changement d\'équipe en masse', modalContent, actions);
+    }
+
+    async executeBulkChangeTeam() {
+        const teamId = document.getElementById('bulk-team-select')?.value;
+
+        if (teamId === '') {
+            window.app?.showAlert('Veuillez sélectionner une équipe', 'error');
+            return;
+        }
+
+        const newTeamId = teamId === 'null' ? null : teamId;
+        const team = newTeamId ? this.teams.find(t => t.id === newTeamId) : null;
+        const teamName = team ? team.nom : 'Aucune équipe';
+
+        try {
+            let successCount = 0;
+            const errors = [];
+
+            for (const userId of this.selectedUsers) {
+                try {
+                    const user = this.users.find(u => u.id === userId);
+                    if (!user) {
+                        errors.push(`Utilisateur non trouvé: ${userId}`);
+                        continue;
+                    }
+
+                    const oldTeamId = user.equipe_id;
+                    const updatedUser = { ...user, equipe_id: newTeamId };
+
+                    const result = await window.D1API.update('utilisateurs', userId, updatedUser);
+                    
+                    if (result.success) {
+                        successCount++;
+                        
+                        // Log du changement d'équipe
+                        if (window.logger) {
+                            const oldTeam = oldTeamId ? this.teams.find(t => t.id === oldTeamId) : null;
+                            await window.logger.log('UPDATE', 'utilisateurs', userId, 
+                                { ...user, equipe_id: oldTeamId }, 
+                                updatedUser, 
+                                `Changement d'équipe en masse: ${user.nom} ${user.prenom} de "${oldTeam?.nom || 'Aucune équipe'}" vers "${teamName}"`
+                            );
+                        }
+                    } else {
+                        throw new Error(result.error);
+                    }
+                } catch (error) {
+                    const user = this.users.find(u => u.id === userId);
+                    errors.push(`${user?.nom || 'Utilisateur inconnu'}: ${error.message}`);
+                }
+            }
+
+            // Fermer le modal
+            document.querySelector('.fixed')?.remove();
+
+            // Afficher le résultat
+            let message = `✅ ${successCount} utilisateur${successCount > 1 ? 's' : ''} transféré${successCount > 1 ? 's' : ''} vers "${teamName}"`;
+            if (errors.length > 0) {
+                message += `\n❌ ${errors.length} erreur${errors.length > 1 ? 's' : ''}`;
+                console.error('Erreurs lors du changement d\'équipe en masse:', errors);
+            }
+
+            window.app?.showAlert(message, successCount > 0 ? 'success' : 'error');
+            
+            // Rafraîchir les données
+            await this.loadUsers();
+            
+        } catch (error) {
+            console.error('Erreur lors du changement d\'équipe en masse:', error);
+            window.app?.showAlert('Erreur lors du changement d\'équipe en masse', 'error');
+        }
     }
 
     async executeBulkRemoveAccess() {

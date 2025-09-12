@@ -604,7 +604,7 @@ class AccessManagementApp {
                         },
                         title: {
                             display: true,
-                            text: `Total: ${users.length} utilisateurs - Coût total: ${totalCost.toFixed(2)}€/mois`
+                            text: `Total: ${users.length} utilisateurs - Coût total: ${totalCost.toFixed(2)}€ HT/mois`
                         }
                     }
                 }
@@ -719,7 +719,7 @@ class AccessManagementApp {
                                     const label = context.label || '';
                                     const value = context.raw || 0;
                                     const percentage = ((value / context.dataset.data.reduce((a, b) => a + b, 0)) * 100).toFixed(1);
-                                    return `${label}: ${value}€/mois (${percentage}%)`;
+                                    return `${label}: ${value}€ HT/mois (${percentage}%)`;
                                 }
                             }
                         },
@@ -891,7 +891,7 @@ class AccessManagementApp {
                         tooltip: {
                             callbacks: {
                                 label: function(context) {
-                                    return `${context.label}: ${context.raw}€/mois`;
+                                    return `${context.label}: ${context.raw}€ HT/mois`;
                                 }
                             }
                         },
@@ -1141,7 +1141,7 @@ class AccessManagementApp {
                 </div>
                 <div class="text-right">
                     <div class="font-bold ${colors[index]}">${software.cout_annuel.toFixed(2)}€/an</div>
-                    <div class="text-sm text-gray-600">${(software.cout_mensuel || 0).toFixed(2)}€/mois</div>
+                    <div class="text-sm text-gray-600">${(software.cout_mensuel || 0).toFixed(2)}€ HT/mois</div>
                 </div>
             </div>
         `).join('');
@@ -1170,7 +1170,7 @@ class AccessManagementApp {
                 </div>
                 <div class="text-right">
                     <div class="font-bold ${colors[index]}">${user.cout_annuel.toFixed(2)}€/an</div>
-                    <div class="text-sm text-gray-600">${user.cout_mensuel.toFixed(2)}€/mois</div>
+                    <div class="text-sm text-gray-600">${user.cout_mensuel.toFixed(2)}€ HT/mois</div>
                 </div>
             </div>
         `).join('');

@@ -292,9 +292,9 @@ class AccessManager {
                 
                 if (cost) {
                     if (droit && droit.nom === 'Accès communs') {
-                        costInfo.textContent = `Coût: ${cost.cout_mensuel}€/mois (partagé - facturé une seule fois)`;
+                        costInfo.textContent = `Coût: ${cost.cout_mensuel}€ HT/mois (partagé - facturé une seule fois)`;
                     } else {
-                        costInfo.textContent = `Coût: ${cost.cout_mensuel}€/mois`;
+                        costInfo.textContent = `Coût: ${cost.cout_mensuel}€ HT/mois`;
                     }
                     costPreview.classList.remove('hidden');
                 } else {
