@@ -7,6 +7,8 @@ class AccessManager {
         this.droits = [];
         this.costs = [];
         this.showAll = false; // Par défaut, ne montrer que les accès actifs
+        this.currentPage = 1; // Pagination
+        this.allAccess = []; // Stockage de tous les accès avant filtrage
         this.init();
     }
 
@@ -43,11 +45,13 @@ class AccessManager {
                 window.D1API.get('couts_licences')
             ]);
 
-            this.access = accessResult.data || [];
+            this.allAccess = accessResult.data || [];
             this.users = usersResult.data || [];
             this.software = softwareResult.data || [];
             this.costs = costsResult.data || [];
 
+            // Récupérer la page sauvegardée
+            this.currentPage = window.paginationUtils?.getSavedPage('access') || 1;
             this.renderAccessTable();
         } catch (error) {
             console.error('Erreur lors du chargement des accès:', error);
@@ -60,21 +64,27 @@ class AccessManager {
         if (!container) return;
 
         // Filtrer les accès selon le mode d'affichage
-        let displayAccess;
+        let filteredAccess;
         if (this.showAll) {
             // Montrer tous les accès
-            displayAccess = this.access;
+            filteredAccess = this.allAccess;
         } else {
             // Filtrer pour ne montrer que ceux d'utilisateurs et logiciels actifs
-            displayAccess = this.access.filter(acc => {
+            filteredAccess = this.allAccess.filter(acc => {
                 const user = this.users.find(u => u.id === acc.utilisateur_id);
                 const software = this.software.find(s => s.id === acc.logiciel_id);
                 return user && !user.archived && software && !software.archived;
             });
         }
 
+        // Paginer les résultats
+        const paginationResult = window.paginationUtils?.paginateData(filteredAccess, this.currentPage);
+        if (!paginationResult) return;
+
+        this.access = paginationResult.data; // Accès de la page courante
+
         // Compter les accès cachés
-        const hiddenCount = this.access.length - displayAccess.length;
+        const hiddenCount = this.allAccess.length - filteredAccess.length;
 
         const tableHtml = `
             ${hiddenCount > 0 && !this.showAll ? 
@@ -127,6 +137,19 @@ class AccessManager {
         `;
 
         container.innerHTML = tableHtml;
+
+        // Ajouter les contrôles de pagination
+        if (window.paginationUtils) {
+            window.paginationUtils.renderPaginationControls(
+                paginationResult.totalItems,
+                paginationResult.currentPage,
+                'access-pagination',
+                'window.accessManager.changePage'
+            );
+        }
+
+        // Animation
+        window.paginationUtils?.animateTableUpdate('#access-table-container table');
         
         // Réattacher l'événement après modification du DOM
         this.setupEventListeners();
@@ -134,7 +157,16 @@ class AccessManager {
 
     toggleView() {
         this.showAll = !this.showAll;
+        this.currentPage = 1; // Reset à la page 1 lors du changement de vue
         this.renderAccessTable();
+    }
+
+    // Méthode de changement de page
+    changePage(page) {
+        this.currentPage = page;
+        window.paginationUtils?.savePage('access', page);
+        this.renderAccessTable();
+        document.getElementById('access-table-container')?.scrollIntoView({ behavior: 'smooth' });
     }
 
     renderAccessRow(access) {
@@ -322,7 +354,7 @@ class AccessManager {
 
         // Vérifier si l'accès existe déjà (sauf si on modifie)
         if (!accessId) {
-            const existingAccess = this.access.find(a => 
+            const existingAccess = this.allAccess.find(a => 
                 a.utilisateur_id === userId && 
                 a.logiciel_id === softwareId && 
                 a.droit_id === rightId
@@ -377,7 +409,7 @@ class AccessManager {
     }
 
     async editAccess(accessId) {
-        const access = this.access.find(a => a.id === accessId);
+        const access = this.allAccess.find(a => a.id === accessId);
         if (!access) return;
 
         const activeUsers = this.users.filter(u => !u.archived);
@@ -463,15 +495,15 @@ class AccessManager {
 
     // Méthodes pour les statistiques et analyses
     getAccessByUser(userId) {
-        return this.access.filter(a => a.utilisateur_id === userId);
+        return this.allAccess.filter(a => a.utilisateur_id === userId);
     }
 
     getAccessBySoftware(softwareId) {
-        return this.access.filter(a => a.logiciel_id === softwareId);
+        return this.allAccess.filter(a => a.logiciel_id === softwareId);
     }
 
     getAccessByRight(rightId) {
-        return this.access.filter(a => a.droit_id === rightId);
+        return this.allAccess.filter(a => a.droit_id === rightId);
     }
 
     calculateUserCost(userId) {

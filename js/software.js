@@ -11,6 +11,8 @@ class SoftwareManager {
         this.sortColumn = 'nom';
         this.sortDirection = 'asc';
         this.selectedSoftware = new Set(); // Pour la sélection multiple
+        this.currentPage = 1; // Pagination
+        this.allSoftware = []; // Stockage de tous les logiciels avant filtrage
         this.init();
     }
 
@@ -35,12 +37,14 @@ class SoftwareManager {
 
         document.getElementById('show-archived-software')?.addEventListener('change', (e) => {
             this.showArchived = e.target.checked;
-            this.loadSoftware();
+            this.currentPage = 1; // Reset à la page 1
+            this.renderSoftwareTable();
         });
 
         document.getElementById('show-shopify-only')?.addEventListener('change', (e) => {
             this.showShopifyOnly = e.target.checked;
-            this.loadSoftware();
+            this.currentPage = 1; // Reset à la page 1
+            this.renderSoftwareTable();
         });
 
         // Search functionality
@@ -59,12 +63,14 @@ class SoftwareManager {
                 window.D1API.get('equipes')
             ]);
 
-            this.software = softwareResult.data || [];
+            this.allSoftware = softwareResult.data || [];
             this.costs = costsResult.data || [];
             this.users = usersResult.data || [];
             this.access = accessResult.data || [];
             this.teams = teamsResult.data || [];
 
+            // Récupérer la page sauvegardée
+            this.currentPage = window.paginationUtils?.getSavedPage('software') || 1;
             this.renderSoftwareTable();
         } catch (error) {
             console.error('Erreur lors du chargement des logiciels:', error);
@@ -94,7 +100,7 @@ class SoftwareManager {
         const container = document.getElementById('software-table-container');
         if (!container) return;
 
-        let filteredSoftware = this.software;
+        let filteredSoftware = this.allSoftware;
         
         // Filtre archivé
         if (!this.showArchived) {
@@ -105,6 +111,12 @@ class SoftwareManager {
         if (this.showShopifyOnly) {
             filteredSoftware = filteredSoftware.filter(s => s.application_shopify === true);
         }
+
+        // Paginer les résultats
+        const paginationResult = window.paginationUtils?.paginateData(filteredSoftware, this.currentPage);
+        if (!paginationResult) return;
+
+        this.software = paginationResult.data; // Logiciels de la page courante
 
         // Légende des couleurs
         const legendHtml = `
@@ -167,13 +179,26 @@ class SoftwareManager {
                     </tr>
                 </thead>
                 <tbody class="bg-white divide-y divide-gray-200">
-                    ${filteredSoftware.map(software => this.renderSoftwareRow(software)).join('')}
+                    ${this.software.map(software => this.renderSoftwareRow(software)).join('')}
                 </tbody>
             </table>
-            ${filteredSoftware.length === 0 ? '<div class="text-center py-8 text-gray-500 text-sm sm:text-base">Aucun logiciel trouvé</div>' : ''}
+            ${this.software.length === 0 ? '<div class="text-center py-8 text-gray-500 text-sm sm:text-base">Aucun logiciel trouvé</div>' : ''}
         `;
 
         container.innerHTML = legendHtml + tableHtml;
+
+        // Ajouter les contrôles de pagination
+        if (window.paginationUtils) {
+            window.paginationUtils.renderPaginationControls(
+                paginationResult.totalItems,
+                paginationResult.currentPage,
+                'software-pagination',
+                'window.softwareManager.changePage'
+            );
+        }
+
+        // Animation
+        window.paginationUtils?.animateTableUpdate('#software-table-container table');
     }
 
     renderSoftwareRow(software) {
@@ -1136,26 +1161,19 @@ class SoftwareManager {
     // =================== FONCTIONNALITÉS DE SÉLECTION MULTIPLE ===================
 
     toggleSelectAll(checked) {
-        let filteredSoftware = this.software;
-        
-        // Filtre archivé
-        if (!this.showArchived) {
-            filteredSoftware = filteredSoftware.filter(s => !s.archived);
-        }
-        
-        // Filtre Shopify uniquement
-        if (this.showShopifyOnly) {
-            filteredSoftware = filteredSoftware.filter(s => s.application_shopify === true);
-        }
+        // Utiliser les logiciels de la page courante (this.software contient déjà les données paginées et filtrées)
+        const currentPageSoftware = this.software;
 
         if (checked) {
-            // Sélectionner tous les logiciels visibles
-            filteredSoftware.forEach(software => {
+            // Sélectionner tous les logiciels visibles sur la page actuelle
+            currentPageSoftware.forEach(software => {
                 this.selectedSoftware.add(software.id);
             });
         } else {
-            // Désélectionner tous les logiciels
-            this.selectedSoftware.clear();
+            // Désélectionner tous les logiciels de la page actuelle
+            currentPageSoftware.forEach(software => {
+                this.selectedSoftware.delete(software.id);
+            });
         }
 
         // Mettre à jour les cases à cocher individuelles
@@ -1175,27 +1193,28 @@ class SoftwareManager {
             this.selectedSoftware.delete(softwareId);
         }
 
-        // Mettre à jour la case "Sélectionner tout"
+        // Mettre à jour la case "Sélectionner tout" basée sur la page actuelle
         const selectAllCheckbox = document.getElementById('select-all-software');
         if (selectAllCheckbox) {
-            let filteredSoftware = this.software;
+            // Utiliser les logiciels de la page courante (déjà filtrés et paginés)
+            const currentPageSoftware = this.software;
             
-            // Appliquer les mêmes filtres que dans l'affichage
-            if (!this.showArchived) {
-                filteredSoftware = filteredSoftware.filter(s => !s.archived);
-            }
-            if (this.showShopifyOnly) {
-                filteredSoftware = filteredSoftware.filter(s => s.application_shopify === true);
-            }
+            const allVisible = currentPageSoftware.every(software => this.selectedSoftware.has(software.id));
+            const someSelected = currentPageSoftware.some(software => this.selectedSoftware.has(software.id));
             
-            const allVisible = filteredSoftware.every(software => this.selectedSoftware.has(software.id));
-            const someSelected = filteredSoftware.some(software => this.selectedSoftware.has(software.id));
-            
-            selectAllCheckbox.checked = allVisible;
+            selectAllCheckbox.checked = allVisible && currentPageSoftware.length > 0;
             selectAllCheckbox.indeterminate = someSelected && !allVisible;
         }
 
         this.updateBulkActionsUI();
+    }
+
+    // Méthode de changement de page
+    changePage(page) {
+        this.currentPage = page;
+        window.paginationUtils?.savePage('software', page);
+        this.renderSoftwareTable();
+        document.getElementById('software-table-container')?.scrollIntoView({ behavior: 'smooth' });
     }
 
     updateBulkActionsUI() {

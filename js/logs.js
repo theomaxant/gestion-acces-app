@@ -5,7 +5,7 @@
 class LogsManager {
     constructor() {
         this.currentPage = 1;
-        this.itemsPerPage = 20;
+        this.itemsPerPage = 100; // Utiliser 100 comme les autres tables
         this.currentFilters = {};
         this.logs = [];
         this.totalLogs = 0;
@@ -327,6 +327,11 @@ class LogsManager {
             });
             
             this.showLoading(true);
+            
+            // Récupérer la page sauvegardée au premier chargement
+            if (this.currentPage === 1) {
+                this.currentPage = window.paginationUtils?.getSavedPage('logs') || 1;
+            }
             
             // Vérifier que window.logger existe
             if (!window.logger) {
@@ -678,50 +683,28 @@ class LogsManager {
     }
     
     /**
+     * Méthode de changement de page
+     */
+    changePage(page) {
+        this.currentPage = page;
+        window.paginationUtils?.savePage('logs', page);
+        this.loadLogs();
+        document.getElementById('logs-list')?.scrollIntoView({ behavior: 'smooth' });
+    }
+
+    /**
      * Afficher la pagination
      */
     displayPagination() {
-        const container = document.getElementById('logs-pagination');
-        const totalPages = Math.ceil(this.totalLogs / this.itemsPerPage);
-        
-        if (totalPages <= 1) {
-            container.innerHTML = '';
-            return;
+        // Utiliser notre système de pagination uniforme
+        if (window.paginationUtils) {
+            window.paginationUtils.renderPaginationControls(
+                this.totalLogs,
+                this.currentPage,
+                'logs-pagination',
+                'window.logsManager.changePage'
+            );
         }
-        
-        let html = '<div class="flex items-center justify-between">';
-        
-        // Informations
-        const start = (this.currentPage - 1) * this.itemsPerPage + 1;
-        const end = Math.min(this.currentPage * this.itemsPerPage, this.totalLogs);
-        html += `<div class="text-sm text-gray-700">Affichage de ${start} à ${end} sur ${this.totalLogs} entrées</div>`;
-        
-        // Boutons de pagination
-        html += '<div class="flex space-x-2">';
-        
-        if (this.currentPage > 1) {
-            html += `<button class="pagination-btn px-3 py-1 border rounded hover:bg-gray-50" data-page="${this.currentPage - 1}">Précédent</button>`;
-        }
-        
-        for (let i = Math.max(1, this.currentPage - 2); i <= Math.min(totalPages, this.currentPage + 2); i++) {
-            const active = i === this.currentPage ? 'bg-blue-600 text-white' : 'hover:bg-gray-50';
-            html += `<button class="pagination-btn px-3 py-1 border rounded ${active}" data-page="${i}">${i}</button>`;
-        }
-        
-        if (this.currentPage < totalPages) {
-            html += `<button class="pagination-btn px-3 py-1 border rounded hover:bg-gray-50" data-page="${this.currentPage + 1}">Suivant</button>`;
-        }
-        
-        html += '</div></div>';
-        container.innerHTML = html;
-        
-        // Ajouter les événements
-        container.querySelectorAll('.pagination-btn').forEach(btn => {
-            btn.addEventListener('click', (e) => {
-                this.currentPage = parseInt(e.target.dataset.page);
-                this.loadLogs();
-            });
-        });
     }
     
     /**
@@ -737,6 +720,7 @@ class LogsManager {
         };
         
         this.currentPage = 1;
+        window.paginationUtils?.savePage('logs', 1);
         this.loadLogs();
     }
     
