@@ -1,0 +1,239 @@
+/**
+ * 🎨 Styles pour la Documentation des Processus
+ * Améliore l'affichage du contenu Markdown
+ */
+
+/* === CONTENEUR PRINCIPAL === */
+.process-document {
+    font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+    line-height: 1.6;
+    color: #374151;
+}
+
+/* === TYPOGRAPHIE === */
+.process-content h1 {
+    @apply text-3xl font-bold mb-6 mt-8 text-gray-900 border-b border-gray-200 pb-3;
+}
+
+.process-content h2 {
+    @apply text-2xl font-semibold mb-4 mt-8 text-gray-800;
+    position: relative;
+}
+
+.process-content h2::before {
+    content: '';
+    position: absolute;
+    left: -16px;
+    top: 50%;
+    transform: translateY(-50%);
+    width: 4px;
+    height: 20px;
+    background-color: #3B82F6;
+    border-radius: 2px;
+}
+
+.process-content h3 {
+    @apply text-xl font-medium mb-3 mt-6 text-gray-700;
+}
+
+.process-content h4 {
+    @apply text-lg font-medium mb-2 mt-4 text-gray-700;
+}
+
+.process-content p {
+    @apply mb-4 text-gray-700 leading-relaxed;
+}
+
+/* === LISTES === */
+.process-content ul {
+    @apply list-disc list-inside mb-6 space-y-2;
+    padding-left: 1.25rem;
+}
+
+.process-content ol {
+    @apply list-decimal list-inside mb-6 space-y-2;
+    padding-left: 1.25rem;
+}
+
+.process-content li {
+    @apply text-gray-700 leading-relaxed;
+    position: relative;
+}
+
+.process-content li::marker {
+    color: #6B7280;
+    font-weight: 600;
+}
+
+/* === CODE === */
+.process-content code {
+    @apply bg-gray-100 px-2 py-1 rounded text-sm font-mono text-gray-800;
+    border: 1px solid #E5E7EB;
+}
+
+.process-content pre {
+    @apply bg-gray-50 p-4 rounded-lg overflow-x-auto mb-6 border border-gray-200;
+}
+
+.process-content pre code {
+    @apply bg-transparent p-0 border-0 text-sm font-mono text-gray-800;
+}
+
+/* === TABLEAUX === */
+.process-content table {
+    @apply w-full mb-6 border-collapse;
+}
+
+.process-content th,
+.process-content td {
+    @apply border border-gray-200 px-4 py-2 text-left;
+}
+
+.process-content th {
+    @apply bg-gray-50 font-semibold text-gray-900;
+}
+
+.process-content tr:hover {
+    @apply bg-gray-50;
+}
+
+/* === EMPHASES === */
+.process-content strong {
+    @apply font-semibold text-gray-900;
+}
+
+.process-content em {
+    @apply italic text-gray-700;
+}
+
+/* === CITATIONS === */
+.process-content blockquote {
+    @apply border-l-4 border-blue-400 pl-4 py-2 mb-6 bg-blue-50 text-gray-700 italic;
+}
+
+/* === LIENS === */
+.process-content a {
+    @apply text-blue-600 hover:text-blue-800 underline transition-colors;
+}
+
+/* === BADGES ET ALERTES === */
+.process-content .badge {
+    @apply inline-block px-2 py-1 text-xs font-semibold rounded-full;
+}
+
+.process-content .badge-success {
+    @apply bg-green-100 text-green-800;
+}
+
+.process-content .badge-warning {
+    @apply bg-yellow-100 text-yellow-800;
+}
+
+.process-content .badge-error {
+    @apply bg-red-100 text-red-800;
+}
+
+.process-content .badge-info {
+    @apply bg-blue-100 text-blue-800;
+}
+
+/* === SÉPARATEURS === */
+.process-content hr {
+    @apply border-0 border-t border-gray-300 my-8;
+}
+
+/* === IMAGES === */
+.process-content img {
+    @apply max-w-full h-auto rounded-lg shadow-sm border border-gray-200 mb-6;
+}
+
+/* === BOUTONS DE MENU === */
+.process-menu-btn {
+    transition: all 0.2s ease-in-out;
+}
+
+.process-menu-btn:hover {
+    transform: translateY(-2px);
+}
+
+.process-menu-btn.active {
+    transform: translateY(-2px);
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
+}
+
+/* === ANIMATIONS === */
+@keyframes fadeIn {
+    from { opacity: 0; transform: translateY(20px); }
+    to { opacity: 1; transform: translateY(0); }
+}
+
+.process-content {
+    animation: fadeIn 0.5s ease-out;
+}
+
+/* === RESPONSIVITÉ === */
+@media (max-width: 768px) {
+    .process-content h1 {
+        @apply text-2xl;
+    }
+    
+    .process-content h2 {
+        @apply text-xl;
+    }
+    
+    .process-content h3 {
+        @apply text-lg;
+    }
+    
+    .process-content pre {
+        @apply text-xs;
+    }
+    
+    .process-menu-btn span {
+        font-size: 10px;
+    }
+}
+
+/* === UTILITAIRES POUR LE MARKDOWN === */
+.process-content .emoji {
+    font-size: 1.2em;
+    margin-right: 0.25rem;
+}
+
+.process-content .highlight {
+    @apply bg-yellow-200 px-1 rounded;
+}
+
+.process-content .note {
+    @apply bg-blue-50 border-l-4 border-blue-400 p-4 mb-6;
+}
+
+.process-content .warning {
+    @apply bg-yellow-50 border-l-4 border-yellow-400 p-4 mb-6;
+}
+
+.process-content .error {
+    @apply bg-red-50 border-l-4 border-red-400 p-4 mb-6;
+}
+
+.process-content .success {
+    @apply bg-green-50 border-l-4 border-green-400 p-4 mb-6;
+}
+
+/* === STATISTIQUES EN PIED DE PAGE === */
+.process-stats {
+    @apply text-xs text-gray-500 bg-gray-50 px-3 py-2 rounded-lg inline-block;
+}
+
+/* === NAVIGATION ENTRE PROCESSUS === */
+.process-navigation {
+    @apply flex justify-between items-center mt-8 pt-6 border-t border-gray-200;
+}
+
+.process-nav-btn {
+    @apply px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors;
+}
+
+.process-nav-btn:disabled {
+    @apply bg-gray-400 cursor-not-allowed;
+}
