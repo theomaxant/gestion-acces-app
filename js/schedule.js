@@ -13,21 +13,35 @@ class ScheduleManager {
     }
 
     setupEventListeners() {
-        document.getElementById('prev-month-btn')?.addEventListener('click', () => {
-            // Navigation plus robuste : créer une nouvelle date
-            const newDate = new Date(this.currentDate.getFullYear(), this.currentDate.getMonth() - 1, 1);
-            this.currentDate = newDate;
-            this.renderCalendar();
-            this.renderMonthlyBlocks(); // Mettre à jour aussi les blocs mensuels
-        });
+        // Utiliser une référence stable à this pour éviter les problèmes de contexte
+        const self = this;
+        
+        const prevBtn = document.getElementById('prev-month-btn');
+        const nextBtn = document.getElementById('next-month-btn');
+        
+        if (prevBtn) {
+            prevBtn.addEventListener('click', function() {
+                // Navigation précédente d'exactement 1 mois
+                const currentYear = self.currentDate.getFullYear();
+                const currentMonth = self.currentDate.getMonth();
+                self.currentDate = new Date(currentYear, currentMonth - 1, 1);
+                
+                self.renderCalendar();
+                self.renderMonthlyBlocks();
+            });
+        }
 
-        document.getElementById('next-month-btn')?.addEventListener('click', () => {
-            // Navigation plus robuste : créer une nouvelle date
-            const newDate = new Date(this.currentDate.getFullYear(), this.currentDate.getMonth() + 1, 1);
-            this.currentDate = newDate;
-            this.renderCalendar();
-            this.renderMonthlyBlocks(); // Mettre à jour aussi les blocs mensuels
-        });
+        if (nextBtn) {
+            nextBtn.addEventListener('click', function() {
+                // Navigation suivante d'exactement 1 mois  
+                const currentYear = self.currentDate.getFullYear();
+                const currentMonth = self.currentDate.getMonth();
+                self.currentDate = new Date(currentYear, currentMonth + 1, 1);
+                
+                self.renderCalendar();
+                self.renderMonthlyBlocks();
+            });
+        }
     }
 
     async loadData() {
@@ -186,9 +200,9 @@ class ScheduleManager {
             'Juillet', 'Août', 'Septembre', 'Octobre', 'Novembre', 'Décembre'
         ];
 
-        // Utiliser currentDate au lieu de today pour afficher les 3 mois relatifs à la navigation
+        // Afficher : mois courant, mois +1, mois +2 (séquence future)
         for (let i = 0; i < 3; i++) {
-            // Navigation plus robuste : créer une nouvelle date pour éviter les problèmes de jours du mois
+            // i=0: mois courant (0), i=1: mois suivant (+1), i=2: mois +2 (+2)
             const targetDate = new Date(this.currentDate.getFullYear(), this.currentDate.getMonth() + i, 1);
             
             const monthData = this.calculateMonthlyPayments(targetDate.getMonth(), targetDate.getFullYear());
@@ -198,9 +212,13 @@ class ScheduleManager {
                 const monthName = monthNames[targetDate.getMonth()];
                 const year = targetDate.getFullYear();
                 
+                // Ajouter des indicateurs pour clarifier la position temporelle
+                const indicators = ['• Courant', 'Mois +1', 'Mois +2'];
+                const indicator = indicators[i];
+                
                 block.querySelector('h3').textContent = `${monthName} ${year}`;
                 block.querySelector('.text-3xl').textContent = `${monthData.total.toFixed(2)}€`;
-                block.querySelector('.text-sm').textContent = `${monthData.payments.length} paiement${monthData.payments.length > 1 ? 's' : ''}`;
+                block.querySelector('.text-sm').textContent = `${monthData.payments.length} paiement${monthData.payments.length > 1 ? 's' : ''} ${indicator}`;
             }
         }
     }
