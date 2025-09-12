@@ -312,20 +312,43 @@ class AccessManagementApp {
 
     async calculateTotalCost() {
         try {
-            const [accessResult, costsResult, droitsResult] = await Promise.all([
+            const [accessResult, costsResult, droitsResult, softwareResult, usersResult] = await Promise.all([
                 window.D1API.get('acces'),
                 window.D1API.get('couts_licences'),
-                window.D1API.get('droits')
+                window.D1API.get('droits'),
+                window.D1API.get('logiciels'),
+                window.D1API.get('utilisateurs')
             ]);
 
             const access = accessResult.data || [];
             const costs = costsResult.data || [];
             const droits = droitsResult.data || [];
+            const software = (softwareResult.data || []).filter(s => !s.archived);
+            const users = (usersResult.data || []).filter(u => !u.archived);
             
             let totalCost = 0;
+            const processedFixedCosts = new Set(); // Pour éviter de compter plusieurs fois les coûts fixes
             const processedSharedAccess = new Set(); // Pour éviter de compter plusieurs fois les accès communs
 
+            // 1. Ajouter les coûts fixes des logiciels
+            software.forEach(soft => {
+                if (soft.cout_fixe && soft.cout_fixe_mensuel && !processedFixedCosts.has(soft.id)) {
+                    totalCost += soft.cout_fixe_mensuel;
+                    processedFixedCosts.add(soft.id);
+                }
+            });
+
+            // 2. Ajouter les coûts basés sur les accès (seulement pour les logiciels NON à coût fixe)
             for (const acc of access) {
+                const soft = software.find(s => s.id === acc.logiciel_id);
+                
+                // Ignorer si le logiciel a un coût fixe (déjà compté ci-dessus)
+                if (soft && soft.cout_fixe) continue;
+                
+                // Vérifier que l'utilisateur est actif
+                const user = users.find(u => u.id === acc.utilisateur_id);
+                if (!user) continue;
+
                 const cost = costs.find(c => c.logiciel_id === acc.logiciel_id && c.droit_id === acc.droit_id);
                 if (cost) {
                     // Pour les accès communs, ne compter qu'une fois par logiciel
@@ -422,12 +445,13 @@ class AccessManagementApp {
 
     async loadTeamStats() {
         try {
-            const [teamsResult, usersResult, accessResult, costsResult, droitsResult] = await Promise.all([
+            const [teamsResult, usersResult, accessResult, costsResult, droitsResult, softwareResult] = await Promise.all([
                 window.D1API.get('equipes'),
                 window.D1API.get('utilisateurs'),
                 window.D1API.get('acces'),
                 window.D1API.get('couts_licences'),
-                window.D1API.get('droits')
+                window.D1API.get('droits'),
+                window.D1API.get('logiciels')
             ]);
 
             const teams = (teamsResult.data || []).filter(t => !t.archived);
@@ -435,6 +459,7 @@ class AccessManagementApp {
             const access = accessResult.data || [];
             const costs = costsResult.data || [];
             const droits = droitsResult.data || [];
+            const software = (softwareResult.data || []).filter(s => !s.archived);
 
             const container = document.getElementById('team-stats-container');
             if (!container) return;
@@ -447,8 +472,25 @@ class AccessManagementApp {
                 // Calculer le coût total de l'équipe
                 let totalCost = 0;
                 const processedShared = new Set();
+                const processedFixedCosts = new Set();
                 
+                // 1. Ajouter les coûts fixes des logiciels utilisés par l'équipe
+                const teamSoftwareIds = [...new Set(teamAccess.map(acc => acc.logiciel_id))];
+                teamSoftwareIds.forEach(softwareId => {
+                    const soft = software.find(s => s.id === softwareId);
+                    if (soft && soft.cout_fixe && soft.cout_fixe_mensuel && !processedFixedCosts.has(softwareId)) {
+                        totalCost += soft.cout_fixe_mensuel;
+                        processedFixedCosts.add(softwareId);
+                    }
+                });
+                
+                // 2. Ajouter les coûts basés sur les accès (seulement pour les logiciels NON à coût fixe)
                 for (const acc of teamAccess) {
+                    const soft = software.find(s => s.id === acc.logiciel_id);
+                    
+                    // Ignorer si le logiciel a un coût fixe (déjà compté ci-dessus)
+                    if (soft && soft.cout_fixe) continue;
+                    
                     const cost = costs.find(c => c.logiciel_id === acc.logiciel_id && c.droit_id === acc.droit_id);
                     const droit = droits.find(d => d.id === acc.droit_id);
                     
@@ -637,24 +679,33 @@ class AccessManagementApp {
             const droits = droitsResult.data || [];
 
             const softwareCosts = {};
+            const processedFixedCosts = new Set();
             
             for (const soft of software) {
                 softwareCosts[soft.id] = 0;
-                const softwareAccess = access.filter(a => a.logiciel_id === soft.id);
-                const processedShared = new Set();
                 
-                for (const acc of softwareAccess) {
-                    const cost = costs.find(c => c.logiciel_id === acc.logiciel_id && c.droit_id === acc.droit_id);
-                    if (cost) {
-                        const droit = droits.find(d => d.id === acc.droit_id);
-                        if (droit && droit.nom === 'Accès communs') {
-                            const sharedKey = `${acc.logiciel_id}_${acc.droit_id}`;
-                            if (!processedShared.has(sharedKey)) {
+                // D'abord, vérifier si c'est un logiciel à coût fixe
+                if (soft.cout_fixe && soft.cout_fixe_mensuel && !processedFixedCosts.has(soft.id)) {
+                    softwareCosts[soft.id] = soft.cout_fixe_mensuel;
+                    processedFixedCosts.add(soft.id);
+                } else {
+                    // Calcul basé sur les accès pour les logiciels non-fixes
+                    const softwareAccess = access.filter(a => a.logiciel_id === soft.id);
+                    const processedShared = new Set();
+                    
+                    for (const acc of softwareAccess) {
+                        const cost = costs.find(c => c.logiciel_id === acc.logiciel_id && c.droit_id === acc.droit_id);
+                        if (cost) {
+                            const droit = droits.find(d => d.id === acc.droit_id);
+                            if (droit && droit.nom === 'Accès communs') {
+                                const sharedKey = `${acc.logiciel_id}_${acc.droit_id}`;
+                                if (!processedShared.has(sharedKey)) {
+                                    softwareCosts[soft.id] += cost.cout_mensuel;
+                                    processedShared.add(sharedKey);
+                                }
+                            } else {
                                 softwareCosts[soft.id] += cost.cout_mensuel;
-                                processedShared.add(sharedKey);
                             }
-                        } else {
-                            softwareCosts[soft.id] += cost.cout_mensuel;
                         }
                     }
                 }
@@ -807,12 +858,13 @@ class AccessManagementApp {
         console.log('Chargement du graphique des coûts par équipe...');
 
         try {
-            const [teamsResult, usersResult, accessResult, costsResult, droitsResult] = await Promise.all([
+            const [teamsResult, usersResult, accessResult, costsResult, droitsResult, softwareResult] = await Promise.all([
                 window.D1API.get('equipes'),
                 window.D1API.get('utilisateurs'),
                 window.D1API.get('acces'),
                 window.D1API.get('couts_licences'),
-                window.D1API.get('droits')
+                window.D1API.get('droits'),
+                window.D1API.get('logiciels')
             ]);
 
             const teams = (teamsResult.data || []).filter(t => !t.archived);
@@ -820,18 +872,58 @@ class AccessManagementApp {
             const access = accessResult.data || [];
             const costs = costsResult.data || [];
             const droits = droitsResult.data || [];
+            const software = (softwareResult.data || []).filter(s => !s.archived);
 
             const teamCosts = {};
+            const processedFixedCosts = new Set();
             
+            // D'abord, répartir les coûts fixes entre les équipes qui utilisent chaque logiciel
+            for (const soft of software) {
+                if (soft.cout_fixe && soft.cout_fixe_mensuel && !processedFixedCosts.has(soft.id)) {
+                    // Trouver toutes les équipes qui ont des utilisateurs ayant accès à ce logiciel
+                    const teamsUsingThisSoftware = new Set();
+                    const softwareAccess = access.filter(a => a.logiciel_id === soft.id);
+                    
+                    for (const acc of softwareAccess) {
+                        const user = users.find(u => u.id === acc.utilisateur_id);
+                        if (user && user.equipe_id) {
+                            const team = teams.find(t => t.id === user.equipe_id);
+                            if (team) {
+                                teamsUsingThisSoftware.add(team.nom);
+                            }
+                        }
+                    }
+                    
+                    // Répartir le coût fixe entre les équipes utilisatrices
+                    if (teamsUsingThisSoftware.size > 0) {
+                        const costPerTeam = soft.cout_fixe_mensuel / teamsUsingThisSoftware.size;
+                        for (const teamName of teamsUsingThisSoftware) {
+                            if (!teamCosts[teamName]) teamCosts[teamName] = 0;
+                            teamCosts[teamName] += costPerTeam;
+                        }
+                    }
+                    processedFixedCosts.add(soft.id);
+                }
+            }
+
+            // Ensuite, calculer les coûts basés sur les accès pour les logiciels non-fixes
             for (const team of teams) {
+                if (!teamCosts[team.nom]) teamCosts[team.nom] = 0;
+                
                 const teamUsers = users.filter(u => u.equipe_id === team.id);
                 const teamUserIds = teamUsers.map(u => u.id);
                 const teamAccess = access.filter(a => teamUserIds.includes(a.utilisateur_id));
                 
-                let totalCost = 0;
+                let accessBasedCost = 0;
                 const processedShared = new Set();
                 
                 for (const acc of teamAccess) {
+                    // Vérifier que ce n'est pas un logiciel à coût fixe
+                    const soft = software.find(s => s.id === acc.logiciel_id);
+                    if (soft && soft.cout_fixe && soft.cout_fixe_mensuel) {
+                        continue; // Ignorer, déjà traité dans la répartition des coûts fixes
+                    }
+                    
                     const cost = costs.find(c => c.logiciel_id === acc.logiciel_id && c.droit_id === acc.droit_id);
                     const droit = droits.find(d => d.id === acc.droit_id);
                     
@@ -839,16 +931,16 @@ class AccessManagementApp {
                         if (droit && droit.nom === 'Accès communs') {
                             const sharedKey = `${acc.logiciel_id}_${acc.droit_id}`;
                             if (!processedShared.has(sharedKey)) {
-                                totalCost += cost.cout_mensuel;
+                                accessBasedCost += cost.cout_mensuel;
                                 processedShared.add(sharedKey);
                             }
                         } else {
-                            totalCost += cost.cout_mensuel;
+                            accessBasedCost += cost.cout_mensuel;
                         }
                     }
                 }
                 
-                teamCosts[team.nom] = totalCost;
+                teamCosts[team.nom] += accessBasedCost;
             }
 
             const labels = Object.keys(teamCosts);
@@ -999,32 +1091,37 @@ class AccessManagementApp {
             const costs = costsResult.data || [];
             const droits = droitsResult.data || [];
             
-            // Calculer le coût annuel pour chaque logiciel basé sur les accès et la périodicité
+            // Calculer le coût annuel pour chaque logiciel
             const softwareWithCosts = software.map(s => {
-                const softwareAccess = access.filter(a => a.logiciel_id === s.id);
-                
-                // Calculer le coût mensuel total basé sur les accès
                 let totalMonthlyCost = 0;
-                const processedShared = new Set();
                 
-                softwareAccess.forEach(acc => {
-                    const cost = costs.find(c => c.logiciel_id === acc.logiciel_id && c.droit_id === acc.droit_id);
-                    const droit = droits.find(d => d.id === acc.droit_id);
+                // Si le logiciel a un coût fixe, utiliser ce coût
+                if (s.cout_fixe && s.cout_fixe_mensuel) {
+                    totalMonthlyCost = s.cout_fixe_mensuel;
+                } else {
+                    // Sinon, calculer basé sur les accès
+                    const softwareAccess = access.filter(a => a.logiciel_id === s.id);
+                    const processedShared = new Set();
                     
-                    if (cost) {
-                        const monthlyCost = cost.cout_mensuel || 0;
+                    softwareAccess.forEach(acc => {
+                        const cost = costs.find(c => c.logiciel_id === acc.logiciel_id && c.droit_id === acc.droit_id);
+                        const droit = droits.find(d => d.id === acc.droit_id);
                         
-                        if (droit && droit.nom === 'Accès communs') {
-                            const sharedKey = `${acc.logiciel_id}_${acc.droit_id}`;
-                            if (!processedShared.has(sharedKey)) {
+                        if (cost) {
+                            const monthlyCost = cost.cout_mensuel || 0;
+                            
+                            if (droit && droit.nom === 'Accès communs') {
+                                const sharedKey = `${acc.logiciel_id}_${acc.droit_id}`;
+                                if (!processedShared.has(sharedKey)) {
+                                    totalMonthlyCost += monthlyCost;
+                                    processedShared.add(sharedKey);
+                                }
+                            } else {
                                 totalMonthlyCost += monthlyCost;
-                                processedShared.add(sharedKey);
                             }
-                        } else {
-                            totalMonthlyCost += monthlyCost;
                         }
-                    }
-                });
+                    });
+                }
                 
                 return {
                     ...s,
@@ -1061,27 +1158,39 @@ class AccessManagementApp {
             const software = (softwareResult.data || []).filter(s => !s.archived);
             const droits = droitsResult.data || [];
             
-            // Calculer le coût annuel par utilisateur basé sur les accès
+            // Calculer le coût annuel par utilisateur
             const usersWithCosts = users.map(user => {
                 const userAccess = access.filter(a => a.utilisateur_id === user.id);
                 let totalMonthlyCost = 0;
                 const processedShared = new Set();
+                const processedFixedCosts = new Set();
                 
                 userAccess.forEach(acc => {
-                    const cost = costs.find(c => c.logiciel_id === acc.logiciel_id && c.droit_id === acc.droit_id);
-                    const droit = droits.find(d => d.id === acc.droit_id);
+                    const soft = software.find(s => s.id === acc.logiciel_id);
                     
-                    if (cost) {
-                        const monthlyCost = cost.cout_mensuel || 0;
+                    // Si le logiciel a un coût fixe, ne compter qu'une fois par logiciel
+                    if (soft && soft.cout_fixe && soft.cout_fixe_mensuel) {
+                        if (!processedFixedCosts.has(soft.id)) {
+                            totalMonthlyCost += soft.cout_fixe_mensuel;
+                            processedFixedCosts.add(soft.id);
+                        }
+                    } else {
+                        // Logique habituelle pour les coûts basés sur les accès
+                        const cost = costs.find(c => c.logiciel_id === acc.logiciel_id && c.droit_id === acc.droit_id);
+                        const droit = droits.find(d => d.id === acc.droit_id);
                         
-                        if (droit && droit.nom === 'Accès communs') {
-                            const sharedKey = `${acc.logiciel_id}_${acc.droit_id}`;
-                            if (!processedShared.has(sharedKey)) {
+                        if (cost) {
+                            const monthlyCost = cost.cout_mensuel || 0;
+                            
+                            if (droit && droit.nom === 'Accès communs') {
+                                const sharedKey = `${acc.logiciel_id}_${acc.droit_id}`;
+                                if (!processedShared.has(sharedKey)) {
+                                    totalMonthlyCost += monthlyCost;
+                                    processedShared.add(sharedKey);
+                                }
+                            } else {
                                 totalMonthlyCost += monthlyCost;
-                                processedShared.add(sharedKey);
                             }
-                        } else {
-                            totalMonthlyCost += monthlyCost;
                         }
                     }
                 });
@@ -1199,30 +1308,35 @@ class AccessManagementApp {
 
             // Calculer le coût total pour chaque logiciel basé sur les accès et la périodicité
             const softwareWithCosts = software.map(s => {
-                const softwareAccess = access.filter(a => a.logiciel_id === s.id);
-                
-                // Calculer le coût mensuel total basé sur les accès
                 let totalMonthlyCost = 0;
-                const processedShared = new Set();
                 
-                softwareAccess.forEach(acc => {
-                    const cost = costs.find(c => c.logiciel_id === acc.logiciel_id && c.droit_id === acc.droit_id);
-                    const droit = droits.find(d => d.id === acc.droit_id);
+                // D'abord, vérifier si c'est un logiciel à coût fixe
+                if (s.cout_fixe && s.cout_fixe_mensuel) {
+                    totalMonthlyCost = s.cout_fixe_mensuel;
+                } else {
+                    // Calcul basé sur les accès pour les logiciels non-fixes
+                    const softwareAccess = access.filter(a => a.logiciel_id === s.id);
+                    const processedShared = new Set();
                     
-                    if (cost) {
-                        const monthlyCost = cost.cout_mensuel || 0;
+                    softwareAccess.forEach(acc => {
+                        const cost = costs.find(c => c.logiciel_id === acc.logiciel_id && c.droit_id === acc.droit_id);
+                        const droit = droits.find(d => d.id === acc.droit_id);
                         
-                        if (droit && droit.nom === 'Accès communs') {
-                            const sharedKey = `${acc.logiciel_id}_${acc.droit_id}`;
-                            if (!processedShared.has(sharedKey)) {
+                        if (cost) {
+                            const monthlyCost = cost.cout_mensuel || 0;
+                            
+                            if (droit && droit.nom === 'Accès communs') {
+                                const sharedKey = `${acc.logiciel_id}_${acc.droit_id}`;
+                                if (!processedShared.has(sharedKey)) {
+                                    totalMonthlyCost += monthlyCost;
+                                    processedShared.add(sharedKey);
+                                }
+                            } else {
                                 totalMonthlyCost += monthlyCost;
-                                processedShared.add(sharedKey);
                             }
-                        } else {
-                            totalMonthlyCost += monthlyCost;
                         }
-                    }
-                });
+                    });
+                }
                 
                 return {
                     ...s,

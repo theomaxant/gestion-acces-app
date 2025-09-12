@@ -14,13 +14,17 @@ class ScheduleManager {
 
     setupEventListeners() {
         document.getElementById('prev-month-btn')?.addEventListener('click', () => {
-            this.currentDate.setMonth(this.currentDate.getMonth() - 1);
+            // Navigation plus robuste : créer une nouvelle date
+            const newDate = new Date(this.currentDate.getFullYear(), this.currentDate.getMonth() - 1, 1);
+            this.currentDate = newDate;
             this.renderCalendar();
             this.renderMonthlyBlocks(); // Mettre à jour aussi les blocs mensuels
         });
 
         document.getElementById('next-month-btn')?.addEventListener('click', () => {
-            this.currentDate.setMonth(this.currentDate.getMonth() + 1);
+            // Navigation plus robuste : créer une nouvelle date
+            const newDate = new Date(this.currentDate.getFullYear(), this.currentDate.getMonth() + 1, 1);
+            this.currentDate = newDate;
             this.renderCalendar();
             this.renderMonthlyBlocks(); // Mettre à jour aussi les blocs mensuels
         });
@@ -298,11 +302,24 @@ class ScheduleManager {
             `;
         }
         
+        if (payment.type === 'shopify_group') {
+            return `
+                <div class="text-xs bg-orange-100 text-orange-800 p-1 rounded truncate border border-orange-200" 
+                     title="🛒 Applications Shopify groupées: ${payment.shopifyApps} - ${payment.amount.toFixed(2)}€ total">
+                    <div class="font-medium truncate flex items-center">
+                        <span class="text-orange-600 mr-1">🛒</span>
+                        ${payment.software}
+                    </div>
+                    <div class="text-xs opacity-75">${payment.amount.toFixed(2)}€ total</div>
+                </div>
+            `;
+        }
+        
         const colors = this.getPeriodicityColor(payment.periodicity);
         return `
             <div class="text-xs ${colors.bg} ${colors.text} p-1 rounded truncate border ${colors.border}" 
-                 title="${payment.software} - ${payment.amount.toFixed(2)}€ (${payment.periodicity})">
-                <div class="font-medium truncate">${payment.software}</div>
+                 title="${payment.software} - ${payment.amount.toFixed(2)}€ (${payment.periodicity})${payment.isShopify ? ' - 🛒 Shopify' : ''}">
+                <div class="font-medium truncate">${payment.isShopify ? '🛒 ' : ''}${payment.software}</div>
                 <div class="text-xs opacity-75">${payment.amount.toFixed(2)}€</div>
             </div>
         `;
@@ -333,6 +350,7 @@ class ScheduleManager {
 
     getPaymentsForDate(date) {
         const payments = [];
+        const shopifyPayments = [];
         
         this.software.forEach(software => {
             // Ne traiter que les logiciels avec des coûts > 0
@@ -341,10 +359,39 @@ class ScheduleManager {
             const dayPayments = this.getPaymentsInMonth(software, date.getMonth(), date.getFullYear());
             dayPayments.forEach(payment => {
                 if (payment.date.getDate() === date.getDate() && payment.amount > 0) {
-                    payments.push(payment);
+                    // Ajouter l'info Shopify au paiement
+                    payment.isShopify = software.application_shopify || false;
+                    
+                    if (payment.isShopify) {
+                        shopifyPayments.push(payment);
+                    } else {
+                        payments.push(payment);
+                    }
                 }
             });
         });
+        
+        // Regrouper les paiements Shopify s'il y en a plusieurs
+        if (shopifyPayments.length > 0) {
+            if (shopifyPayments.length === 1) {
+                // Un seul logiciel Shopify, l'ajouter normalement
+                payments.push(shopifyPayments[0]);
+            } else {
+                // Plusieurs logiciels Shopify, créer un bloc groupé
+                const totalShopifyAmount = shopifyPayments.reduce((sum, payment) => sum + payment.amount, 0);
+                const shopifyNames = shopifyPayments.map(p => p.software).join(', ');
+                
+                payments.push({
+                    type: 'shopify_group',
+                    date: date,
+                    amount: totalShopifyAmount,
+                    software: `🛒 Apps Shopify (${shopifyPayments.length})`,
+                    periodicity: 'grouped',
+                    shopifyApps: shopifyNames,
+                    count: shopifyPayments.length
+                });
+            }
+        }
         
         // Ajouter les alertes de résiliation
         const cancellationAlerts = this.getCancellationAlertsForDate(date);

@@ -129,11 +129,11 @@ class AccessManager {
                         </tr>
                     </thead>
                     <tbody class="bg-white divide-y divide-gray-200">
-                        ${displayAccess.map(access => this.renderAccessRow(access)).join('')}
+                        ${this.access.map(access => this.renderAccessRow(access)).join('')}
                     </tbody>
                 </table>
             </div>
-            ${displayAccess.length === 0 ? '<div class="text-center py-8 text-gray-500">Aucun accès trouvé</div>' : ''}
+            ${this.access.length === 0 ? '<div class="text-center py-8 text-gray-500">Aucun accès trouvé</div>' : ''}
         `;
 
         container.innerHTML = tableHtml;
