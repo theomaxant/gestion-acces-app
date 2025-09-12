@@ -1,7 +1,7 @@
 /* Styles pour la sélection multiple et actions en masse */
 
 /* Animation pour la barre d'actions en masse */
-#bulk-actions-bar {
+#bulk-actions-bar, #bulk-actions-bar-software {
     animation: slideUpFromBottom 0.3s ease-out;
     backdrop-filter: blur(10px);
     box-shadow: 0 10px 25px rgba(0, 0, 0, 0.2);
@@ -19,36 +19,36 @@
 }
 
 /* Effet de survol pour les lignes avec sélection */
-.user-checkbox:checked ~ * {
+.user-checkbox:checked ~ *, .software-checkbox:checked ~ * {
     background-color: rgba(59, 130, 246, 0.05) !important;
 }
 
-tbody tr:has(.user-checkbox:checked) {
+tbody tr:has(.user-checkbox:checked), tbody tr:has(.software-checkbox:checked) {
     background-color: rgba(59, 130, 246, 0.05) !important;
     border-left: 3px solid #3b82f6;
 }
 
 /* Mise en évidence des cases à cocher */
-.user-checkbox, #select-all-users {
+.user-checkbox, #select-all-users, .software-checkbox, #select-all-software {
     width: 16px;
     height: 16px;
     accent-color: #3b82f6;
 }
 
-.user-checkbox:checked, #select-all-users:checked {
+.user-checkbox:checked, #select-all-users:checked, .software-checkbox:checked, #select-all-software:checked {
     transform: scale(1.1);
     transition: transform 0.1s ease-in-out;
 }
 
-/* Style pour la case "sélectionner tout" en état indéterminé */
-#select-all-users:indeterminate {
+/* Style pour les cases "sélectionner tout" en état indéterminé */
+#select-all-users:indeterminate, #select-all-software:indeterminate {
     background-color: #3b82f6;
     background-image: url("data:image/svg+xml,%3csvg xmlns='http://www.w3.org/2000/svg' fill='none' viewBox='0 0 16 16'%3e%3cpath stroke='white' stroke-linecap='round' stroke-linejoin='round' stroke-width='2' d='M4 8h8'/%3e%3c/svg%3e");
 }
 
 /* Responsive pour la barre d'actions */
 @media (max-width: 768px) {
-    #bulk-actions-bar {
+    #bulk-actions-bar, #bulk-actions-bar-software {
         left: 1rem;
         right: 1rem;
         transform: none;
@@ -56,18 +56,19 @@ tbody tr:has(.user-checkbox:checked) {
         gap: 0.5rem;
     }
     
-    #bulk-actions-bar .flex.items-center.space-x-2 {
+    #bulk-actions-bar .flex.items-center.space-x-2,
+    #bulk-actions-bar-software .flex.items-center.space-x-2 {
         flex-wrap: wrap;
         justify-content: center;
     }
 }
 
 /* Animation pour les boutons d'action en masse */
-#bulk-actions-bar button {
+#bulk-actions-bar button, #bulk-actions-bar-software button {
     transition: all 0.2s ease-in-out;
 }
 
-#bulk-actions-bar button:hover {
+#bulk-actions-bar button:hover, #bulk-actions-bar-software button:hover {
     transform: translateY(-1px);
     box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
 }
