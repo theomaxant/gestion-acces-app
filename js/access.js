@@ -181,7 +181,17 @@ class AccessManager {
         const hasIssues = !user || !software || !droit || isUserArchived || isSoftwareArchived;
 
         let costDisplay = 'Non défini';
-        if (cost) {
+        
+        // Si le logiciel a un coût fixe, afficher ce coût global
+        if (software && software.cout_fixe && software.cout_fixe_mensuel) {
+            const monthlyCoût = software.cout_fixe_mensuel;
+            const annualCost = monthlyCoût * 12;
+            
+            costDisplay = `
+                <div class="text-sm font-medium text-purple-600">${annualCost.toFixed(2)}€</div>
+                <div class="text-xs text-gray-500">(${monthlyCoût.toFixed(2)}€/mois - coût fixe global)</div>
+            `;
+        } else if (cost) {
             const monthlyCoût = cost.cout_mensuel;
             const annualCost = monthlyCoût * 12;
             
@@ -510,19 +520,31 @@ class AccessManager {
         const userAccess = this.getAccessByUser(userId);
         let totalCost = 0;
         const processedShared = new Set();
+        const processedFixedCost = new Set();
 
         for (const acc of userAccess) {
-            const cost = this.costs.find(c => c.logiciel_id === acc.logiciel_id && c.droit_id === acc.droit_id);
-            if (cost) {
-                const droit = this.droits.find(d => d.id === acc.droit_id);
-                if (droit && droit.nom === 'Accès communs') {
-                    const sharedKey = `${acc.logiciel_id}_${acc.droit_id}`;
-                    if (!processedShared.has(sharedKey)) {
+            const software = this.software.find(s => s.id === acc.logiciel_id);
+            
+            // Si le logiciel a un coût fixe, ne compter qu'une fois par logiciel
+            if (software && software.cout_fixe && software.cout_fixe_mensuel) {
+                if (!processedFixedCost.has(software.id)) {
+                    totalCost += software.cout_fixe_mensuel;
+                    processedFixedCost.add(software.id);
+                }
+            } else {
+                // Logique habituelle pour les coûts basés sur les accès
+                const cost = this.costs.find(c => c.logiciel_id === acc.logiciel_id && c.droit_id === acc.droit_id);
+                if (cost) {
+                    const droit = this.droits.find(d => d.id === acc.droit_id);
+                    if (droit && droit.nom === 'Accès communs') {
+                        const sharedKey = `${acc.logiciel_id}_${acc.droit_id}`;
+                        if (!processedShared.has(sharedKey)) {
+                            totalCost += cost.cout_mensuel;
+                            processedShared.add(sharedKey);
+                        }
+                    } else {
                         totalCost += cost.cout_mensuel;
-                        processedShared.add(sharedKey);
                     }
-                } else {
-                    totalCost += cost.cout_mensuel;
                 }
             }
         }
@@ -531,6 +553,14 @@ class AccessManager {
     }
 
     calculateSoftwareCost(softwareId) {
+        const software = this.software.find(s => s.id === softwareId);
+        
+        // Si le logiciel a un coût fixe, retourner ce coût
+        if (software && software.cout_fixe && software.cout_fixe_mensuel) {
+            return software.cout_fixe_mensuel;
+        }
+        
+        // Sinon, logique habituelle basée sur les accès
         const softwareAccess = this.getAccessBySoftware(softwareId);
         let totalCost = 0;
         const processedShared = new Set();

@@ -246,6 +246,7 @@ class SoftwareManager {
                         ${engagementAlert && engagementAlert.isAlert ? '<span class="text-red-500 mr-2" title="' + engagementAlert.message + '">⚠️</span>' : ''}
                         <div class="text-sm font-medium text-gray-900">${software.nom}</div>
                         ${software.logiciel_de_base ? '<span class="ml-2 inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-blue-100 text-blue-800">Base</span>' : ''}
+                        ${software.cout_fixe ? '<span class="ml-2 inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-purple-100 text-purple-800">💰 Coût Fixe</span>' : ''}
                     </div>
                     ${software.description ? `<div class="text-xs text-gray-500 mt-1">${software.description}</div>` : ''}
                     ${engagementAlert && engagementAlert.isAlert ? `<div class="text-xs text-red-600 mt-1 font-medium">${engagementAlert.message}</div>` : ''}
@@ -300,7 +301,7 @@ class SoftwareManager {
                 </td>
                 <td class="hidden lg:table-cell px-3 sm:px-6 py-3 sm:py-4">
                     <div class="text-sm font-medium text-purple-600">${annualCost.toFixed(2)}€</div>
-                    <div class="text-xs text-gray-500">(${monthlyCost.toFixed(2)}€/mois)</div>
+                    <div class="text-xs text-gray-500">(${monthlyCost.toFixed(2)}€/mois${software.cout_fixe ? ' - fixe' : ''})</div>
                 </td>
                 <td class="px-3 sm:px-6 py-3 sm:py-4 text-right">
                     <div class="flex justify-end space-x-1 sm:space-x-2">
@@ -337,8 +338,8 @@ class SoftwareManager {
                             `<div class="text-xs text-red-600 font-medium mb-2">⚠️ ${engagementAlert.message}</div>` : ''
                         }
                         <div class="text-xs text-gray-600 mt-1">
-                            <div><strong>Coût mensuel:</strong> ${monthlyCost.toFixed(2)}€</div>
-                            <div><strong>Coût annuel:</strong> ${annualCost.toFixed(2)}€</div>
+                            <div><strong>Coût mensuel:</strong> ${monthlyCost.toFixed(2)}€${software.cout_fixe ? ' (fixe)' : ''}</div>
+                            <div><strong>Coût annuel:</strong> ${annualCost.toFixed(2)}€${software.cout_fixe ? ' (fixe)' : ''}</div>
                             <div><strong>Accès actifs:</strong> ${this.countActiveAccessForSoftware(software.id)}</div>
                             ${software.date_souscription ? `<div><strong>Souscrit le:</strong> ${new Date(software.date_souscription).toLocaleDateString('fr-FR')}</div>` : ''}
                             ${nextPayment ? `<div class="${nextPayment.color}"><strong>Prochain paiement:</strong> ${nextPayment.date}</div>` : ''}
@@ -458,6 +459,14 @@ class SoftwareManager {
                                 📋 Engagement contractuel
                             </label>
                         </div>
+                        <div class="flex items-center">
+                            <input type="checkbox" id="software-fixed-cost" 
+                                   class="h-4 w-4 text-purple-600 focus:ring-purple-500 border-gray-300 rounded"
+                                   onchange="toggleFixedCostFields()">
+                            <label for="software-fixed-cost" class="ml-2 block text-sm text-gray-700 font-medium">
+                                💰 Coût fixe (indépendant des accès)
+                            </label>
+                        </div>
                     </div>
                     
                     <!-- Champs d'engagement (conditionnels) -->
@@ -486,6 +495,41 @@ class SoftwareManager {
                             </div>
                         </div>
                     </div>
+                    
+                    <!-- Champs de coût fixe (conditionnels) -->
+                    <div id="fixed-cost-fields" class="space-y-4 border-l-4 border-purple-200 pl-4 bg-purple-50 p-4 rounded hidden">
+                        <div class="text-sm text-purple-800 font-medium mb-3">
+                            💰 Configuration du coût fixe mensuel
+                        </div>
+                        <div class="grid grid-cols-1 md:grid-cols-1 gap-4">
+                            <div>
+                                <label class="block text-sm font-medium text-gray-700 mb-1">
+                                    Coût mensuel fixe *
+                                    <span class="text-purple-500">●</span>
+                                </label>
+                                <div class="relative">
+                                    <input type="number" step="0.01" min="0" id="software-fixed-cost-amount" 
+                                           class="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-purple-500"
+                                           placeholder="0.00">
+                                    <div class="absolute inset-y-0 right-0 pr-3 flex items-center pointer-events-none">
+                                        <span class="text-gray-500 sm:text-sm">€ HT/mois</span>
+                                    </div>
+                                </div>
+                                <p class="text-xs text-gray-500 mt-1">Ce coût sera appliqué indépendamment du nombre d'utilisateurs ayant accès au logiciel</p>
+                            </div>
+                        </div>
+                        <div class="bg-purple-100 border border-purple-200 rounded-lg p-3">
+                            <div class="flex items-start">
+                                <i class="fas fa-info-circle text-purple-600 mt-0.5 mr-2"></i>
+                                <div class="text-sm text-purple-800">
+                                    <p class="font-medium mb-1">Mode coût fixe :</p>
+                                    <p>• Le coût ne dépend pas du nombre d'accès utilisateurs</p>
+                                    <p>• Idéal pour les licences globales ou forfaitaires</p>
+                                    <p>• Les coûts par type d'accès seront ignorés</p>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
                 </div>
             </form>
         `;
@@ -511,6 +555,8 @@ class SoftwareManager {
         const moyen_paiement = document.getElementById('software-payment-method').value;
         const periodicite = document.getElementById('software-periodicity').value;
         const date_souscription = document.getElementById('software-subscription-date').value;
+        const cout_fixe = document.getElementById('software-fixed-cost').checked;
+        const cout_fixe_mensuel = document.getElementById('software-fixed-cost-amount').value;
 
         // Validation des champs obligatoires
         if (!nom) {
@@ -552,6 +598,15 @@ class SoftwareManager {
             return;
         }
 
+        // Validation des champs de coût fixe
+        let fixedCostData;
+        try {
+            fixedCostData = window.validateFixedCostData();
+        } catch (error) {
+            window.app?.showAlert(error.message, 'error');
+            return;
+        }
+
         try {
             const softwareData = {
                 nom,
@@ -566,6 +621,8 @@ class SoftwareManager {
                 engagement: engagementData.engagement,
                 date_fin_contrat: engagementData.date_fin_contrat,
                 date_limite_annulation: engagementData.date_limite_annulation,
+                cout_fixe: fixedCostData.cout_fixe,
+                cout_fixe_mensuel: fixedCostData.cout_fixe_mensuel,
                 archived: false
             };
 
@@ -718,6 +775,14 @@ class SoftwareManager {
                                 📋 Engagement contractuel
                             </label>
                         </div>
+                        <div class="flex items-center">
+                            <input type="checkbox" id="software-fixed-cost" ${software.cout_fixe ? 'checked' : ''}
+                                   class="h-4 w-4 text-purple-600 focus:ring-purple-500 border-gray-300 rounded"
+                                   onchange="toggleFixedCostFields()">
+                            <label for="software-fixed-cost" class="ml-2 block text-sm text-gray-700 font-medium">
+                                💰 Coût fixe (indépendant des accès)
+                            </label>
+                        </div>
                     </div>
                     
                     <!-- Champs d'engagement (conditionnels) -->
@@ -743,6 +808,42 @@ class SoftwareManager {
                                 <input type="date" id="software-cancellation-deadline" value="${software.date_limite_annulation || ''}"
                                        class="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-red-500">
                                 <p class="text-xs text-gray-500 mt-1">Dernier délai pour annuler le contrat</p>
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <!-- Champs de coût fixe (conditionnels) -->
+                    <div id="fixed-cost-fields" class="space-y-4 border-l-4 border-purple-200 pl-4 bg-purple-50 p-4 rounded ${software.cout_fixe ? '' : 'hidden'}">
+                        <div class="text-sm text-purple-800 font-medium mb-3">
+                            💰 Configuration du coût fixe mensuel
+                        </div>
+                        <div class="grid grid-cols-1 md:grid-cols-1 gap-4">
+                            <div>
+                                <label class="block text-sm font-medium text-gray-700 mb-1">
+                                    Coût mensuel fixe *
+                                    <span class="text-purple-500">●</span>
+                                </label>
+                                <div class="relative">
+                                    <input type="number" step="0.01" min="0" id="software-fixed-cost-amount" 
+                                           value="${software.cout_fixe_mensuel || ''}"
+                                           class="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-purple-500"
+                                           placeholder="0.00">
+                                    <div class="absolute inset-y-0 right-0 pr-3 flex items-center pointer-events-none">
+                                        <span class="text-gray-500 sm:text-sm">€ HT/mois</span>
+                                    </div>
+                                </div>
+                                <p class="text-xs text-gray-500 mt-1">Ce coût sera appliqué indépendamment du nombre d'utilisateurs ayant accès au logiciel</p>
+                            </div>
+                        </div>
+                        <div class="bg-purple-100 border border-purple-200 rounded-lg p-3">
+                            <div class="flex items-start">
+                                <i class="fas fa-info-circle text-purple-600 mt-0.5 mr-2"></i>
+                                <div class="text-sm text-purple-800">
+                                    <p class="font-medium mb-1">Mode coût fixe :</p>
+                                    <p>• Le coût ne dépend pas du nombre d'accès utilisateurs</p>
+                                    <p>• Idéal pour les licences globales ou forfaitaires</p>
+                                    <p>• Les coûts par type d'accès seront ignorés</p>
+                                </div>
                             </div>
                         </div>
                     </div>
@@ -989,6 +1090,11 @@ class SoftwareManager {
         
         const software = this.software.find(s => s.id === softwareId);
         if (!software) return 0;
+        
+        // Si le logiciel a un coût fixe, retourner directement ce coût
+        if (software.cout_fixe && software.cout_fixe_mensuel) {
+            return software.cout_fixe_mensuel;
+        }
         
         const softwareAccess = this.access.filter(a => a.logiciel_id === softwareId);
         const activeUsers = this.users.filter(u => !u.archived);
@@ -1483,6 +1589,28 @@ window.toggleEngagementFields = function() {
     }
 };
 
+// Fonction globale pour gérer l'affichage des champs de coût fixe
+window.toggleFixedCostFields = function() {
+    const fixedCostCheckbox = document.getElementById('software-fixed-cost');
+    const fixedCostFields = document.getElementById('fixed-cost-fields');
+    const fixedCostAmountField = document.getElementById('software-fixed-cost-amount');
+    
+    if (fixedCostCheckbox && fixedCostFields) {
+        if (fixedCostCheckbox.checked) {
+            fixedCostFields.classList.remove('hidden');
+            // Rendre le champ obligatoire
+            if (fixedCostAmountField) fixedCostAmountField.required = true;
+        } else {
+            fixedCostFields.classList.add('hidden');
+            // Retirer l'obligation et vider le champ
+            if (fixedCostAmountField) {
+                fixedCostAmountField.required = false;
+                fixedCostAmountField.value = '';
+            }
+        }
+    }
+};
+
 // Fonction globale de validation des dates d'engagement
 window.validateEngagementDates = function() {
     const engagementCheckbox = document.getElementById('software-engagement');
@@ -1526,6 +1654,38 @@ window.validateEngagementDates = function() {
         engagement: false,
         date_fin_contrat: null,
         date_limite_annulation: null
+    };
+};
+
+// Fonction globale de validation des données de coût fixe
+window.validateFixedCostData = function() {
+    const fixedCostCheckbox = document.getElementById('software-fixed-cost');
+    
+    if (fixedCostCheckbox && fixedCostCheckbox.checked) {
+        const fixedCostAmount = document.getElementById('software-fixed-cost-amount').value;
+        
+        if (!fixedCostAmount) {
+            throw new Error('Le coût mensuel fixe est requis lorsque le coût fixe est activé');
+        }
+        
+        const amount = parseFloat(fixedCostAmount);
+        if (isNaN(amount) || amount < 0) {
+            throw new Error('Le coût mensuel fixe doit être un nombre positif');
+        }
+        
+        if (amount === 0) {
+            throw new Error('Le coût mensuel fixe doit être supérieur à 0');
+        }
+        
+        return {
+            cout_fixe: true,
+            cout_fixe_mensuel: amount
+        };
+    }
+    
+    return {
+        cout_fixe: false,
+        cout_fixe_mensuel: 0
     };
 };
 

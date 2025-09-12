@@ -16,11 +16,13 @@ class ScheduleManager {
         document.getElementById('prev-month-btn')?.addEventListener('click', () => {
             this.currentDate.setMonth(this.currentDate.getMonth() - 1);
             this.renderCalendar();
+            this.renderMonthlyBlocks(); // Mettre à jour aussi les blocs mensuels
         });
 
         document.getElementById('next-month-btn')?.addEventListener('click', () => {
             this.currentDate.setMonth(this.currentDate.getMonth() + 1);
             this.renderCalendar();
+            this.renderMonthlyBlocks(); // Mettre à jour aussi les blocs mensuels
         });
     }
 
@@ -42,28 +44,35 @@ class ScheduleManager {
             this.software = software.map(s => {
                 const softwareAccess = access.filter(a => a.logiciel_id === s.id);
                 
-                // Calculer le coût mensuel total basé sur les accès actuels
+                // Calculer le coût mensuel total
                 let totalMonthlyCost = 0;
-                const processedShared = new Set();
                 
-                softwareAccess.forEach(acc => {
-                    const cost = costs.find(c => c.logiciel_id === acc.logiciel_id && c.droit_id === acc.droit_id);
-                    const droit = droits.find(d => d.id === acc.droit_id);
+                // Si le logiciel a un coût fixe, utiliser ce coût
+                if (s.cout_fixe && s.cout_fixe_mensuel) {
+                    totalMonthlyCost = s.cout_fixe_mensuel;
+                } else {
+                    // Sinon, calculer basé sur les accès actuels
+                    const processedShared = new Set();
                     
-                    if (cost) {
-                        const monthlyCost = cost.cout_mensuel || 0;
+                    softwareAccess.forEach(acc => {
+                        const cost = costs.find(c => c.logiciel_id === acc.logiciel_id && c.droit_id === acc.droit_id);
+                        const droit = droits.find(d => d.id === acc.droit_id);
                         
-                        if (droit && droit.nom === 'Accès communs') {
-                            const sharedKey = `${acc.logiciel_id}_${acc.droit_id}`;
-                            if (!processedShared.has(sharedKey)) {
+                        if (cost) {
+                            const monthlyCost = cost.cout_mensuel || 0;
+                            
+                            if (droit && droit.nom === 'Accès communs') {
+                                const sharedKey = `${acc.logiciel_id}_${acc.droit_id}`;
+                                if (!processedShared.has(sharedKey)) {
+                                    totalMonthlyCost += monthlyCost;
+                                    processedShared.add(sharedKey);
+                                }
+                            } else {
                                 totalMonthlyCost += monthlyCost;
-                                processedShared.add(sharedKey);
                             }
-                        } else {
-                            totalMonthlyCost += monthlyCost;
                         }
-                    }
-                });
+                    });
+                }
                 
                 return {
                     ...s,
@@ -169,16 +178,15 @@ class ScheduleManager {
     }
 
     renderMonthlyBlocks() {
-        const today = new Date();
         const monthNames = [
             'Janvier', 'Février', 'Mars', 'Avril', 'Mai', 'Juin',
             'Juillet', 'Août', 'Septembre', 'Octobre', 'Novembre', 'Décembre'
         ];
 
-        // Afficher les 3 prochains mois consécutifs (mois actuel + 2 suivants)
+        // Utiliser currentDate au lieu de today pour afficher les 3 mois relatifs à la navigation
         for (let i = 0; i < 3; i++) {
-            const targetDate = new Date(today);
-            targetDate.setMonth(today.getMonth() + i);
+            const targetDate = new Date(this.currentDate);
+            targetDate.setMonth(this.currentDate.getMonth() + i);
             targetDate.setDate(1); // Premier jour du mois
             
             const monthData = this.calculateMonthlyPayments(targetDate.getMonth(), targetDate.getFullYear());
