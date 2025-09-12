@@ -132,8 +132,7 @@ class ScheduleManager {
 
         // Calculer tous les paiements futurs sur les 12 prochains mois
         for (let i = 0; i < 12; i++) {
-            const paymentDate = new Date(currentPayment);
-            paymentDate.setMonth(paymentDate.getMonth() + (period * i));
+            const paymentDate = new Date(currentPayment.getFullYear(), currentPayment.getMonth() + (period * i), currentPayment.getDate());
             
             if (paymentDate.getMonth() === month && paymentDate.getFullYear() === year) {
                 payments.push({
@@ -172,7 +171,7 @@ class ScheduleManager {
         
         // Avancer jusqu'à la prochaine date dans le futur
         while (nextPaymentDate <= today) {
-            nextPaymentDate.setMonth(nextPaymentDate.getMonth() + monthsInterval);
+            nextPaymentDate = new Date(nextPaymentDate.getFullYear(), nextPaymentDate.getMonth() + monthsInterval, nextPaymentDate.getDate());
         }
 
         return {
@@ -189,9 +188,8 @@ class ScheduleManager {
 
         // Utiliser currentDate au lieu de today pour afficher les 3 mois relatifs à la navigation
         for (let i = 0; i < 3; i++) {
-            const targetDate = new Date(this.currentDate);
-            targetDate.setMonth(this.currentDate.getMonth() + i);
-            targetDate.setDate(1); // Premier jour du mois
+            // Navigation plus robuste : créer une nouvelle date pour éviter les problèmes de jours du mois
+            const targetDate = new Date(this.currentDate.getFullYear(), this.currentDate.getMonth() + i, 1);
             
             const monthData = this.calculateMonthlyPayments(targetDate.getMonth(), targetDate.getFullYear());
             

@@ -280,8 +280,28 @@ class AccessManagementApp {
             // Calculer le coût total
             const totalCost = await this.calculateTotalCost();
             const annualCost = totalCost * 12;
-            document.getElementById('stat-cost-monthly').textContent = `${totalCost.toFixed(2)}€`;
-            document.getElementById('stat-cost-annual').textContent = `${annualCost.toFixed(2)}€`;
+            
+            // Formatter les coûts pour l'affichage (gérer les grands nombres)
+            const monthlyElement = document.getElementById('stat-cost-monthly');
+            const annualElement = document.getElementById('stat-cost-annual');
+            
+            if (monthlyElement) {
+                const monthlyText = `${totalCost.toFixed(2)}€`;
+                monthlyElement.textContent = monthlyText;
+                // Ajuster la taille si le nombre est très long (>10 caractères)
+                monthlyElement.className = monthlyText.length > 10 ? 
+                    'text-xs font-bold text-gray-900 break-all' : 
+                    'text-sm font-bold text-gray-900';
+            }
+            
+            if (annualElement) {
+                const annualText = `${annualCost.toFixed(2)}€`;
+                annualElement.textContent = annualText;
+                // Ajuster la taille si le nombre est très long (>10 caractères)
+                annualElement.className = annualText.length > 10 ? 
+                    'text-xs font-bold text-blue-600 break-all' : 
+                    'text-sm font-bold text-blue-600';
+            }
 
             // Calculer les accès (total et externes)
             const totalAccess = activeAccess.length;
@@ -301,6 +321,7 @@ class AccessManagementApp {
             // Charger les top 3
             await this.loadTopSoftware();
             await this.loadTopUsers();
+            await this.loadTopTeams();
             
             // Charger les graphiques
             await this.loadCharts();
@@ -464,10 +485,15 @@ class AccessManagementApp {
             const container = document.getElementById('team-stats-container');
             if (!container) return;
 
-            const teamStatsHtml = teams.map(team => {
+            // Calculer les statistiques pour chaque équipe
+            const teamsWithStats = teams.map(team => {
                 const teamUsers = users.filter(u => u.equipe_id === team.id);
                 const teamUserIds = teamUsers.map(u => u.id);
                 const teamAccess = access.filter(a => teamUserIds.includes(a.utilisateur_id));
+                
+                // Compter utilisateurs internes vs externes
+                const internalUsers = teamUsers.filter(u => !u.externe).length;
+                const externalUsers = teamUsers.filter(u => u.externe).length;
                 
                 // Calculer le coût total de l'équipe
                 let totalCost = 0;
@@ -507,17 +533,45 @@ class AccessManagementApp {
                     }
                 }
 
+                return {
+                    team,
+                    totalUsers: teamUsers.length,
+                    internalUsers,
+                    externalUsers,
+                    monthlyCost: totalCost,
+                    annualCost: totalCost * 12
+                };
+            });
+
+            // Trier par coût annuel décroissant
+            teamsWithStats.sort((a, b) => b.annualCost - a.annualCost);
+
+            // Générer le HTML
+            const teamStatsHtml = teamsWithStats.map(teamStats => {
                 return `
                     <div class="bg-white rounded-lg shadow-md p-4">
-                        <h4 class="font-semibold text-lg text-gray-900 mb-2">${team.nom}</h4>
+                        <h4 class="font-semibold text-lg text-gray-900 mb-3">${teamStats.team.nom}</h4>
                         <div class="space-y-2 text-sm">
                             <div class="flex justify-between">
-                                <span class="text-gray-600">Utilisateurs:</span>
-                                <span class="font-medium">${teamUsers.length}</span>
+                                <span class="text-gray-600">Utilisateurs (total):</span>
+                                <span class="font-medium">${teamStats.totalUsers}</span>
                             </div>
                             <div class="flex justify-between">
-                                <span class="text-gray-600">Coût total:</span>
-                                <span class="font-bold text-blue-600">${totalCost.toFixed(2)}€</span>
+                                <span class="text-gray-600">Internes:</span>
+                                <span class="font-medium text-green-600">${teamStats.internalUsers}</span>
+                            </div>
+                            <div class="flex justify-between">
+                                <span class="text-gray-600">Externes:</span>
+                                <span class="font-medium text-orange-600">${teamStats.externalUsers}</span>
+                            </div>
+                            <hr class="border-gray-200">
+                            <div class="flex justify-between">
+                                <span class="text-gray-600">Coût mensuel:</span>
+                                <span class="font-bold text-blue-600">${teamStats.monthlyCost.toFixed(2)}€</span>
+                            </div>
+                            <div class="flex justify-between">
+                                <span class="text-gray-600">Coût annuel:</span>
+                                <span class="font-bold text-purple-600">${teamStats.annualCost.toFixed(2)}€</span>
                             </div>
                         </div>
                     </div>
@@ -715,7 +769,7 @@ class AccessManagementApp {
             const softwareWithCosts = software.filter(s => (softwareCosts[s.id] || 0) > 0);
             
             const labels = softwareWithCosts.map(s => s.nom);
-            const data = softwareWithCosts.map(s => softwareCosts[s.id]);
+            const data = softwareWithCosts.map(s => parseFloat(softwareCosts[s.id].toFixed(2)));
 
             // Si aucune donnée, afficher un message au lieu du graphique
             if (data.length === 0 || data.every(d => d === 0)) {
@@ -944,7 +998,7 @@ class AccessManagementApp {
             }
 
             const labels = Object.keys(teamCosts);
-            const data = Object.values(teamCosts);
+            const data = Object.values(teamCosts).map(cost => parseFloat(cost.toFixed(2)));
 
             // Détruire le graphique existant s'il y en a un
             if (window.teamCostChart && typeof window.teamCostChart.destroy === 'function') {
@@ -1285,6 +1339,145 @@ class AccessManagementApp {
         `).join('');
     }
 
+    async loadTopTeams() {
+        try {
+            const [teamsResult, usersResult, accessResult, costsResult, droitsResult, softwareResult] = await Promise.all([
+                window.D1API.get('equipes'),
+                window.D1API.get('utilisateurs'),
+                window.D1API.get('acces'),
+                window.D1API.get('couts_licences'),
+                window.D1API.get('droits'),
+                window.D1API.get('logiciels')
+            ]);
+
+            const teams = (teamsResult.data || []).filter(t => !t.archived);
+            const users = (usersResult.data || []).filter(u => !u.archived);
+            const access = accessResult.data || [];
+            const costs = costsResult.data || [];
+            const droits = droitsResult.data || [];
+            const software = (softwareResult.data || []).filter(s => !s.archived);
+
+            const teamCosts = {};
+            const processedFixedCosts = new Set();
+            
+            // D'abord, répartir les coûts fixes entre les équipes qui utilisent chaque logiciel
+            for (const soft of software) {
+                if (soft.cout_fixe && soft.cout_fixe_mensuel && !processedFixedCosts.has(soft.id)) {
+                    // Trouver toutes les équipes qui ont des utilisateurs ayant accès à ce logiciel
+                    const teamsUsingThisSoftware = new Set();
+                    const softwareAccess = access.filter(a => a.logiciel_id === soft.id);
+                    
+                    for (const acc of softwareAccess) {
+                        const user = users.find(u => u.id === acc.utilisateur_id);
+                        if (user && user.equipe_id) {
+                            const team = teams.find(t => t.id === user.equipe_id);
+                            if (team) {
+                                teamsUsingThisSoftware.add(team.nom);
+                            }
+                        }
+                    }
+                    
+                    // Répartir le coût fixe entre les équipes utilisatrices
+                    if (teamsUsingThisSoftware.size > 0) {
+                        const costPerTeam = soft.cout_fixe_mensuel / teamsUsingThisSoftware.size;
+                        for (const teamName of teamsUsingThisSoftware) {
+                            if (!teamCosts[teamName]) teamCosts[teamName] = 0;
+                            teamCosts[teamName] += costPerTeam;
+                        }
+                    }
+                    processedFixedCosts.add(soft.id);
+                }
+            }
+
+            // Ensuite, calculer les coûts basés sur les accès pour les logiciels non-fixes
+            for (const team of teams) {
+                if (!teamCosts[team.nom]) teamCosts[team.nom] = 0;
+                
+                const teamUsers = users.filter(u => u.equipe_id === team.id);
+                const teamUserIds = teamUsers.map(u => u.id);
+                const teamAccess = access.filter(a => teamUserIds.includes(a.utilisateur_id));
+                
+                let accessBasedCost = 0;
+                const processedShared = new Set();
+                
+                for (const acc of teamAccess) {
+                    // Vérifier que ce n'est pas un logiciel à coût fixe
+                    const soft = software.find(s => s.id === acc.logiciel_id);
+                    if (soft && soft.cout_fixe && soft.cout_fixe_mensuel) {
+                        continue; // Ignorer, déjà traité dans la répartition des coûts fixes
+                    }
+                    
+                    const cost = costs.find(c => c.logiciel_id === acc.logiciel_id && c.droit_id === acc.droit_id);
+                    const droit = droits.find(d => d.id === acc.droit_id);
+                    
+                    if (cost) {
+                        if (droit && droit.nom === 'Accès communs') {
+                            const sharedKey = `${acc.logiciel_id}_${acc.droit_id}`;
+                            if (!processedShared.has(sharedKey)) {
+                                accessBasedCost += cost.cout_mensuel;
+                                processedShared.add(sharedKey);
+                            }
+                        } else {
+                            accessBasedCost += cost.cout_mensuel;
+                        }
+                    }
+                }
+                
+                teamCosts[team.nom] += accessBasedCost;
+            }
+
+            // Créer les objets équipes avec coûts
+            const teamsWithCosts = Object.entries(teamCosts).map(([teamName, monthlyCost]) => {
+                const team = teams.find(t => t.nom === teamName);
+                return {
+                    nom: teamName,
+                    cout_mensuel: monthlyCost,
+                    cout_annuel: monthlyCost * 12,
+                    teamData: team
+                };
+            });
+            
+            // Trier par coût annuel décroissant et prendre les 3 premiers
+            const topTeams = teamsWithCosts
+                .filter(t => t.cout_annuel > 0)
+                .sort((a, b) => b.cout_annuel - a.cout_annuel)
+                .slice(0, 3);
+
+            this.renderTopTeams(topTeams);
+        } catch (error) {
+            console.error('Erreur lors du chargement du top des équipes:', error);
+        }
+    }
+
+    renderTopTeams(topTeams) {
+        const container = document.getElementById('top-teams-container');
+        if (!container) return;
+        
+        if (topTeams.length === 0) {
+            container.innerHTML = '<p class="text-gray-500 text-sm">Aucune équipe avec coût défini</p>';
+            return;
+        }
+        
+        const medals = ['🥇', '🥈', '🥉'];
+        const colors = ['text-yellow-600', 'text-gray-500', 'text-amber-600'];
+        
+        container.innerHTML = topTeams.map((team, index) => `
+            <div class="flex items-center justify-between p-3 bg-gray-50 rounded-lg">
+                <div class="flex items-center">
+                    <span class="text-xl mr-3">${medals[index]}</span>
+                    <div>
+                        <div class="font-medium text-gray-900">${team.nom}</div>
+                        <div class="text-sm text-gray-600">Équipe</div>
+                    </div>
+                </div>
+                <div class="text-right">
+                    <div class="font-bold ${colors[index]}">${team.cout_annuel.toFixed(2)}€/an</div>
+                    <div class="text-sm text-gray-600">${team.cout_mensuel.toFixed(2)}€ HT/mois</div>
+                </div>
+            </div>
+        `).join('');
+    }
+
     async loadPaymentMethodChart() {
         const ctx = document.getElementById('paymentMethodChart');
         if (!ctx) {
@@ -1372,7 +1565,7 @@ class AccessManagementApp {
             const labels = Object.keys(filteredPaymentMethods).map(key => 
                 paymentMethodLabels[key] || key
             );
-            const data = Object.values(filteredPaymentMethods).map(pm => pm.cost);
+            const data = Object.values(filteredPaymentMethods).map(pm => parseFloat(pm.cost.toFixed(2)));
             const colors = ['#3B82F6', '#10B981', '#F59E0B', '#EF4444'];
 
             // Si aucune donnée, afficher un message au lieu du graphique
