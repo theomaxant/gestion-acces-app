@@ -36,6 +36,11 @@
 - **Vision annuelle** : Coûts mensuels ×12 partout dans l'interface
 - **Budgets équipes** : Suivi en temps réel, alertes dépassement
 - **ROI et optimisation** : Identification logiciels sous-utilisés
+- **🆕 COÛTS FIXES** : Support complet des logiciels à coût fixe mensuel (indépendant du nombre d'utilisateurs)
+  - Checkbox "Coût fixe ?" lors de l'ajout/modification de logiciels
+  - Champ "Coût fixe mensuel" pour définir le montant global
+  - Répartition intelligente des coûts fixes entre équipes utilisatrices
+  - Intégration complète dans tous les calculs et graphiques du dashboard
 
 ### 📋 **Gestion d'Engagement** ⭐ NOUVEAU
 - **Contrats avec engagement** : Checkbox "Engagement ?" pour logiciels sous contrat
@@ -599,6 +604,19 @@ logUpdate("table", "id", oldData, newData, "détails");
 - 🔄 **Multi-tenant** pour plusieurs organisations
 
 ## 🛠️ Corrections Récentes
+
+### ✅ Logiciels à Coût Fixe - Intégration Dashboard (12/09/2025)
+- **Fonctionnalité :** Support complet des coûts fixes dans tous les blocs du dashboard
+- **Modifications :**
+  - `js/app.js` : Mise à jour méthodes `loadCostChart`, `loadTeamCostChart`, `loadPaymentMethodChart`
+  - Répartition intelligente des coûts fixes entre équipes utilisatrices
+  - Calculs combinés coûts fixes + coûts basés sur accès
+- **Impact :** Dashboard affiche correctement les coûts totaux incluant les logiciels à tarif fixe
+
+### ✅ Corrections Navigation & Groupement (12/09/2025) 
+- **Planificateur :** Navigation mensuelle (au lieu de trimestre) corrigée
+- **Shopify :** Groupement des applications Shopify par date implémenté
+- **Page Accès :** Correction erreur après pagination (ReferenceError résolu)
 
 ### ✅ Rapports Fonctionnels (10/09/2025)
 - **Problème :** Boutons de rapports non réactifs
