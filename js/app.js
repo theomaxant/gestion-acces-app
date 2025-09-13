@@ -1722,6 +1722,8 @@ class AccessManagementApp {
             console.error('Erreur lors du chargement du graphique des moyens de paiement:', error);
         }
     }
+
+    // Fonction ROI supprimée car considérée comme non pertinente
 }
 
 // Initialiser l'application

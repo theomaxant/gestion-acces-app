@@ -9,6 +9,9 @@ class UsersManager {
         this.sortColumn = 'nom';
         this.sortDirection = 'asc';
         this.selectedUsers = new Set(); // Pour la sélection multiple
+        this.currentPage = 1; // Pagination
+        this.allUsers = []; // Stockage de tous les utilisateurs avant filtrage
+        this.selectedTeamId = ''; // Filtre par équipe
         this.init();
     }
 
@@ -33,12 +36,20 @@ class UsersManager {
 
         document.getElementById('show-archived-users')?.addEventListener('change', (e) => {
             this.showArchived = e.target.checked;
-            this.loadUsers();
+            this.currentPage = 1; // Reset à la page 1 lors du changement de filtre
+            this.renderUsersTable();
         });
 
         // Search functionality
         document.getElementById('users-search')?.addEventListener('input', (e) => {
             this.filterUsers(e.target.value);
+        });
+
+        // Team filter
+        document.getElementById('team-filter')?.addEventListener('change', (e) => {
+            this.selectedTeamId = e.target.value;
+            this.currentPage = 1; // Reset à la page 1 lors du changement de filtre
+            this.renderUsersTable();
         });
 
         // Bouton pour ajout en masse d'applications
@@ -57,12 +68,17 @@ class UsersManager {
                 window.D1API.get('equipes')
             ]);
 
-            this.users = usersResult.data || [];
+            this.allUsers = usersResult.data || [];
             this.software = softwareResult.data || [];
             this.access = accessResult.data || [];
             this.costs = costsResult.data || [];
             this.teams = teamsResult.data || [];
 
+            // Peupler le filtre d'équipes
+            this.populateTeamFilter();
+
+            // Récupérer la page sauvegardée
+            this.currentPage = window.paginationUtils?.getSavedPage('users') || 1;
             this.renderUsersTable();
         } catch (error) {
             console.error('Erreur lors du chargement des utilisateurs:', error);
@@ -88,13 +104,46 @@ class UsersManager {
         });
     }
 
+    populateTeamFilter() {
+        const teamFilter = document.getElementById('team-filter');
+        if (!teamFilter) return;
+
+        // Garder l'option "Toutes les équipes"
+        const currentValue = teamFilter.value;
+        teamFilter.innerHTML = '<option value="">Toutes les équipes</option>';
+
+        // Ajouter les équipes actives
+        const activeTeams = this.teams.filter(team => !team.archived);
+        activeTeams.forEach(team => {
+            const option = document.createElement('option');
+            option.value = team.id;
+            option.textContent = team.nom;
+            teamFilter.appendChild(option);
+        });
+
+        // Restaurer la valeur sélectionnée
+        teamFilter.value = currentValue;
+    }
+
     renderUsersTable() {
         const container = document.getElementById('users-table-container');
         if (!container) return;
 
-        const filteredUsers = this.showArchived ? 
-            this.users : 
-            this.users.filter(u => !u.archived);
+        // Filtrer les utilisateurs
+        let filteredUsers = this.showArchived ? 
+            this.allUsers : 
+            this.allUsers.filter(u => !u.archived);
+
+        // Filtre par équipe
+        if (this.selectedTeamId) {
+            filteredUsers = filteredUsers.filter(u => u.equipe_id === this.selectedTeamId);
+        }
+
+        // Paginer les résultats
+        const paginationResult = window.paginationUtils?.paginateData(filteredUsers, this.currentPage);
+        if (!paginationResult) return;
+
+        this.users = paginationResult.data; // Utilisateurs de la page courante
 
         const tableHtml = `
             <table class="min-w-full table-auto">
@@ -133,10 +182,23 @@ class UsersManager {
                     ${filteredUsers.map(user => this.renderUserRow(user)).join('')}
                 </tbody>
             </table>
-            ${filteredUsers.length === 0 ? '<div class="text-center py-8 text-gray-500 text-sm sm:text-base">Aucun utilisateur trouvé</div>' : ''}
+            ${this.users.length === 0 ? '<div class="text-center py-8 text-gray-500 text-sm sm:text-base">Aucun utilisateur trouvé</div>' : ''}
         `;
 
         container.innerHTML = tableHtml;
+
+        // Ajouter les contrôles de pagination
+        if (window.paginationUtils) {
+            window.paginationUtils.renderPaginationControls(
+                paginationResult.totalItems,
+                paginationResult.currentPage,
+                'users-pagination',
+                'window.usersManager.changePage'
+            );
+        }
+
+        // Animation
+        window.paginationUtils?.animateTableUpdate('#users-table-container table');
     }
 
     renderUserRow(user) {
@@ -893,18 +955,16 @@ class UsersManager {
     // =================== FONCTIONNALITÉS DE SÉLECTION MULTIPLE ===================
 
     toggleSelectAll(checked) {
-        const filteredUsers = this.showArchived ? 
-            this.users : 
-            this.users.filter(u => !u.archived);
-
         if (checked) {
-            // Sélectionner tous les utilisateurs visibles
-            filteredUsers.forEach(user => {
+            // Sélectionner tous les utilisateurs de la page courante
+            this.users.forEach(user => {
                 this.selectedUsers.add(user.id);
             });
         } else {
-            // Désélectionner tous les utilisateurs
-            this.selectedUsers.clear();
+            // Désélectionner tous les utilisateurs de la page courante
+            this.users.forEach(user => {
+                this.selectedUsers.delete(user.id);
+            });
         }
 
         // Mettre à jour les cases à cocher individuelles
@@ -924,18 +984,14 @@ class UsersManager {
             this.selectedUsers.delete(userId);
         }
 
-        // Mettre à jour la case "Sélectionner tout"
+        // Mettre à jour la case "Sélectionner tout" pour la page courante
         const selectAllCheckbox = document.getElementById('select-all-users');
         if (selectAllCheckbox) {
-            const filteredUsers = this.showArchived ? 
-                this.users : 
-                this.users.filter(u => !u.archived);
+            const allPageSelected = this.users.every(user => this.selectedUsers.has(user.id));
+            const somePageSelected = this.users.some(user => this.selectedUsers.has(user.id));
             
-            const allVisible = filteredUsers.every(user => this.selectedUsers.has(user.id));
-            const someSelected = filteredUsers.some(user => this.selectedUsers.has(user.id));
-            
-            selectAllCheckbox.checked = allVisible;
-            selectAllCheckbox.indeterminate = someSelected && !allVisible;
+            selectAllCheckbox.checked = allPageSelected && this.users.length > 0;
+            selectAllCheckbox.indeterminate = somePageSelected && !allPageSelected;
         }
 
         this.updateBulkActionsUI();
@@ -1508,6 +1564,17 @@ class UsersManager {
             console.error('Erreur lors de la suppression en masse:', error);
             window.app?.showAlert('Erreur lors de la suppression en masse', 'error');
         }
+    }
+
+    // =================== PAGINATION ===================
+
+    changePage(page) {
+        this.currentPage = page;
+        window.paginationUtils?.savePage('users', page);
+        this.renderUsersTable();
+        
+        // Scroll vers le haut du tableau
+        document.getElementById('users-table-container')?.scrollIntoView({ behavior: 'smooth' });
     }
 }
 
