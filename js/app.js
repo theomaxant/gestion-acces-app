@@ -276,6 +276,22 @@ class AccessManagementApp {
             // Mettre à jour les statistiques
             document.getElementById('stat-users').textContent = activeUsers.length;
             document.getElementById('stat-software').textContent = activeSoftware.length;
+            
+            // Calculer et afficher les logiciels Shopify
+            const shopifySoftware = activeSoftware.filter(s => s.application_shopify === true).length;
+            console.log('🛍️ Logiciels Shopify trouvés:', shopifySoftware, '/', activeSoftware.length);
+            
+            const shopifySoftwareElement = document.getElementById('stat-software-shopify');
+            if (shopifySoftwareElement) {
+                shopifySoftwareElement.textContent = shopifySoftware;
+            }
+            
+            // Calculer et afficher les utilisateurs externes
+            const externalUsers = activeUsers.filter(u => u.externe).length;
+            const externalUsersElement = document.getElementById('stat-users-external');
+            if (externalUsersElement) {
+                externalUsersElement.textContent = externalUsers;
+            }
 
             // Calculer le coût total
             const totalCost = await this.calculateTotalCost();
@@ -314,6 +330,10 @@ class AccessManagementApp {
             const externalAnnualCost = externalCost * 12;
             document.getElementById('stat-external-cost-monthly').textContent = `${externalCost.toFixed(2)}€`;
             document.getElementById('stat-external-cost-annual').textContent = `${externalAnnualCost.toFixed(2)}€`;
+
+            // Calculer les coûts moyens par employé
+            console.log('🔍 Calcul des coûts moyens par employé - Utilisateurs actifs:', activeUsers.length, 'Coût total:', totalCost);
+            await this.calculateAverageEmployeeCosts(activeUsers, totalCost);
 
             // Charger les statistiques par équipe
             await this.loadTeamStats();
@@ -460,6 +480,53 @@ class AccessManagementApp {
         }
     }
 
+    async calculateAverageEmployeeCosts(activeUsers, totalCost) {
+        try {
+            const usersResult = await window.D1API.get('utilisateurs');
+            const users = (usersResult.data || []).filter(u => !u.archived);
+            
+            // Calculer les coûts moyens globaux
+            const totalUsers = users.length;
+            const avgCostMonthly = totalUsers > 0 ? totalCost / totalUsers : 0;
+            const avgCostAnnual = avgCostMonthly * 12;
+            
+            // Calculer les coûts moyens pour internes et externes
+            const internalUsers = users.filter(u => !u.externe);
+            const externalUsers = users.filter(u => u.externe);
+            
+            // Calculer les coûts spécifiques aux internes et externes
+            const externalCost = await this.calculateExternalUsersCost();
+            const internalCost = totalCost - externalCost;
+            
+            const avgInternalCostMonthly = internalUsers.length > 0 ? internalCost / internalUsers.length : 0;
+            const avgInternalCostAnnual = avgInternalCostMonthly * 12;
+            
+            const avgExternalCostMonthly = externalUsers.length > 0 ? externalCost / externalUsers.length : 0;
+            const avgExternalCostAnnual = avgExternalCostMonthly * 12;
+            
+            // Mettre à jour l'interface
+            console.log('🔍 Statistiques calculées:', {
+                avgCostMonthly, avgInternalCostMonthly, avgExternalCostMonthly,
+                totalUsers, internalUsers: internalUsers.length, externalUsers: externalUsers.length
+            });
+            
+            document.getElementById('stat-avg-cost-monthly').textContent = `${avgCostMonthly.toFixed(2)}€`;
+            document.getElementById('stat-avg-cost-annual').textContent = `${avgCostAnnual.toFixed(2)}€`;
+            
+            document.getElementById('stat-internal-avg-cost-monthly').textContent = `${avgInternalCostMonthly.toFixed(2)}€`;
+            document.getElementById('stat-internal-avg-cost-annual').textContent = `${avgInternalCostAnnual.toFixed(2)}€`;
+            
+            document.getElementById('stat-external-avg-cost-monthly').textContent = `${avgExternalCostMonthly.toFixed(2)}€`;
+            document.getElementById('stat-external-avg-cost-annual').textContent = `${avgExternalCostAnnual.toFixed(2)}€`;
+            
+        } catch (error) {
+            console.error('Erreur lors du calcul des coûts moyens par employé:', error);
+        }
+    }
+
+    // Cette fonction a été supprimée car les coûts moyens par employé
+    // sont maintenant intégrés directement dans loadTeamStats()
+
     async loadTeamStats() {
         try {
             const [teamsResult, usersResult, accessResult, costsResult, droitsResult, softwareResult] = await Promise.all([
@@ -538,8 +605,12 @@ class AccessManagementApp {
             // Trier par coût annuel décroissant
             teamsWithStats.sort((a, b) => b.annualCost - a.annualCost);
 
-            // Générer le HTML
+            // Générer le HTML avec coût moyen par employé intégré
             const teamStatsHtml = teamsWithStats.map(teamStats => {
+                // Calculer le coût moyen par employé
+                const avgCostPerEmployee = teamStats.totalUsers > 0 ? teamStats.monthlyCost / teamStats.totalUsers : 0;
+                const avgCostPerEmployeeAnnual = avgCostPerEmployee * 12;
+                
                 return `
                     <div class="bg-white rounded-lg shadow-md p-4">
                         <h4 class="font-semibold text-lg text-gray-900 mb-3">${teamStats.team.nom}</h4>
@@ -564,6 +635,17 @@ class AccessManagementApp {
                             <div class="flex justify-between">
                                 <span class="text-gray-600">Coût annuel:</span>
                                 <span class="font-bold text-purple-600">${teamStats.annualCost.toFixed(2)}€</span>
+                            </div>
+                            <hr class="border-gray-300 my-2">
+                            <div class="bg-gray-50 -mx-2 px-2 py-2 rounded">
+                                <div class="flex justify-between">
+                                    <span class="text-gray-600">💰 Moy./emp. (mensuel):</span>
+                                    <span class="font-bold text-indigo-600">${avgCostPerEmployee.toFixed(2)}€</span>
+                                </div>
+                                <div class="flex justify-between">
+                                    <span class="text-gray-600">💰 Moy./emp. (annuel):</span>
+                                    <span class="font-bold text-indigo-800">${avgCostPerEmployeeAnnual.toFixed(2)}€</span>
+                                </div>
                             </div>
                         </div>
                     </div>
