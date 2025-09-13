@@ -16,6 +16,8 @@
     <link rel="stylesheet" href="css/pagination.css">
     <!-- CSS pour les processus -->
     <link rel="stylesheet" href="css/process-styles.css">
+    <!-- CSS pour le mode sombre -->
+    <link rel="stylesheet" href="css/dark-mode.css">
     <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
     <script src="https://cdn.jsdelivr.net/npm/chartjs-plugin-datalabels@2"></script>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
@@ -29,6 +31,9 @@
     
     <!-- ⚡ SUPABASE API - Solution finale tout-en-un -->
     <script src="js/supabase-api.js"></script>
+    
+    <!-- 🌙 MODE SOMBRE -->
+    <script src="js/dark-mode.js"></script>
 
 </head>
 <body class="bg-gray-100">
@@ -90,6 +95,21 @@
                                     <button id="nav-process" class="submenu-btn w-full text-left px-4 py-3 hover:bg-gray-100 transition-colors text-gray-700 border-b border-gray-100">
                                         <i class="fas fa-book mr-3 w-5 text-blue-600"></i>Process
                                     </button>
+
+                                    <!-- Mode sombre toggle -->
+                                    <div class="px-4 py-3 border-b border-gray-100">
+                                        <label class="flex items-center justify-between cursor-pointer">
+                                            <div class="flex items-center">
+                                                <i class="fas fa-moon mr-3 w-5 text-blue-600"></i>
+                                                <span class="text-gray-700">Mode sombre</span>
+                                            </div>
+                                            <input type="checkbox" id="dark-mode-toggle" class="sr-only">
+                                            <div class="relative">
+                                                <div class="block bg-gray-600 w-14 h-8 rounded-full"></div>
+                                                <div class="dot absolute left-1 top-1 bg-white w-6 h-6 rounded-full transition"></div>
+                                            </div>
+                                        </label>
+                                    </div>
 
                                     <button id="nav-logout" class="submenu-btn w-full text-left px-4 py-3 hover:bg-red-100 transition-colors text-red-600">
                                         <i class="fas fa-sign-out-alt mr-3 w-5 text-red-600"></i>Déconnexion
@@ -448,11 +468,23 @@
                         </div>
                     </div>
                     
-                    <!-- Search Bar -->
-                    <div class="relative w-full sm:w-64 sm:ml-auto mt-4">
-                        <input type="text" id="users-search" placeholder="Rechercher des utilisateurs..." 
-                               class="w-full pl-10 pr-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 text-sm sm:text-base">
-                        <i class="fas fa-search absolute left-3 top-3 text-gray-400"></i>
+                    <!-- Filtres -->
+                    <div class="flex flex-col sm:flex-row gap-4 w-full sm:w-auto sm:ml-auto mt-4">
+                        <!-- Filtre par équipe -->
+                        <div class="relative">
+                            <select id="team-filter" class="pl-8 pr-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 text-sm sm:text-base bg-white">
+                                <option value="">Toutes les équipes</option>
+                                <!-- Les options seront ajoutées dynamiquement -->
+                            </select>
+                            <i class="fas fa-users absolute left-3 top-3 text-gray-400"></i>
+                        </div>
+                        
+                        <!-- Search Bar -->
+                        <div class="relative">
+                            <input type="text" id="users-search" placeholder="Rechercher des utilisateurs..." 
+                                   class="w-full pl-10 pr-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 text-sm sm:text-base">
+                            <i class="fas fa-search absolute left-3 top-3 text-gray-400"></i>
+                        </div>
                     </div>
                 </div>
                 
