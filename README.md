@@ -9,6 +9,7 @@
 
 ### 👥 **Gestion Utilisateurs & Équipes**
 - **Utilisateurs complets** : Nom, prénom, email, téléphone, équipe
+- **🏢 Utilisateurs externes** : Distinction interne/externe avec compteurs séparés
 - **Équipes avec budgets** : Budget mensuel, responsable, suivi dépassements
 - **Hiérarchie claire** : Responsables d'équipe, validation budgétaire
 - **Archivage automatique** : Conservation audit, suppression accès
@@ -267,10 +268,10 @@ Consultez `GUIDE-SELECTION-MULTIPLE-UTILISATEURS.md` pour le guide détaillé.
 **🔧 Systèmes automatiquement mis à jour :**
 - ✅ **Tableau des logiciels** - Coût annuel avec mention "(fixe)"
 - ✅ **Échéancier** - Calcul des paiements avec coûts forfaitaires
-- ✅ **Tableau de bord** - Statistiques globales incluant les coûts fixes
+- ✅ **📊 Dashboard optimisé** - 2 lignes de 4 blocs avec utilisateurs externes et coûts moyens intégrés
 - ✅ **Tous les rapports** - Calculs précis logiciels/utilisateurs/équipes
 - ✅ **Table des accès** - Affichage "coût fixe global" au lieu de coût unitaire
-- ✅ **Vue équipes** - Budgets incluant les forfaits partagés
+- ✅ **Vue équipes** - Budgets incluant les forfaits partagés et coûts moyens par employé
 
 **📁 Fichiers créés/modifiés :**
 - **`sql/add_fixed_cost_to_logiciels.sql`** - Script SQL pour les nouvelles colonnes

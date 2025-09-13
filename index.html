@@ -163,8 +163,9 @@
                     <p class="text-gray-600">Vue d'ensemble de la gestion des accès</p>
                 </div>
 
-                <!-- Statistics Cards -->
-                <div class="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-5 gap-2 sm:gap-4 mb-6 sm:mb-8">
+                <!-- Statistics Cards - 2 lignes de 4 blocs -->
+                <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4 mb-6 sm:mb-8">
+                    <!-- Première ligne -->
                     <div class="bg-white rounded-lg shadow-md p-4">
                         <div class="flex items-center">
                             <div class="flex-shrink-0 bg-blue-500 text-white p-2 rounded-lg">
@@ -172,7 +173,16 @@
                             </div>
                             <div class="ml-3">
                                 <p class="text-gray-600 text-xs">Utilisateurs Actifs</p>
-                                <p id="stat-users" class="text-xl font-bold text-gray-900">0</p>
+                                <div class="space-y-1">
+                                    <div class="flex items-center">
+                                        <span class="text-xs text-gray-500 w-12">Total:</span>
+                                        <span id="stat-users" class="text-sm font-bold text-gray-900">0</span>
+                                    </div>
+                                    <div class="flex items-center">
+                                        <span class="text-xs text-gray-500 w-12">🏢 Ext:</span>
+                                        <span id="stat-users-external" class="text-sm font-bold text-orange-600">0</span>
+                                    </div>
+                                </div>
                             </div>
                         </div>
                     </div>
@@ -184,26 +194,14 @@
                             </div>
                             <div class="ml-3">
                                 <p class="text-gray-600 text-xs">Logiciels Actifs</p>
-                                <p id="stat-software" class="text-xl font-bold text-gray-900">0</p>
-                            </div>
-                        </div>
-                    </div>
-                    
-                    <div class="bg-white rounded-lg shadow-md p-4">
-                        <div class="flex items-center">
-                            <div class="flex-shrink-0 bg-purple-500 text-white p-2 rounded-lg">
-                                <i class="fas fa-shield-alt text-lg"></i>
-                            </div>
-                            <div class="ml-3">
-                                <p class="text-gray-600 text-xs">Accès Accordés</p>
                                 <div class="space-y-1">
                                     <div class="flex items-center">
                                         <span class="text-xs text-gray-500 w-12">Total:</span>
-                                        <span id="stat-access-total" class="text-sm font-bold text-gray-900">0</span>
+                                        <span id="stat-software" class="text-sm font-bold text-gray-900">0</span>
                                     </div>
                                     <div class="flex items-center">
-                                        <span class="text-xs text-gray-500 w-12">🏢 Ext:</span>
-                                        <span id="stat-access-external" class="text-sm font-bold text-orange-600">0</span>
+                                        <span class="text-xs text-gray-500 w-12">Shopify:</span>
+                                        <span id="stat-software-shopify" class="text-sm font-bold text-green-600">0</span>
                                     </div>
                                 </div>
                             </div>
@@ -224,7 +222,7 @@
                                     </div>
                                     <div class="flex items-center">
                                         <span class="text-xs text-gray-500 w-12 flex-shrink-0">Ann:</span>
-                                        <span id="stat-cost-annual" class="text-sm font-bold text-blue-600 ml-1 min-w-0">0€</span>
+                                        <span id="stat-cost-annual" class="text-sm font-bold text-red-600 ml-1 min-w-0">0€</span>
                                     </div>
                                 </div>
                             </div>
@@ -252,6 +250,93 @@
                         </div>
                     </div>
                 </div>
+                
+                <!-- Deuxième ligne de stats -->
+                <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4 mb-6 sm:mb-8">
+                    <div class="bg-white rounded-lg shadow-md p-4">
+                        <div class="flex items-center">
+                            <div class="flex-shrink-0 bg-indigo-500 text-white p-2 rounded-lg">
+                                <i class="fas fa-user-tie text-lg"></i>
+                            </div>
+                            <div class="ml-3">
+                                <p class="text-gray-600 text-xs">💰 Coût/Employé Global</p>
+                                <div class="space-y-1">
+                                    <div class="flex items-center">
+                                        <span class="text-xs text-gray-500 w-12">Mens:</span>
+                                        <span id="stat-avg-cost-monthly" class="text-sm font-bold text-gray-900">0€</span>
+                                    </div>
+                                    <div class="flex items-center">
+                                        <span class="text-xs text-gray-500 w-12">Ann:</span>
+                                        <span id="stat-avg-cost-annual" class="text-sm font-bold text-indigo-600">0€</span>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <div class="bg-white rounded-lg shadow-md p-4">
+                        <div class="flex items-center">
+                            <div class="flex-shrink-0 bg-teal-500 text-white p-2 rounded-lg">
+                                <i class="fas fa-user-check text-lg"></i>
+                            </div>
+                            <div class="ml-3">
+                                <p class="text-gray-600 text-xs">👤 Coût/Employé Interne</p>
+                                <div class="space-y-1">
+                                    <div class="flex items-center">
+                                        <span class="text-xs text-gray-500 w-12">Mens:</span>
+                                        <span id="stat-internal-avg-cost-monthly" class="text-sm font-bold text-gray-900">0€</span>
+                                    </div>
+                                    <div class="flex items-center">
+                                        <span class="text-xs text-gray-500 w-12">Ann:</span>
+                                        <span id="stat-internal-avg-cost-annual" class="text-sm font-bold text-teal-600">0€</span>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <div class="bg-white rounded-lg shadow-md p-4">
+                        <div class="flex items-center">
+                            <div class="flex-shrink-0 bg-pink-500 text-white p-2 rounded-lg">
+                                <i class="fas fa-user-plus text-lg"></i>
+                            </div>
+                            <div class="ml-3">
+                                <p class="text-gray-600 text-xs">🏢 Coût/Employé Externe</p>
+                                <div class="space-y-1">
+                                    <div class="flex items-center">
+                                        <span class="text-xs text-gray-500 w-12">Mens:</span>
+                                        <span id="stat-external-avg-cost-monthly" class="text-sm font-bold text-gray-900">0€</span>
+                                    </div>
+                                    <div class="flex items-center">
+                                        <span class="text-xs text-gray-500 w-12">Ann:</span>
+                                        <span id="stat-external-avg-cost-annual" class="text-sm font-bold text-pink-600">0€</span>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <div class="bg-white rounded-lg shadow-md p-4">
+                        <div class="flex items-center">
+                            <div class="flex-shrink-0 bg-purple-500 text-white p-2 rounded-lg">
+                                <i class="fas fa-shield-alt text-lg"></i>
+                            </div>
+                            <div class="ml-3">
+                                <p class="text-gray-600 text-xs">Accès Accordés</p>
+                                <div class="space-y-1">
+                                    <div class="flex items-center">
+                                        <span class="text-xs text-gray-500 w-12">Total:</span>
+                                        <span id="stat-access-total" class="text-sm font-bold text-gray-900">0</span>
+                                    </div>
+                                    <div class="flex items-center">
+                                        <span class="text-xs text-gray-500 w-12">🏢 Ext:</span>
+                                        <span id="stat-access-external" class="text-sm font-bold text-orange-600">0</span>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
 
                 <!-- Team Statistics -->
                 <div class="mb-6 sm:mb-8">
@@ -260,6 +345,8 @@
                         <!-- Team stats will be loaded here -->
                     </div>
                 </div>
+                
+
 
                 <!-- Top 3 Sections -->
                 <div class="grid grid-cols-1 lg:grid-cols-3 gap-6 mb-8">
